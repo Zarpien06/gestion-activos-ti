@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+
+{% block title %}Permisos | Gestion de Activos TI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 14px;
+        margin-bottom: 24px;
+    }
+    .page-header h1 { margin: 0; font-size: 24px; font-weight: 700; }
+    .page-header p { margin: 4px 0 0; color: var(--text-light); }
+
+    .card-title { margin: 0; font-size: 16px; font-weight: 600; }
+    .card-sub { margin: 2px 0 0; color: var(--text-light); font-size: 13px; }
+
+    .role-card { margin-bottom: 18px; }
+
+    .role-form {
+        display: grid;
+        grid-template-columns: minmax(260px, 420px) auto;
+        gap: 12px;
+        align-items: center;
+        margin-top: 18px;
+    }
+
+    .form-select {
+        min-height: 44px;
+        appearance: none;
+        padding-right: 38px;
+        background:
+            var(--surface)
+            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
+            no-repeat right 12px center;
+    }
+
+    .selected-role {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 18px;
+        padding: 8px 16px;
+        color: var(--primary);
+        background: var(--primary-soft);
+        border-radius: 999px;
+    }
+    .selected-role span { font-size: 13px; opacity: .85; }
+    .selected-role strong { font-weight: 700; }
+
+    .permission-heading { margin-bottom: 20px; }
+
+    .permission-table { width: 100%; border-collapse: collapse; }
+
+    .permission-table th,
+    .permission-table td {
+        padding: 13px 16px;
+        text-align: left;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .permission-table th {
+        color: var(--text-light);
+        background: var(--surface-2);
+        font-size: 11.5px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        white-space: nowrap;
+    }
+
+    .permission-table tbody tr:hover { background: var(--primary-soft); }
+    .permission-table tr:last-child td { border-bottom: 0; }
+    .permission-table td:first-child small { display: block; margin-top: 3px; color: var(--text-light); font-size: 12px; }
+    .permission-table td:nth-child(2) { color: var(--text-light); }
+
+    .permission-table th.check-cell,
+    .permission-table td.check-cell { width: 88px; text-align: center; }
+
+    .check-cell input {
+        width: 20px;
+        height: 20px;
+        accent-color: var(--primary);
+        cursor: pointer;
+    }
+    .check-cell input:disabled { cursor: not-allowed; opacity: .6; }
+
+    .table-responsive { border: 1px solid var(--border); border-radius: var(--radius); }
+
+    .permission-actions {
+        display: flex;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 20px;
+        padding-top: 18px;
+        border-top: 1px solid var(--border);
+    }
+
+    .btn-secondary { background: #475569; }
+    .btn-secondary:hover { background: #334155; }
+
+    .empty-state { padding: 60px 24px; text-align: center; }
+    .empty-icon {
+        display: grid;
+        place-items: center;
+        width: 56px;
+        height: 56px;
+        margin: 0 auto 16px;
+        color: #fff;
+        font-size: 22px;
+        font-weight: 700;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        box-shadow: 0 10px 24px rgba(99,102,241,.35);
+    }
+    .empty-state h2 { margin: 0; font-size: 18px; }
+    .empty-state p { margin: 6px 0 0; color: var(--text-light); }
+
+    @media (max-width: 850px) {
+        .role-form { grid-template-columns: 1fr; }
+        .permission-actions { flex-direction: column; }
+        .permission-table { min-width: 720px; }
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1>Roles y permisos</h1>
+        <p>Selecciona un rol y define lo que puede ver, crear, editar o eliminar.</p>
+    </div>
+
+    <a class="btn btn-secondary" href="{{ url_for('usuarios') }}">Volver a usuarios</a>
+</div>
+
+
+<div class="card role-card">
+
+    <h2 class="card-title">1. Escoge el rol</h2>
+    <p class="card-sub">Administrador siempre tiene acceso total. Los demas roles son configurables.</p>
+
+    <form method="GET" action="{{ url_for('administrar_permisos') }}" class="role-form">
+        <select name="rol_id" class="form-select" required>
+            <option value="">Selecciona un rol</option>
+            {% for rol in roles %}
+                <option value="{{ rol.id }}" {% if rol_id == rol.id %}selected{% endif %}>
+                    {{ rol.nombre }}{% if not rol.activo %} - Inactivo{% endif %}
+                </option>
+            {% endfor %}
+        </select>
+
+        <button type="submit" class="btn">Cargar permisos</button>
+    </form>
+
+</div>
+
+
+{% if rol_id %}
+
+    {% set seleccionado = namespace(nombre='Rol seleccionado', es_admin=false) %}
+    {% for rol in roles %}
+        {% if rol.id == rol_id %}
+            {% set seleccionado.nombre = rol.nombre %}
+            {% if rol.nombre|lower == 'administrador' %}
+                {% set seleccionado.es_admin = true %}
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+
+    <div class="selected-role">
+        <span>Rol seleccionado</span>
+        <strong>{{ seleccionado.nombre }}</strong>
+    </div>
+
+    <div class="card">
+
+        <div class="permission-heading">
+            <h2 class="card-title">2. Configura la matriz</h2>
+            <p class="card-sub">
+                {% if seleccionado.es_admin %}
+                    El Administrador tiene acceso total y no puede restringirse.
+                {% else %}
+                    Marca exactamente las acciones autorizadas y guarda los cambios.
+                {% endif %}
+            </p>
+        </div>
+
+        <form method="POST" action="{{ url_for('administrar_permisos') }}">
+
+            <input type="hidden" name="rol_id" value="{{ rol_id }}">
+
+            <div class="table-responsive">
+
+                <table class="permission-table">
+
+                    <thead>
+                        <tr>
+                            <th>Modulo</th>
+                            <th>Descripcion</th>
+                            <th class="check-cell">Ver</th>
+                            <th class="check-cell">Crear</th>
+                            <th class="check-cell">Editar</th>
+                            <th class="check-cell">Eliminar</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for modulo in modulos %}
+
+                            {% set permiso = permiso_por_modulo.get(modulo.id, {}) %}
+
+                            <tr>
+                                <td><strong>{{ modulo.nombre }}</strong><small>{{ modulo.codigo }}</small></td>
+                                <td>{{ modulo.descripcion or '' }}</td>
+
+                                {% for accion in ['ver', 'crear', 'editar', 'eliminar'] %}
+                                    <td class="check-cell">
+                                        <input
+                                            type="checkbox"
+                                            name="modulo_{{ modulo.id }}_{{ accion }}"
+                                            {% if seleccionado.es_admin or permiso.get('puede_' ~ accion) %}checked{% endif %}
+                                            {% if seleccionado.es_admin %}disabled{% endif %}>
+                                    </td>
+                                {% endfor %}
+                            </tr>
+
+                        {% else %}
+
+                            <tr><td colspan="6">No hay modulos configurados.</td></tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            {% if not seleccionado.es_admin %}
+                <div class="permission-actions">
+                    <button type="button" id="viewOnly" class="btn btn-outline">Solo lectura</button>
+                    <button type="button" id="selectAll" class="btn btn-secondary">Marcar todos</button>
+                    <button type="button" id="clearAll" class="btn btn-outline">Limpiar todos</button>
+                    <button type="submit" class="btn btn-success">Guardar permisos</button>
+                </div>
+            {% endif %}
+
+        </form>
+
+    </div>
+
+{% else %}
+
+    <div class="card empty-state">
+        <div class="empty-icon">1</div>
+        <h2>Selecciona un rol arriba</h2>
+        <p>Al cargarlo aparecera la matriz de permisos del rol.</p>
+    </div>
+
+{% endif %}
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+    function checkboxes() {
+        return document.querySelectorAll('.permission-table input[type="checkbox"]:not(:disabled)');
+    }
+
+    const selectAll = document.getElementById('selectAll');
+    const clearAll = document.getElementById('clearAll');
+    const viewOnly = document.getElementById('viewOnly');
+
+    if (selectAll) { selectAll.addEventListener('click', () => checkboxes().forEach(c => c.checked = true)); }
+    if (clearAll) { clearAll.addEventListener('click', () => checkboxes().forEach(c => c.checked = false)); }
+    if (viewOnly) { viewOnly.addEventListener('click', () => checkboxes().forEach(c => c.checked = c.name.endsWith('_ver'))); }
+</script>
+{% endblock %}

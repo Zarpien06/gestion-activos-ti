@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Acceso denegado{% endblock %}
+{% block content %}
+<div class="card" style="max-width:700px;margin:60px auto;text-align:center;">
+    <h1>403 - Acceso denegado</h1>
+    <p>No tienes permiso para abrir este modulo o realizar esta accion.</p>
+    <a class="btn" href="{{ url_for('dashboard') }}">Volver al dashboard</a>
+</div>
+{% endblock %}

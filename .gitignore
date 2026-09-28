@@ -1,13 +1,13 @@
-.venv/
 .env
+.venv/
 __pycache__/
 *.pyc
 .pytest_cache/
 .vscode/
 
-uplo*ds/
 pdf/
-
-app_backup.py
-*_backup.p*
+uploads/
+*_backup.py
 *_backup.html
+auth_backup/
+templates/usuarios_backup/

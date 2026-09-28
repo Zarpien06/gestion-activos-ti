@@ -1,243 +1,109 @@
 {% extends "base.html" %}
 
-{% block title %}
-Asignaciones | Gestión TI
+{% block title %}Asignaciones | Gestión TI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header { margin-bottom: 24px; }
+    .page-header h1 { margin: 0; font-size: 24px; font-weight: 700; }
+    .page-header p { margin: 4px 0 0; color: var(--text-light); }
+
+    .form-card { max-width: 720px; }
+
+    .card-title { margin: 0; font-size: 16px; font-weight: 600; }
+    .card-sub { margin: 2px 0 0; color: var(--text-light); font-size: 13px; }
+
+    .form-body { display: flex; flex-direction: column; gap: 18px; margin-top: 20px; }
+
+    .form-select {
+        min-height: 44px;
+        appearance: none;
+        padding-right: 38px;
+        background:
+            var(--surface)
+            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
+            no-repeat right 12px center;
+    }
+
+    textarea.form-control { resize: vertical; min-height: 96px; }
+
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 22px;
+        padding-top: 18px;
+        border-top: 1px solid var(--border);
+    }
+
+    .form-card .alert { margin: 20px 0 0; }
+
+    @media (max-width: 768px) {
+        .form-actions .btn { width: 100%; }
+    }
+</style>
 {% endblock %}
+
 
 {% block content %}
 
 <div class="page-header">
-
-    <div>
-        <h1>Asignar equipos</h1>
-
-        <p>
-            Selecciona una persona y un activo disponible.
-        </p>
-    </div>
-
+    <h1>Asignar equipos</h1>
+    <p>Selecciona una persona y un activo disponible.</p>
 </div>
 
+<div class="card form-card">
 
-<!-- =========================
-     FORMULARIO DE ASIGNACIÓN
-========================= -->
+    <h2 class="card-title">Nueva asignación</h2>
+    <p class="card-sub">Los campos con * son obligatorios.</p>
 
-<div class="card">
+    <form action="/asignaciones/crear" method="POST">
 
-    <div class="card-header">
-        Nueva asignación
-    </div>
+        <div class="form-body">
 
-    <div class="card-body">
-
-        <form
-            action="/asignaciones/crear"
-            method="POST">
-
-
-            <!-- Persona -->
-
-            <div class="form-group">
-
-                <label for="persona_id">
-                    Persona *
-                </label>
-
-                <select
-                    id="persona_id"
-                    name="persona_id"
-                    class="form-select"
-                    required>
-
-                    <option value="">
-                        Selecciona una persona
-                    </option>
-
+            <div>
+                <label for="persona_id">Persona *</label>
+                <select id="persona_id" name="persona_id" class="form-select" required>
+                    <option value="">Selecciona una persona</option>
                     {% for persona in personas %}
-
-                    <option value="{{ persona.id }}">
-
-                        {{ persona.nombre }}
-
-                        {% if persona.area %}
-                            - {{ persona.area }}
-                        {% endif %}
-
-                    </option>
-
+                        <option value="{{ persona.id }}">
+                            {{ persona.nombre }}{% if persona.area %} - {{ persona.area }}{% endif %}
+                        </option>
                     {% endfor %}
-
                 </select>
-
             </div>
 
-
-            <!-- Activo -->
-
-            <div class="form-group">
-
-                <label for="activo_id">
-                    Activo disponible *
-                </label>
-
-                <select
-                    id="activo_id"
-                    name="activo_id"
-                    class="form-select"
-                    required>
-
-                    <option value="">
-                        Selecciona un activo
-                    </option>
-
+            <div>
+                <label for="activo_id">Activo disponible *</label>
+                <select id="activo_id" name="activo_id" class="form-select" required>
+                    <option value="">Selecciona un activo</option>
                     {% for activo in activos %}
-
-                    <option value="{{ activo.id }}">
-
-                        {{ activo.codigo }}
-                        -
-                        {{ activo.tipo or "Sin tipo" }}
-                        -
-                        {{ activo.marca or "Sin marca" }}
-                        -
-                        {{ activo.modelo or "Sin modelo" }}
-
-                    </option>
-
+                        <option value="{{ activo.id }}">
+                            {{ activo.codigo }} - {{ activo.tipo or "Sin tipo" }} - {{ activo.marca or "Sin marca" }} - {{ activo.modelo or "Sin modelo" }}
+                        </option>
                     {% endfor %}
-
                 </select>
-
             </div>
 
-
-            <!-- Observaciones -->
-
-            <div class="form-group">
-
-                <label for="observacion">
-                    Observaciones
-                </label>
-
-                <textarea
-                    id="observacion"
-                    name="observacion"
-                    class="form-control"
-                    rows="4"
-                    placeholder="Condiciones de entrega, accesorios o comentarios"></textarea>
-
+            <div>
+                <label for="observacion">Observaciones</label>
+                <textarea id="observacion" name="observacion" class="form-control" rows="4"
+                          placeholder="Condiciones de entrega, accesorios o comentarios"></textarea>
             </div>
-
-
-            <!-- Botón -->
-
-            <div style="margin-top: 20px;">
-
-                <button
-                    type="submit"
-                    class="btn btn-success">
-
-                    <i class="bi bi-box-arrow-up-right me-1"></i>
-
-                    Asignar equipo
-
-                </button>
-
-            </div>
-
-        </form>
-
-
-        <!-- Sin activos -->
-
-        {% if not activos %}
-
-        <div
-            class="alert alert-warning"
-            style="margin-top: 20px;">
-
-            <i class="bi bi-exclamation-triangle me-1"></i>
-
-            No hay activos disponibles para asignación.
 
         </div>
 
-        {% endif %}
+        <div class="form-actions">
+            <button type="submit" class="btn btn-success">Asignar equipo</button>
+        </div>
 
-    </div>
+    </form>
+
+    {% if not activos %}
+        <div class="alert alert-warning">
+            No hay activos disponibles para asignación.
+        </div>
+    {% endif %}
 
 </div>
-
-{% endblock %}
-
-
-{% block extra_css %}
-
-<style>
-
-    /* =========================
-       PAGE HEADER
-    ========================= */
-
-    .page-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 24px;
-    }
-
-    .page-header h1 {
-        margin: 0;
-        font-size: 28px;
-        font-weight: 700;
-        color: #0f172a;
-    }
-
-    .page-header p {
-        margin: 6px 0 0;
-        color: #64748b;
-    }
-
-
-    /* =========================
-       FORMULARIO
-    ========================= */
-
-    .form-group {
-        display: flex;
-        flex-direction: column;
-        gap: 7px;
-        margin-bottom: 18px;
-    }
-
-    .form-group label {
-        color: #334155;
-        font-weight: 600;
-    }
-
-
-    /* =========================
-       SELECT
-    ========================= */
-
-    .form-select {
-        min-height: 44px;
-    }
-
-
-    /* =========================
-       RESPONSIVE
-    ========================= */
-
-    @media (max-width: 768px) {
-
-        .page-header h1 {
-            font-size: 24px;
-        }
-
-    }
-
-</style>
 
 {% endblock %}

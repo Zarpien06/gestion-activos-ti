@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+
+{% block title %}Usuarios | Gestion de Activos TI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 14px;
+        margin-bottom: 24px;
+    }
+    .page-header h1 { margin: 0; font-size: 24px; font-weight: 700; }
+    .page-header p { margin: 4px 0 0; color: var(--text-light); }
+
+    .card-title { margin: 0; font-size: 16px; font-weight: 600; }
+    .card-sub { margin: 2px 0 0; color: var(--text-light); font-size: 13px; }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 16px;
+        margin-top: 20px;
+    }
+
+    .field small { display: block; margin-top: 5px; color: var(--text-light); font-size: 12px; }
+
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 20px;
+        padding-top: 18px;
+        border-top: 1px solid var(--border);
+    }
+
+    .form-select {
+        appearance: none;
+        padding-right: 36px;
+        background:
+            var(--surface)
+            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
+            no-repeat right 12px center;
+    }
+    .form-select:disabled, .form-control:disabled { opacity: .6; cursor: not-allowed; }
+
+    .section-label {
+        margin: 32px 0 14px;
+        font-size: 13px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: var(--text-light);
+    }
+
+    .usuarios-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr));
+        gap: 20px;
+    }
+
+    .usuario-card { display: flex; flex-direction: column; }
+
+    .usuario-head {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 18px;
+    }
+
+    .avatar {
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+        width: 44px;
+        height: 44px;
+        color: var(--primary);
+        background: var(--primary-soft);
+        border-radius: 50%;
+        font-size: 16px;
+        font-weight: 700;
+    }
+
+    .usuario-head .who { flex: 1; min-width: 0; }
+    .usuario-head h3 { margin: 0; font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .usuario-head p { margin: 2px 0 0; color: var(--text-light); font-size: 13px; }
+
+    .current-note {
+        margin-bottom: 16px;
+        padding: 10px 12px;
+        color: var(--primary);
+        background: var(--primary-soft);
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+    }
+
+    .edit-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+    }
+
+    .edit-actions { margin-top: 16px; }
+
+    .actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 20px;
+        padding-top: 18px;
+        border-top: 1px solid var(--border);
+    }
+
+    .password-form { display: flex; flex: 1; gap: 8px; }
+
+    .btn-sm { padding: 8px 14px; font-size: 12.5px; white-space: nowrap; }
+    .btn-secondary { background: #475569; }
+    .btn-secondary:hover { background: #334155; }
+    .btn-warning { color: #422006; background: #f59e0b; }
+    .btn-warning:hover { color: #422006; background: #d97706; }
+
+    .last-access { margin-top: 16px; color: var(--text-light); font-size: 13px; }
+    .last-access strong { color: var(--text); font-weight: 500; }
+
+    @media (max-width: 850px) {
+        .edit-grid { grid-template-columns: 1fr; }
+        .actions, .password-form { flex-direction: column; align-items: stretch; }
+        .form-actions .btn { width: 100%; }
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1>Usuarios del sistema</h1>
+        <p>Crea y edita usuarios, cambia contrasenas, roles y estados.</p>
+    </div>
+
+    <a class="btn btn-secondary" href="{{ url_for('administrar_permisos') }}">Administrar permisos</a>
+</div>
+
+
+<!-- CREAR USUARIO -->
+<div class="card">
+
+    <h2 class="card-title">Crear usuario</h2>
+    <p class="card-sub">Los campos con * son obligatorios.</p>
+
+    <form method="POST" action="{{ url_for('crear_usuario_web') }}">
+
+        <div class="form-grid">
+
+            <div class="field">
+                <label>Nombre completo *</label>
+                <input name="nombre" class="form-control" required>
+            </div>
+
+            <div class="field">
+                <label>Usuario *</label>
+                <input name="username" class="form-control" minlength="4" pattern="[A-Za-z0-9._-]+" required>
+                <small>Minimo 4 caracteres, sin espacios.</small>
+            </div>
+
+            <div class="field">
+                <label>Correo</label>
+                <input name="correo" type="email" class="form-control">
+            </div>
+
+            <div class="field">
+                <label>Contrasena *</label>
+                <input name="password" type="password" class="form-control" minlength="8"
+                       autocomplete="new-password" required>
+                <small>Minimo 8 caracteres.</small>
+            </div>
+
+            <div class="field">
+                <label>Rol *</label>
+                <select name="rol_id" class="form-select" required>
+                    <option value="">Selecciona un rol</option>
+                    {% for rol in roles %}
+                        <option value="{{ rol.id }}">{{ rol.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-success">Crear usuario</button>
+        </div>
+
+    </form>
+
+</div>
+
+
+<div class="section-label">Usuarios registrados ({{ usuarios|length }})</div>
+
+<div class="usuarios-grid">
+
+    {% for usuario in usuarios %}
+
+        {% set es_actual = usuario.id|string == current_user.id|string %}
+
+        <article class="card usuario-card">
+
+            <div class="usuario-head">
+                <span class="avatar">{{ (usuario.nombre or '?')[:1]|upper }}</span>
+
+                <div class="who">
+                    <h3>{{ usuario.nombre }}</h3>
+                    <p>@{{ usuario.username or 'sin_usuario' }}</p>
+                </div>
+
+                {% if usuario.activo %}
+                    <span class="badge badge-success">Activo</span>
+                {% else %}
+                    <span class="badge badge-danger">Inactivo</span>
+                {% endif %}
+            </div>
+
+            {% if es_actual %}
+                <div class="current-note">Sesion actual. No puedes desactivarla ni cambiar su rol.</div>
+            {% endif %}
+
+            <form method="POST" action="{{ url_for('editar_usuario_web', usuario_id=usuario.id) }}">
+
+                <div class="edit-grid">
+
+                    <div class="field">
+                        <label>Nombre</label>
+                        <input name="nombre" class="form-control" value="{{ usuario.nombre }}" required>
+                    </div>
+
+                    <div class="field">
+                        <label>Usuario</label>
+                        <input name="username" class="form-control" value="{{ usuario.username or '' }}"
+                               minlength="4" pattern="[A-Za-z0-9._-]+" required>
+                    </div>
+
+                    <div class="field">
+                        <label>Correo</label>
+                        <input name="correo" type="email" class="form-control" value="{{ usuario.correo or '' }}">
+                    </div>
+
+                    <div class="field">
+                        <label>Rol</label>
+                        <select name="rol_id" class="form-select" required {% if es_actual %}disabled{% endif %}>
+                            {% for rol in roles %}
+                                <option value="{{ rol.id }}" {% if rol.id == usuario.rol_id %}selected{% endif %}>{{ rol.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if es_actual %}
+                            <input type="hidden" name="rol_id" value="{{ usuario.rol_id }}">
+                        {% endif %}
+                    </div>
+
+                </div>
+
+                <div class="edit-actions">
+                    <button type="submit" class="btn btn-sm">Guardar cambios</button>
+                </div>
+
+            </form>
+
+            <div class="actions">
+
+                <form method="POST" action="{{ url_for('cambiar_password_web', usuario_id=usuario.id) }}" class="password-form">
+                    <input name="password" type="password" class="form-control" minlength="8"
+                           placeholder="Nueva contrasena" autocomplete="new-password" required>
+                    <button type="submit" class="btn btn-sm btn-warning">Cambiar contrasena</button>
+                </form>
+
+                {% if not es_actual %}
+                    <form method="POST" action="{{ url_for('cambiar_estado_usuario', usuario_id=usuario.id) }}">
+                        <input type="hidden" name="activo" value="{{ 'false' if usuario.activo else 'true' }}">
+                        <button type="submit" class="btn btn-sm {{ 'btn-danger' if usuario.activo else 'btn-success' }}">
+                            {{ 'Desactivar' if usuario.activo else 'Activar' }}
+                        </button>
+                    </form>
+                {% endif %}
+
+            </div>
+
+            <div class="last-access"><strong>Ultimo acceso:</strong> {{ usuario.ultimo_acceso or 'Nunca' }}</div>
+
+        </article>
+
+    {% else %}
+
+        <div class="card">No hay usuarios registrados.</div>
+
+    {% endfor %}
+
+</div>
+
+{% endblock %}

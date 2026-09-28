@@ -1,108 +1,183 @@
 {% extends "base.html" %}
 
+{% block title %}Tickets | Gestión TI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header { margin-bottom: 24px; }
+    .page-header h1 { margin: 0; font-size: 24px; font-weight: 700; }
+    .page-header p { margin: 4px 0 0; color: var(--text-light); }
+
+    .stack { display: flex; flex-direction: column; gap: 24px; }
+
+    .card-title { margin: 0; font-size: 16px; font-weight: 600; }
+    .card-sub { margin: 2px 0 0; color: var(--text-light); font-size: 13px; }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 140px 1fr 2fr;
+        gap: 16px;
+        margin-top: 18px;
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 20px;
+        padding-top: 18px;
+        border-top: 1px solid var(--border);
+    }
+
+    .list-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 20px 22px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .card-flush { padding: 0; overflow: hidden; }
+    .card-flush .table-responsive { border: 0; border-radius: 0; }
+
+    .count-pill {
+        padding: 5px 13px;
+        color: var(--primary);
+        background: var(--primary-soft);
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .cell-muted { color: var(--text-light); }
+    .cell-title { font-weight: 600; }
+    .cell-desc { max-width: 420px; color: var(--text-light); }
+
+    .empty-state { padding: 48px 16px; text-align: center; color: var(--text-light); }
+
+    @media (max-width: 900px) {
+        .form-grid { grid-template-columns: 1fr; }
+        .form-actions .btn { width: 100%; }
+        .table { min-width: 700px; }
+    }
+</style>
+{% endblock %}
+
+
 {% block content %}
 
-<h2>Tickets</h2>
-
-<div class="card mb-4">
-
-<div class="card-body">
-
-/ticket/crear
-
-<div class="row">
-
-<div class="col-md-3">
-
-<input
-type="number"
-name="activo_id"
-class="form-control"
-placeholder="ID Activo">
-
+<div class="page-header">
+    <h1>Tickets</h1>
+    <p>Reporta y da seguimiento a los problemas de los equipos.</p>
 </div>
 
-<div class="col-md-3">
+<div class="stack">
 
-<input
-type="text"
-name="titulo"
-class="form-control"
-placeholder="Título">
+    <!-- NUEVO TICKET -->
+    <div class="card">
 
-</div>
+        <h2 class="card-title">Nuevo ticket</h2>
+        <p class="card-sub">Indica el ID del activo y describe el problema.</p>
 
-<div class="col-md-4">
+        <form action="/tickets/crear" method="POST">
 
-<input
-type="text"
-name="descripcion"
-class="form-control"
-placeholder="Descripción">
+            <div class="form-grid">
 
-</div>
+                <div>
+                    <label for="activo_id">ID activo</label>
+                    <input id="activo_id" name="activo_id" type="number" class="form-control"
+                           placeholder="Ej: 125" required>
+                </div>
 
-<div class="col-md-2">
+                <div>
+                    <label for="titulo">Título</label>
+                    <input id="titulo" name="titulo" type="text" class="form-control"
+                           placeholder="Resumen del problema" required>
+                </div>
 
-<button
-class="btn btn-primary">
+                <div>
+                    <label for="descripcion">Descripción</label>
+                    <input id="descripcion" name="descripcion" type="text" class="form-control"
+                           placeholder="Detalle de lo que ocurre">
+                </div>
 
-Crear
+            </div>
 
-</button>
+            <div class="form-actions">
+                <button type="submit" class="btn">Crear ticket</button>
+            </div>
 
-</div>
+        </form>
 
-</div>
+    </div>
 
-</form>
 
-</div>
+    <!-- LISTA -->
+    <div class="card card-flush">
 
-</div>
+        <div class="list-head">
+            <div>
+                <h2 class="card-title">Tickets registrados</h2>
+                <p class="card-sub">Historial de incidencias</p>
+            </div>
 
-<div class="card">
+            <span class="count-pill">Total: {{ tickets|length }}</span>
+        </div>
 
-<div class="card-body">
+        <div class="table-responsive">
 
-<table class="table">
+            <table class="table">
 
-<thead>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Título</th>
+                        <th>Descripción</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
 
-<tr>
+                <tbody>
 
-<th>ID</th>
-<th>Título</th>
-<th>Descripción</th>
-<th>Estado</th>
+                    {% for t in tickets %}
 
-</tr>
+                        {% set e = (t.estado or '')|lower %}
 
-</thead>
+                        {% if 'solucion' in e or 'cerrado' in e %}
+                            {% set clase = 'badge-success' %}
+                        {% elif 'proceso' in e %}
+                            {% set clase = 'badge-info' %}
+                        {% elif 'pendiente' in e or 'abierto' in e or 'repuesto' in e %}
+                            {% set clase = 'badge-warning' %}
+                        {% else %}
+                            {% set clase = '' %}
+                        {% endif %}
 
-<tbody>
+                        <tr>
+                            <td class="cell-muted">{{ t.id }}</td>
+                            <td class="cell-title">{{ t.titulo }}</td>
+                            <td class="cell-desc">{{ t.descripcion or "" }}</td>
+                            <td><span class="badge {{ clase }}">{{ t.estado or '—' }}</span></td>
+                        </tr>
 
-{% for t in tickets %}
+                    {% else %}
 
-<tr>
+                        <tr>
+                            <td colspan="4">
+                                <div class="empty-state">No hay tickets registrados.</div>
+                            </td>
+                        </tr>
 
-<td>{{ t.id }}</td>
+                    {% endfor %}
 
-<td>{{ t.titulo }}</td>
+                </tbody>
 
-<td>{{ t.descripcion }}</td>
+            </table>
 
-<td>{{ t.estado }}</td>
+        </div>
 
-</tr>
-
-{% endfor %}
-
-</tbody>
-
-</table>
-
-</div>
+    </div>
 
 </div>
 

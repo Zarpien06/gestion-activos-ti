@@ -1,66 +1,85 @@
 {% extends "base.html" %}
 
+{% block title %}Reportes | Gestión TI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header { margin-bottom: 24px; }
+    .page-header h1 { margin: 0; font-size: 24px; font-weight: 700; }
+    .page-header p { margin: 4px 0 0; color: var(--text-light); }
+
+    .report-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 18px;
+    }
+
+    .report-card { display: flex; flex-direction: column; gap: 18px; }
+
+    .report-icon {
+        display: grid;
+        place-items: center;
+        width: 46px;
+        height: 46px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .04em;
+        color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 14%, transparent);
+    }
+
+    .report-card h3 { margin: 0; font-size: 16px; font-weight: 600; }
+    .report-card p { margin: 4px 0 0; color: var(--text-light); font-size: 13.5px; }
+
+    .report-card .btn { margin-top: auto; align-self: flex-start; }
+
+    .r-excel   { --accent: var(--success); }
+    .r-pdf     { --accent: var(--danger); }
+    .r-history { --accent: var(--warning); }
+
+    .btn-warning { background: var(--warning); }
+    .btn-warning:hover { background: #b45309; }
+</style>
+{% endblock %}
+
+
 {% block content %}
 
-<h2>Reportes</h2>
-
-<div class="row">
-
-<div class="col-md-4">
-
-<div class="card">
-
-<div class="card-body">
-
-<h5>Exportar Inventario</h5>
-
-<button class="btn btn-success">
-Excel
-</button>
-
+<div class="page-header">
+    <h1>Reportes</h1>
+    <p>Exporta la información del sistema.</p>
 </div>
 
-</div>
+<div class="report-grid">
 
-</div>
+    <div class="card report-card r-excel">
+        <div class="report-icon">XLS</div>
+        <div>
+            <h3>Exportar inventario</h3>
+            <p>Listado completo de activos en una hoja de Excel.</p>
+        </div>
+        <button type="button" class="btn btn-success">Descargar Excel</button>
+    </div>
 
-<div class="col-md-4">
+    <div class="card report-card r-pdf">
+        <div class="report-icon">PDF</div>
+        <div>
+            <h3>Exportar actas</h3>
+            <p>Actas de entrega y devolución generadas.</p>
+        </div>
+        <button type="button" class="btn btn-danger">Descargar PDF</button>
+    </div>
 
-<div class="card">
-
-<div class="card-body">
-
-<h5>Exportar Actas</h5>
-
-<button class="btn btn-primary">
-PDF
-</button>
-
-</div>
-
-</div>
-
-</div>
-
-<div class="col-md-4">
-
-<div class="card">
-
-<div class="card-body">
-
-<h5>Historial</h5>
-
-<button class="btn btn-warning">
-Descargar
-</button>
-
-</div>
-
-</div>
-
-</div>
+    <div class="card report-card r-history">
+        <div class="report-icon">LOG</div>
+        <div>
+            <h3>Historial</h3>
+            <p>Movimientos y cambios registrados por equipo.</p>
+        </div>
+        <button type="button" class="btn btn-warning">Descargar historial</button>
+    </div>
 
 </div>
 
 {% endblock %}
-``

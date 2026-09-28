@@ -1,345 +1,170 @@
 {% extends "base.html" %}
 
-{% block title %}
-Devoluciones | Gestión TI
+{% block title %}Devoluciones | Gestión TI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header { margin-bottom: 24px; }
+    .page-header h1 { margin: 0; font-size: 24px; font-weight: 700; }
+    .page-header p { margin: 4px 0 0; color: var(--text-light); }
+
+    .list-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 20px 22px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .card-title { margin: 0; font-size: 16px; font-weight: 600; }
+    .card-sub { margin: 2px 0 0; color: var(--text-light); font-size: 13px; }
+
+    .card-flush { padding: 0; overflow: hidden; }
+    .card-flush .table-responsive { border: 0; border-radius: 0; }
+
+    .count-pill {
+        padding: 5px 13px;
+        color: var(--primary);
+        background: var(--primary-soft);
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .cell-code { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-weight: 600; font-size: 13px; }
+    .cell-muted { color: var(--text-light); }
+
+    .table .form-select,
+    .table .form-control { min-width: 160px; padding: 8px 10px; font-size: 13px; }
+
+    .table .form-select {
+        appearance: none;
+        padding-right: 32px;
+        background:
+            var(--surface)
+            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
+            no-repeat right 10px center;
+    }
+
+    .btn-sm { padding: 8px 14px; font-size: 12.5px; white-space: nowrap; }
+
+    .empty-state { padding: 48px 16px; text-align: center; color: var(--text-light); }
+
+    @media (max-width: 900px) {
+        .table { min-width: 1000px; }
+    }
+</style>
 {% endblock %}
+
 
 {% block content %}
 
 <div class="page-header">
-
-    <div>
-        <h1>Devoluciones</h1>
-
-        <p>
-            Registra la devolución de equipos asignados.
-        </p>
-    </div>
-
+    <h1>Devoluciones</h1>
+    <p>Registra la devolución de equipos asignados.</p>
 </div>
 
+<div class="card card-flush">
 
-<!-- =========================
-     ACTIVOS ASIGNADOS
-========================= -->
-
-<div class="card">
-
-    <div class="card-header">
-
-        <div class="section-header">
-
-            <div>
-                <h2 style="margin: 0;">
-                    Equipos asignados
-                </h2>
-
-                <p
-                    style="
-                        margin: 5px 0 0;
-                        color: #64748b;
-                    ">
-
-                    Selecciona el nuevo estado del equipo
-                    antes de registrar la devolución.
-
-                </p>
-            </div>
-
+    <div class="list-head">
+        <div>
+            <h2 class="card-title">Equipos asignados</h2>
+            <p class="card-sub">Selecciona el nuevo estado del equipo antes de registrar la devolución.</p>
         </div>
 
+        <span class="count-pill">{{ activos|length }} asignados</span>
     </div>
 
+    <div class="table-responsive">
 
-    <div class="card-body">
+        <table class="table">
 
-        <div class="table-responsive">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Tipo</th>
+                    <th>Marca / Modelo</th>
+                    <th>Asignado a</th>
+                    <th>Nuevo estado</th>
+                    <th>Observaciones</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
 
-            <table class="table">
+            <tbody>
 
-                <thead>
-
-                    <tr>
-
-                        <th>Código</th>
-                        <th>Tipo</th>
-                        <th>Marca / Modelo</th>
-                        <th>Asignado a</th>
-                        <th>Nuevo estado</th>
-                        <th>Observaciones</th>
-                        <th>Acción</th>
-
-                    </tr>
-
-                </thead>
-
-
-                <tbody>
-
-                    {% for activo in activos %}
+                {% for activo in activos %}
 
                     <tr>
 
-                        <!-- Código -->
-
-                        <td>
-
-                            <strong>
-                                {{ activo.codigo }}
-                            </strong>
-
+                        <td class="cell-code">
+                            {{ activo.codigo }}
+                            <form id="devolucion-{{ activo.id }}"
+                                  action="/devoluciones/{{ activo.id }}"
+                                  method="POST"></form>
                         </td>
 
-
-                        <!-- Tipo -->
-
-                        <td>
-                            {{ activo.tipo or "" }}
-                        </td>
-
-
-                        <!-- Marca / Modelo -->
+                        <td>{{ activo.tipo or "" }}</td>
 
                         <td>
-
-                            {% if activo.marca %}
-                                {{ activo.marca }}
-                            {% endif %}
-
-                            {% if activo.modelo %}
-                                {{ activo.modelo }}
-                            {% endif %}
-
-                            {% if not activo.marca and not activo.modelo %}
-                                <span style="color: #94a3b8;">
-                                    Sin información
-                                </span>
-                            {% endif %}
-
-                        </td>
-
-
-                        <!-- Asignado a -->
-
-                        <td>
-
-                            {% if activo.asignado_a %}
-
-                                <span>
-                                    {{ activo.asignado_a }}
-                                </span>
-
+                            {% if activo.marca or activo.modelo %}
+                                {{ activo.marca or "" }} {{ activo.modelo or "" }}
                             {% else %}
-
-                                <span style="color: #94a3b8;">
-                                    Sin asignar
-                                </span>
-
+                                <span class="cell-muted">Sin información</span>
                             {% endif %}
-
                         </td>
 
+                        <td>
+                            {% if activo.asignado_a %}
+                                {{ activo.asignado_a }}
+                            {% else %}
+                                <span class="cell-muted">Sin asignar</span>
+                            {% endif %}
+                        </td>
 
-                        <!-- Formulario -->
+                        <td>
+                            <select name="estado_destino" class="form-select"
+                                    form="devolucion-{{ activo.id }}" required>
+                                <option value="Disponible">Disponible</option>
+                                <option value="En reparación">En reparación</option>
+                                <option value="Dado de baja">Dado de baja</option>
+                            </select>
+                        </td>
 
-                        <form
-                            action="/devoluciones/{{ activo.id }}"
-                            method="POST"
-                            style="display: contents;">
+                        <td>
+                            <input name="observacion" type="text" class="form-control"
+                                   form="devolucion-{{ activo.id }}"
+                                   placeholder="Estado del equipo">
+                        </td>
 
-
-                            <!-- Nuevo estado -->
-
-                            <td>
-
-                                <select
-                                    name="estado_destino"
-                                    class="form-select"
-                                    required>
-
-                                    <option value="Disponible">
-                                        Disponible
-                                    </option>
-
-                                    <option value="En reparación">
-                                        En reparación
-                                    </option>
-
-                                    <option value="Dado de baja">
-                                        Dado de baja
-                                    </option>
-
-                                </select>
-
-                            </td>
-
-
-                            <!-- Observaciones -->
-
-                            <td>
-
-                                <input
-                                    name="observacion"
-                                    type="text"
-                                    class="form-control"
-                                    placeholder="Estado del equipo">
-
-                            </td>
-
-
-                            <!-- Acción -->
-
-                            <td>
-
-                                <button
-                                    type="submit"
-                                    class="btn btn-danger"
+                        <td>
+                            <button type="submit" class="btn btn-sm btn-danger"
+                                    form="devolucion-{{ activo.id }}"
                                     onclick="return confirm('¿Confirmas la devolución de este equipo?');">
-
-                                    <i class="bi bi-arrow-return-left me-1"></i>
-
-                                    Devolver
-
-                                </button>
-
-                            </td>
-
-
-                        </form>
+                                Devolver
+                            </button>
+                        </td>
 
                     </tr>
 
-
-                    {% else %}
+                {% else %}
 
                     <tr>
-
-                        <td
-                            colspan="7"
-                            class="text-center"
-                            style="padding: 35px;">
-
-                            <i
-                                class="bi bi-box-seam"
-                                style="
-                                    font-size: 32px;
-                                    color: #94a3b8;
-                                ">
-                            </i>
-
-                            <div
-                                style="
-                                    margin-top: 10px;
-                                    color: #64748b;
-                                ">
-
-                                No hay activos asignados.
-
-                            </div>
-
+                        <td colspan="7">
+                            <div class="empty-state">No hay activos asignados.</div>
                         </td>
-
                     </tr>
 
-                    {% endfor %}
+                {% endfor %}
 
-                </tbody>
+            </tbody>
 
-            </table>
-
-        </div>
+        </table>
 
     </div>
 
 </div>
-
-{% endblock %}
-
-
-{% block extra_css %}
-
-<style>
-
-    /* =========================
-       PAGE HEADER
-    ========================= */
-
-    .page-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 24px;
-    }
-
-    .page-header h1 {
-        margin: 0;
-        font-size: 28px;
-        font-weight: 700;
-        color: #0f172a;
-    }
-
-    .page-header p {
-        margin: 6px 0 0;
-        color: #64748b;
-    }
-
-
-    /* =========================
-       SECTION HEADER
-    ========================= */
-
-    .section-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-
-    /* =========================
-       TABLA
-    ========================= */
-
-    .table th {
-        white-space: nowrap;
-        color: #475569;
-        font-size: 14px;
-    }
-
-    .table td {
-        vertical-align: middle;
-    }
-
-    .table tbody tr:hover {
-        background-color: #f8fafc;
-    }
-
-
-    /* =========================
-       FORMULARIO
-    ========================= */
-
-    .table .form-select,
-    .table .form-control {
-        min-width: 150px;
-    }
-
-
-    /* =========================
-       RESPONSIVE
-    ========================= */
-
-    @media (max-width: 900px) {
-
-        .table {
-            min-width: 1000px;
-        }
-
-        .page-header h1 {
-            font-size: 24px;
-        }
-
-    }
-
-</style>
 
 {% endblock %}

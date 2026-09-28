@@ -2,150 +2,216 @@
 
 {% block title %}Actas PDF | Gestion de Activos TI{% endblock %}
 
+{% block extra_css %}
+<style>
+    .page-header { margin-bottom: 24px; }
+    .page-header h1 { margin: 0; font-size: 24px; font-weight: 700; }
+    .page-header p { margin: 4px 0 0; color: var(--text-light); }
+
+    .stack { display: flex; flex-direction: column; gap: 24px; }
+
+    .card-title { margin: 0; font-size: 16px; font-weight: 600; }
+    .card-sub { margin: 2px 0 0; color: var(--text-light); font-size: 13px; }
+
+    .acta-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 18px;
+        margin-top: 20px;
+    }
+
+    .field-full { margin-top: 18px; }
+
+    .form-select {
+        min-height: 44px;
+        appearance: none;
+        padding-right: 38px;
+        background:
+            var(--surface)
+            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
+            no-repeat right 12px center;
+    }
+
+    textarea.form-control { resize: vertical; min-height: 96px; }
+
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 22px;
+        padding-top: 18px;
+        border-top: 1px solid var(--border);
+    }
+
+    .list-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 20px 22px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .card-flush { padding: 0; overflow: hidden; }
+    .card-flush .table-responsive { border: 0; border-radius: 0; }
+
+    .count-pill {
+        padding: 5px 13px;
+        color: var(--primary);
+        background: var(--primary-soft);
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .cell-muted { color: var(--text-light); }
+    .cell-obs { max-width: 360px; color: var(--text-light); }
+    .btn-sm { padding: 7px 13px; font-size: 12.5px; white-space: nowrap; }
+
+    .empty-state { padding: 48px 16px; text-align: center; color: var(--text-light); }
+
+    @media (max-width: 900px) {
+        .form-actions .btn { width: 100%; }
+        .table { min-width: 800px; }
+    }
+</style>
+{% endblock %}
+
+
 {% block content %}
 
 <div class="page-header">
-    <div>
-        <h1>Actas PDF</h1>
-        <p>Genera actas por persona y descarga el documento.</p>
+    <h1>Actas PDF</h1>
+    <p>Genera actas por persona y descarga el documento.</p>
+</div>
+
+<div class="stack">
+
+    <!-- GENERAR ACTA -->
+    <div class="card">
+
+        <h2 class="card-title">Generar nueva acta</h2>
+        <p class="card-sub">Los campos con * son obligatorios.</p>
+
+        <form method="POST" action="/actas/generar">
+
+            <div class="acta-grid">
+
+                <div>
+                    <label for="persona_id">Persona *</label>
+                    <select id="persona_id" name="persona_id" class="form-select" required>
+                        <option value="">Selecciona una persona</option>
+                        {% for persona in personas %}
+                            <option value="{{ persona.id }}">
+                                {{ persona.nombre }}{% if persona.area %} - {{ persona.area }}{% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label for="tipo">Tipo de acta *</label>
+                    <select id="tipo" name="tipo" class="form-select" required>
+                        <option value="Entrega">Entrega</option>
+                        <option value="Devolucion">Devolucion</option>
+                        <option value="Cambio">Cambio de equipo</option>
+                        <option value="Paz y salvo">Paz y salvo</option>
+                    </select>
+                </div>
+
+            </div>
+
+            <div class="field-full">
+                <label for="observaciones">Observaciones</label>
+                <textarea id="observaciones" name="observaciones" class="form-control" rows="5"
+                          placeholder="Accesorios, estado del equipo o novedades"></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-success">Generar y descargar PDF</button>
+            </div>
+
+        </form>
+
     </div>
-</div>
 
-<div class="card" style="margin-bottom: 24px;">
-    <h2 style="margin-top: 0;">Generar nueva acta</h2>
 
-    <form method="POST" action="/actas/generar">
-        <div class="acta-grid">
+    <!-- ACTAS GENERADAS -->
+    <div class="card card-flush">
 
-            <div class="form-group">
-                <label for="persona_id">Persona *</label>
-
-                <select
-                    id="persona_id"
-                    name="persona_id"
-                    class="form-select"
-                    required>
-
-                    <option value="">Selecciona una persona</option>
-
-                    {% for persona in personas %}
-                    <option value="{{ persona.id }}">
-                        {{ persona.nombre }}
-                        {% if persona.area %}
-                            - {{ persona.area }}
-                        {% endif %}
-                    </option>
-                    {% endfor %}
-                </select>
+        <div class="list-head">
+            <div>
+                <h2 class="card-title">Actas generadas</h2>
+                <p class="card-sub">Historial de documentos</p>
             </div>
 
-            <div class="form-group">
-                <label for="tipo">Tipo de acta *</label>
-
-                <select
-                    id="tipo"
-                    name="tipo"
-                    class="form-select"
-                    required>
-
-                    <option value="Entrega">Entrega</option>
-                    <option value="Devolucion">Devolucion</option>
-                    <option value="Cambio">Cambio de equipo</option>
-                    <option value="Paz y salvo">Paz y salvo</option>
-                </select>
-            </div>
-
+            <span class="count-pill">Total: {{ actas|length }}</span>
         </div>
 
-        <div class="form-group" style="margin-top: 18px;">
-            <label for="observaciones">Observaciones</label>
+        <div class="table-responsive">
 
-            <textarea
-                id="observaciones"
-                name="observaciones"
-                class="form-control"
-                rows="5"
-                placeholder="Accesorios, estado del equipo o novedades"></textarea>
-        </div>
+            <table class="table">
 
-        <button
-            type="submit"
-            class="btn btn-success"
-            style="margin-top: 18px;">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Persona ID</th>
+                        <th>Tipo</th>
+                        <th>Fecha</th>
+                        <th>Observaciones</th>
+                        <th>PDF</th>
+                    </tr>
+                </thead>
 
-            Generar y descargar PDF
-        </button>
-    </form>
-</div>
+                <tbody>
 
-<div class="card">
-    <h2 style="margin-top: 0;">Actas generadas</h2>
+                    {% for acta in actas %}
 
-    <div class="table-responsive">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Persona ID</th>
-                    <th>Tipo</th>
-                    <th>Fecha</th>
-                    <th>Observaciones</th>
-                    <th>PDF</th>
-                </tr>
-            </thead>
+                        {% set t = (acta.tipo or '')|lower %}
 
-            <tbody>
-                {% for acta in actas %}
-                <tr>
-                    <td>{{ acta.id }}</td>
-                    <td>{{ acta.persona_id }}</td>
-                    <td>{{ acta.tipo or "" }}</td>
-                    <td>{{ acta.fecha or "" }}</td>
-                    <td>{{ acta.observaciones or "" }}</td>
-                    <td>
-                        {% if acta.ruta_pdf %}
-                        <a
-                            class="btn"
-                            href="/actas/descargar/{{ acta.ruta_pdf }}">
-                            Descargar
-                        </a>
+                        {% if 'entrega' in t %}
+                            {% set clase = 'badge-success' %}
+                        {% elif 'devol' in t %}
+                            {% set clase = 'badge-warning' %}
+                        {% elif 'cambio' in t %}
+                            {% set clase = 'badge-info' %}
                         {% else %}
-                        Sin archivo
+                            {% set clase = '' %}
                         {% endif %}
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="6">No hay actas generadas.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+
+                        <tr>
+                            <td class="cell-muted">{{ acta.id }}</td>
+                            <td class="cell-muted">{{ acta.persona_id }}</td>
+                            <td><span class="badge {{ clase }}">{{ acta.tipo or "—" }}</span></td>
+                            <td>{{ acta.fecha or "" }}</td>
+                            <td class="cell-obs">{{ acta.observaciones or "" }}</td>
+                            <td>
+                                {% if acta.ruta_pdf %}
+                                    <a class="btn btn-sm" href="/actas/descargar/{{ acta.ruta_pdf }}">Descargar</a>
+                                {% else %}
+                                    <span class="cell-muted">Sin archivo</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+
+                    {% else %}
+
+                        <tr>
+                            <td colspan="6">
+                                <div class="empty-state">No hay actas generadas.</div>
+                            </td>
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
     </div>
+
 </div>
 
-{% endblock %}
-
-{% block extra_css %}
-<style>
-    .acta-grid {
-        display: grid;
-        grid-template-columns: repeat(
-            auto-fit,
-            minmax(260px, 1fr)
-        );
-        gap: 18px;
-    }
-
-    .form-group {
-        display: flex;
-        flex-direction: column;
-        gap: 7px;
-    }
-
-    .form-group label {
-        color: #334155;
-        font-weight: 600;
-    }
-</style>
 {% endblock %}
