@@ -1,0 +1,443 @@
+{% extends "base.html" %}
+
+{% block title %}
+Personas | Gestión de Activos TI
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1>Personas</h1>
+        <p>Registra y administra los colaboradores.</p>
+    </div>
+</div>
+
+
+<!-- =========================
+     NUEVA PERSONA
+========================= -->
+
+<div class="card" style="margin-bottom: 24px;">
+
+    <div class="card-header">
+        Nueva persona
+    </div>
+
+    <div class="card-body">
+
+        <form
+            action="/personas/crear"
+            method="POST">
+
+            <div class="form-grid">
+
+                <!-- Nombre -->
+                <div class="form-group">
+
+                    <label for="nombre">
+                        Nombre completo *
+                    </label>
+
+                    <input
+                        id="nombre"
+                        name="nombre"
+                        type="text"
+                        class="form-control"
+                        placeholder="Nombre completo"
+                        required>
+
+                </div>
+
+
+                <!-- Documento -->
+                <div class="form-group">
+
+                    <label for="documento">
+                        Documento
+                    </label>
+
+                    <input
+                        id="documento"
+                        name="documento"
+                        type="text"
+                        class="form-control"
+                        placeholder="Número de documento">
+
+                </div>
+
+
+                <!-- Correo -->
+                <div class="form-group">
+
+                    <label for="correo">
+                        Correo
+                    </label>
+
+                    <input
+                        id="correo"
+                        name="correo"
+                        type="email"
+                        class="form-control"
+                        placeholder="correo@planeta.com.co">
+
+                </div>
+
+
+                <!-- Cargo -->
+                <div class="form-group">
+
+                    <label for="cargo">
+                        Cargo
+                    </label>
+
+                    <input
+                        id="cargo"
+                        name="cargo"
+                        type="text"
+                        class="form-control"
+                        placeholder="Cargo">
+
+                </div>
+
+
+                <!-- Área -->
+                <div class="form-group">
+
+                    <label for="area">
+                        Área
+                    </label>
+
+                    <input
+                        id="area"
+                        name="area"
+                        type="text"
+                        class="form-control"
+                        placeholder="Área">
+
+                </div>
+
+            </div>
+
+
+            <div style="margin-top: 18px;">
+
+                <button
+                    type="submit"
+                    class="btn btn-success">
+
+                    <i class="bi bi-person-plus me-1"></i>
+                    Guardar persona
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<!-- =========================
+     PERSONAS REGISTRADAS
+========================= -->
+
+<div class="card">
+
+    <div class="card-header">
+
+        <div class="section-header">
+
+            <div>
+
+                <h2 style="margin: 0;">
+                    Personas registradas
+                </h2>
+
+                <p
+                    style="
+                        margin: 5px 0 0;
+                        color: #64748b;
+                    ">
+
+                    Total: {{ personas|length }}
+
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="card-body">
+
+        <div class="table-responsive">
+
+            <table class="table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>Nombre</th>
+                        <th>Documento</th>
+                        <th>Correo</th>
+                        <th>Cargo</th>
+                        <th>Área</th>
+                        <th>Estado</th>
+                        <th>Acción</th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    {% for persona in personas %}
+
+                    <tr>
+
+                        <!-- Nombre -->
+                        <td>
+                            <strong>
+                                {{ persona.nombre }}
+                            </strong>
+                        </td>
+
+
+                        <!-- Documento -->
+                        <td>
+                            {{ persona.documento or "" }}
+                        </td>
+
+
+                        <!-- Correo -->
+                        <td>
+                            {{ persona.correo or "" }}
+                        </td>
+
+
+                        <!-- Cargo -->
+                        <td>
+                            {{ persona.cargo or "" }}
+                        </td>
+
+
+                        <!-- Área -->
+                        <td>
+                            {{ persona.area or "" }}
+                        </td>
+
+
+                        <!-- Estado -->
+                        <td>
+
+                            {% if (persona.estado or "Activo") == "Activo" %}
+
+                                <span class="badge bg-success">
+                                    Activo
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge bg-secondary">
+                                    Inactiva
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- Acción -->
+                        <td>
+
+                            {% if (persona.estado or "Activo") == "Activo" %}
+
+                            <form
+                                action="/personas/{{ persona.id }}/desactivar"
+                                method="POST"
+                                style="display: inline;">
+
+                                <button
+                                    type="submit"
+                                    class="btn btn-sm btn-danger"
+                                    onclick="return confirm('¿Deseas desactivar esta persona?');">
+
+                                    <i class="bi bi-person-dash me-1"></i>
+                                    Desactivar
+
+                                </button>
+
+                            </form>
+
+                            {% else %}
+
+                            <span style="color: #64748b;">
+                                Inactiva
+                            </span>
+
+                            {% endif %}
+
+                        </td>
+
+                    </tr>
+
+
+                    {% else %}
+
+                    <tr>
+
+                        <td
+                            colspan="7"
+                            class="text-center"
+                            style="padding: 30px;">
+
+                            <i
+                                class="bi bi-people"
+                                style="
+                                    font-size: 30px;
+                                    color: #94a3b8;
+                                ">
+                            </i>
+
+                            <div
+                                style="
+                                    margin-top: 8px;
+                                    color: #64748b;
+                                ">
+
+                                No hay personas registradas.
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+
+{% block extra_css %}
+
+<style>
+
+    /* =========================
+       PAGE HEADER
+    ========================= */
+
+    .page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 24px;
+    }
+
+    .page-header h1 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .page-header p {
+        margin: 6px 0 0;
+        color: #64748b;
+    }
+
+
+    /* =========================
+       FORMULARIO
+    ========================= */
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(
+            auto-fit,
+            minmax(200px, 1fr)
+        );
+        gap: 16px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+    }
+
+    .form-group label {
+        color: #334155;
+        font-weight: 600;
+    }
+
+
+    /* =========================
+       SECTION HEADER
+    ========================= */
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+
+    /* =========================
+       TABLA
+    ========================= */
+
+    .table th {
+        white-space: nowrap;
+        color: #475569;
+        font-size: 14px;
+    }
+
+    .table td {
+        vertical-align: middle;
+    }
+
+    .table tbody tr:hover {
+        background-color: #f8fafc;
+    }
+
+
+    /* =========================
+       RESPONSIVE
+    ========================= */
+
+    @media (max-width: 768px) {
+
+        .page-header h1 {
+            font-size: 24px;
+        }
+
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .table {
+            min-width: 850px;
+        }
+
+    }
+
+</style>
+
+{% endblock %}

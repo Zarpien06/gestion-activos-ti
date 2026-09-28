@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Actas PDF | Gestion de Activos TI{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1>Actas PDF</h1>
+        <p>Genera actas por persona y descarga el documento.</p>
+    </div>
+</div>
+
+<div class="card" style="margin-bottom: 24px;">
+    <h2 style="margin-top: 0;">Generar nueva acta</h2>
+
+    <form method="POST" action="/actas/generar">
+        <div class="acta-grid">
+
+            <div class="form-group">
+                <label for="persona_id">Persona *</label>
+
+                <select
+                    id="persona_id"
+                    name="persona_id"
+                    class="form-select"
+                    required>
+
+                    <option value="">Selecciona una persona</option>
+
+                    {% for persona in personas %}
+                    <option value="{{ persona.id }}">
+                        {{ persona.nombre }}
+                        {% if persona.area %}
+                            - {{ persona.area }}
+                        {% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="tipo">Tipo de acta *</label>
+
+                <select
+                    id="tipo"
+                    name="tipo"
+                    class="form-select"
+                    required>
+
+                    <option value="Entrega">Entrega</option>
+                    <option value="Devolucion">Devolucion</option>
+                    <option value="Cambio">Cambio de equipo</option>
+                    <option value="Paz y salvo">Paz y salvo</option>
+                </select>
+            </div>
+
+        </div>
+
+        <div class="form-group" style="margin-top: 18px;">
+            <label for="observaciones">Observaciones</label>
+
+            <textarea
+                id="observaciones"
+                name="observaciones"
+                class="form-control"
+                rows="5"
+                placeholder="Accesorios, estado del equipo o novedades"></textarea>
+        </div>
+
+        <button
+            type="submit"
+            class="btn btn-success"
+            style="margin-top: 18px;">
+
+            Generar y descargar PDF
+        </button>
+    </form>
+</div>
+
+<div class="card">
+    <h2 style="margin-top: 0;">Actas generadas</h2>
+
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Persona ID</th>
+                    <th>Tipo</th>
+                    <th>Fecha</th>
+                    <th>Observaciones</th>
+                    <th>PDF</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for acta in actas %}
+                <tr>
+                    <td>{{ acta.id }}</td>
+                    <td>{{ acta.persona_id }}</td>
+                    <td>{{ acta.tipo or "" }}</td>
+                    <td>{{ acta.fecha or "" }}</td>
+                    <td>{{ acta.observaciones or "" }}</td>
+                    <td>
+                        {% if acta.ruta_pdf %}
+                        <a
+                            class="btn"
+                            href="/actas/descargar/{{ acta.ruta_pdf }}">
+                            Descargar
+                        </a>
+                        {% else %}
+                        Sin archivo
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6">No hay actas generadas.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .acta-grid {
+        display: grid;
+        grid-template-columns: repeat(
+            auto-fit,
+            minmax(260px, 1fr)
+        );
+        gap: 18px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+    }
+
+    .form-group label {
+        color: #334155;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}

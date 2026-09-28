@@ -1,0 +1,13 @@
+.venv/
+.env
+__pycache__/
+*.pyc
+.pytest_cache/
+.vscode/
+
+uplo*ds/
+pdf/
+
+app_backup.py
+*_backup.p*
+*_backup.html

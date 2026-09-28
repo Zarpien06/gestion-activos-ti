@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Inventario (704 Activos)</h2>
+
+<div class="card">
+
+<div class="card-body">
+
+<table
+id="tablaActivos"
+class="table table-striped table-hover">
+
+<thead>
+
+<tr>
+
+<th>ID</th>
+<th>Código</th>
+<th>Tipo</th>
+<th>Marca</th>
+<th>Modelo</th>
+<th>Estado</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for activo in activos %}
+
+<tr>
+
+<td>{{ activo.id }}</td>
+
+<td>{{ activo.codigo }}</td>
+
+<td>{{ activo.tipo }}</td>
+
+<td>{{ activo.marca }}</td>
+
+<td>{{ activo.modelo }}</td>
+
+<td>{{ activo.estado }}</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block title %}
+Asignaciones | Gestión TI
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+
+    <div>
+        <h1>Asignar equipos</h1>
+
+        <p>
+            Selecciona una persona y un activo disponible.
+        </p>
+    </div>
+
+</div>
+
+
+<!-- =========================
+     FORMULARIO DE ASIGNACIÓN
+========================= -->
+
+<div class="card">
+
+    <div class="card-header">
+        Nueva asignación
+    </div>
+
+    <div class="card-body">
+
+        <form
+            action="/asignaciones/crear"
+            method="POST">
+
+
+            <!-- Persona -->
+
+            <div class="form-group">
+
+                <label for="persona_id">
+                    Persona *
+                </label>
+
+                <select
+                    id="persona_id"
+                    name="persona_id"
+                    class="form-select"
+                    required>
+
+                    <option value="">
+                        Selecciona una persona
+                    </option>
+
+                    {% for persona in personas %}
+
+                    <option value="{{ persona.id }}">
+
+                        {{ persona.nombre }}
+
+                        {% if persona.area %}
+                            - {{ persona.area }}
+                        {% endif %}
+
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <!-- Activo -->
+
+            <div class="form-group">
+
+                <label for="activo_id">
+                    Activo disponible *
+                </label>
+
+                <select
+                    id="activo_id"
+                    name="activo_id"
+                    class="form-select"
+                    required>
+
+                    <option value="">
+                        Selecciona un activo
+                    </option>
+
+                    {% for activo in activos %}
+
+                    <option value="{{ activo.id }}">
+
+                        {{ activo.codigo }}
+                        -
+                        {{ activo.tipo or "Sin tipo" }}
+                        -
+                        {{ activo.marca or "Sin marca" }}
+                        -
+                        {{ activo.modelo or "Sin modelo" }}
+
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <!-- Observaciones -->
+
+            <div class="form-group">
+
+                <label for="observacion">
+                    Observaciones
+                </label>
+
+                <textarea
+                    id="observacion"
+                    name="observacion"
+                    class="form-control"
+                    rows="4"
+                    placeholder="Condiciones de entrega, accesorios o comentarios"></textarea>
+
+            </div>
+
+
+            <!-- Botón -->
+
+            <div style="margin-top: 20px;">
+
+                <button
+                    type="submit"
+                    class="btn btn-success">
+
+                    <i class="bi bi-box-arrow-up-right me-1"></i>
+
+                    Asignar equipo
+
+                </button>
+
+            </div>
+
+        </form>
+
+
+        <!-- Sin activos -->
+
+        {% if not activos %}
+
+        <div
+            class="alert alert-warning"
+            style="margin-top: 20px;">
+
+            <i class="bi bi-exclamation-triangle me-1"></i>
+
+            No hay activos disponibles para asignación.
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+
+{% block extra_css %}
+
+<style>
+
+    /* =========================
+       PAGE HEADER
+    ========================= */
+
+    .page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 24px;
+    }
+
+    .page-header h1 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .page-header p {
+        margin: 6px 0 0;
+        color: #64748b;
+    }
+
+
+    /* =========================
+       FORMULARIO
+    ========================= */
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        margin-bottom: 18px;
+    }
+
+    .form-group label {
+        color: #334155;
+        font-weight: 600;
+    }
+
+
+    /* =========================
+       SELECT
+    ========================= */
+
+    .form-select {
+        min-height: 44px;
+    }
+
+
+    /* =========================
+       RESPONSIVE
+    ========================= */
+
+    @media (max-width: 768px) {
+
+        .page-header h1 {
+            font-size: 24px;
+        }
+
+    }
+
+</style>
+
+{% endblock %}

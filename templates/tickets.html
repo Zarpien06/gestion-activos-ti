@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Tickets</h2>
+
+<div class="card mb-4">
+
+<div class="card-body">
+
+/ticket/crear
+
+<div class="row">
+
+<div class="col-md-3">
+
+<input
+type="number"
+name="activo_id"
+class="form-control"
+placeholder="ID Activo">
+
+</div>
+
+<div class="col-md-3">
+
+<input
+type="text"
+name="titulo"
+class="form-control"
+placeholder="Título">
+
+</div>
+
+<div class="col-md-4">
+
+<input
+type="text"
+name="descripcion"
+class="form-control"
+placeholder="Descripción">
+
+</div>
+
+<div class="col-md-2">
+
+<button
+class="btn btn-primary">
+
+Crear
+
+</button>
+
+</div>
+
+</div>
+
+</form>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<div class="card-body">
+
+<table class="table">
+
+<thead>
+
+<tr>
+
+<th>ID</th>
+<th>Título</th>
+<th>Descripción</th>
+<th>Estado</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for t in tickets %}
+
+<tr>
+
+<td>{{ t.id }}</td>
+
+<td>{{ t.titulo }}</td>
+
+<td>{{ t.descripcion }}</td>
+
+<td>{{ t.estado }}</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2 class="mb-4">Dashboard TI</h2>
+
+<div class="row mt-4">
+
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+
+            <div class="card-body">
+
+                <h6>Total Activos</h6>
+
+                <h2>{{ total }}</h2>
+
+            </div>
+
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+
+            <div class="card-body">
+
+                <h6>Disponibles</h6>
+
+                <h2>{{ disponibles }}</h2>
+
+            </div>
+
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card bg-warning">
+
+            <div class="card-body">
+
+                <h6>Asignados</h6>
+
+                <h2>{{ asignados }}</h2>
+
+            </div>
+
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card bg-danger text-white">
+
+            <div class="card-body">
+
+                <h6>Reparación</h6>
+
+                <h2>{{ reparacion }}</h2>
+
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<div class="row mt-4">
+
+    <div class="col-md-6">
+
+        <div class="card">
+
+            <div class="card-header">
+                Activos por Estado
+            </div>
+
+            <div class="card-body">
+
+                <canvas id="estadoChart"></canvas>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+const ctx = document.getElementById("estadoChart");
+
+new Chart(ctx, {
+
+    type: "doughnut",
+
+    data: {
+
+        labels: [
+            "Disponibles",
+            "Asignados",
+            "Reparación"
+        ],
+
+        datasets: [{
+
+            data: [
+                {{ disponibles }},
+                {{ asignados }},
+                {{ reparacion }}
+            ],
+
+            backgroundColor: [
+                "#198754",
+                "#ffc107",
+                "#dc3545"
+            ]
+
+        }]
+
+    }
+
+});
+
+</script>
+
+{% endblock %}
