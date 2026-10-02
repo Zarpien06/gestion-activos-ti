@@ -5,7 +5,7 @@
 {% block extra_css %}
 <style>
     .page-header { margin-bottom: 24px; }
-    .page-header h1 { margin: 0; font-size: 24px; font-weight: 700; }
+    .page-header h1 { margin: 0; font-size: clamp(20px, 4vw, 24px); font-weight: 700; }
     .page-header p { margin: 4px 0 0; color: var(--text-light); }
 
     .stack { display: flex; flex-direction: column; gap: 24px; }
@@ -13,12 +13,25 @@
     .card-title { margin: 0; font-size: 16px; font-weight: 600; }
     .card-sub { margin: 2px 0 0; color: var(--text-light); font-size: 13px; }
 
+    /* ---------- Formulario ---------- */
     .form-grid {
         display: grid;
-        grid-template-columns: 140px 1fr 2fr;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
         gap: 16px;
         margin-top: 18px;
     }
+    .field-full { grid-column: 1 / -1; }
+
+    .form-select {
+        min-height: 44px;
+        appearance: none;
+        padding-right: 38px;
+        background:
+            var(--surface)
+            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
+            no-repeat right 12px center;
+    }
+    textarea.form-control { resize: vertical; min-height: 96px; }
 
     .form-actions {
         display: flex;
@@ -27,18 +40,28 @@
         padding-top: 18px;
         border-top: 1px solid var(--border);
     }
+    @media (max-width: 768px) {
+        .form-grid { grid-template-columns: 1fr; }
+        .form-actions .btn { width: 100%; }
+    }
+
+    /* ---------- Lista ---------- */
+    .card-flush {
+        padding: 0;
+        overflow: hidden;
+        container-type: inline-size;
+        container-name: lista;
+    }
 
     .list-head {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 12px;
+        flex-wrap: wrap;
+        gap: 12px 16px;
         padding: 20px 22px;
         border-bottom: 1px solid var(--border);
     }
-
-    .card-flush { padding: 0; overflow: hidden; }
-    .card-flush .table-responsive { border: 0; border-radius: 0; }
 
     .count-pill {
         padding: 5px 13px;
@@ -50,22 +73,205 @@
         white-space: nowrap;
     }
 
-    .cell-muted { color: var(--text-light); }
-    .cell-title { font-weight: 600; }
-    .cell-desc { max-width: 420px; color: var(--text-light); }
+    /* Filtros por estado */
+    .tabs { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px 22px; border-bottom: 1px solid var(--border); }
+    .tab {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 14px;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-light);
+        background: transparent;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        cursor: pointer;
+        transition: background .15s, color .15s, border-color .15s;
+    }
+    .tab:hover { color: var(--text, inherit); border-color: var(--primary); }
+    .tab[aria-pressed="true"] {
+        color: var(--primary);
+        background: var(--primary-soft);
+        border-color: transparent;
+    }
+    .tab b {
+        min-width: 22px;
+        padding: 1px 7px;
+        font-size: 12px;
+        text-align: center;
+        border-radius: 999px;
+        background: color-mix(in srgb, currentColor 14%, transparent);
+    }
+
+    .tabla-scroll { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .tabla-tickets { width: 100%; border-collapse: collapse; }
+    .tabla-tickets th, .tabla-tickets td {
+        padding: 14px 16px;
+        text-align: left;
+        vertical-align: middle;
+    }
+    .tabla-tickets th {
+        font-size: .74rem;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        color: var(--text-light);
+        white-space: nowrap;
+    }
+    .tabla-tickets tbody tr { border-top: 1px solid var(--border); }
+    .tabla-tickets tbody tr:hover { background: var(--surface-2, rgba(148,163,184,.07)); }
+    .tabla-tickets tr[hidden] { display: none !important; }
+
+    @media (min-width: 900px) {
+        .tabla-scroll { max-height: calc(100vh - 360px); min-height: 240px; overflow: auto; }
+        .tabla-tickets thead th {
+            position: sticky; top: 0; z-index: 2;
+            background: var(--surface, #0f172a);
+            box-shadow: 0 1px 0 var(--border);
+        }
+    }
+
+    .cell-id { color: var(--text-light); white-space: nowrap; }
+    .cell-title { font-weight: 600; min-width: 180px; }
+    .cell-desc { max-width: 380px; color: var(--text-light); line-height: 1.4; }
+    .cell-activo { white-space: nowrap; }
+    .cell-fecha { color: var(--text-light); font-size: .9em; white-space: nowrap; }
+    .chip {
+        display: inline-block;
+        padding: 3px 10px;
+        font-size: 12.5px;
+        font-weight: 600;
+        border-radius: 8px;
+        background: var(--surface-2, rgba(148,163,184,.14));
+    }
+
+    /* Acciones: siempre en una fila */
+    .th-action, .cell-action { text-align: right; width: 1%; white-space: nowrap; }
+    .row-actions {
+        display: inline-flex;
+        align-items: center;
+        justify-content: flex-end;
+        flex-wrap: nowrap;
+        gap: 10px;
+    }
+    .row-actions form { margin: 0; display: inline-flex; }
+    .btn-sm { padding: 8px 16px; font-size: 13px; white-space: nowrap; line-height: 1.2; }
+
+    .estado-select {
+        min-height: 36px;
+        padding: 6px 30px 6px 12px;
+        font-size: 13px;
+        appearance: none;
+        background:
+            var(--surface)
+            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
+            no-repeat right 10px center;
+    }
+
+    .btn-ok {
+        color: #fff;
+        background: var(--success, #16a34a);
+        border-color: transparent;
+    }
+    .btn-soft {
+        color: var(--text-light);
+        background: transparent;
+        border: 1px solid var(--border);
+        box-shadow: none;
+    }
+    .btn-soft:hover { color: var(--text, inherit); border-color: var(--primary); }
+
+    .tabla-tickets tr.resuelto .cell-title { text-decoration: line-through; text-decoration-color: var(--text-light); color: var(--text-light); }
 
     .empty-state { padding: 48px 16px; text-align: center; color: var(--text-light); }
 
-    @media (max-width: 900px) {
-        .form-grid { grid-template-columns: 1fr; }
-        .form-actions .btn { width: 100%; }
-        .table { min-width: 700px; }
+    /* ---------- Columnas por prioridad segun ancho de la tarjeta ---------- */
+    @container lista (max-width: 1050px) { .c-fecha { display: none; } }
+    @container lista (max-width: 900px)  { .c-desc { display: none; } }
+
+    /* ---------- Tarjeta angosta: cada ticket es una ficha ---------- */
+    @container lista (max-width: 640px) {
+        .c-fecha, .c-desc { display: flex; }
+
+        .list-head, .tabs { padding-left: 16px; padding-right: 16px; }
+        .tabla-scroll { overflow: visible; max-height: none; padding: 12px; }
+
+        .tabla-tickets,
+        .tabla-tickets tbody,
+        .tabla-tickets tr,
+        .tabla-tickets td { display: block; width: 100%; }
+
+        .tabla-tickets thead {
+            position: absolute; width: 1px; height: 1px;
+            overflow: hidden; clip: rect(0 0 0 0);
+        }
+
+        .tabla-tickets tbody tr {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 10px 14px;
+            margin-bottom: 12px;
+        }
+        .tabla-tickets tbody tr:hover { background: transparent; }
+
+        .tabla-tickets td {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 7px 0;
+            text-align: right;
+            word-break: break-word;
+            max-width: none;
+            min-width: 0;
+            white-space: normal;
+        }
+        .tabla-tickets td::before {
+            content: attr(data-label);
+            flex: 0 0 34%;
+            text-align: left;
+            color: var(--text-light);
+            font-size: .78rem;
+            text-transform: uppercase;
+            letter-spacing: .03em;
+        }
+        .tabla-tickets .cell-title {
+            padding-bottom: 10px;
+            margin-bottom: 4px;
+            border-bottom: 1px solid var(--border);
+        }
+        .tabla-tickets .cell-action { padding-top: 12px; width: 100%; }
+        .tabla-tickets .cell-action::before { display: none; }
+        .tabla-tickets .row-actions { display: flex; width: 100%; }
+        .tabla-tickets .row-actions > *,
+        .tabla-tickets .row-actions form { flex: 1 1 0; }
+        .tabla-tickets .row-actions .btn,
+        .tabla-tickets .row-actions select { width: 100%; text-align: center; padding-top: 10px; padding-bottom: 10px; }
+
+        .tabla-tickets .empty-row td { display: block; text-align: center; padding: 0; }
+        .tabla-tickets .empty-row td::before { display: none; }
+        .tabla-tickets .empty-row { border: 0; padding: 0; }
     }
 </style>
 {% endblock %}
 
 
 {% block content %}
+
+{# Mapa id -> codigo de activo y conteos por grupo #}
+{% set cod = {} %}
+{% for a in activos %}{% set _ = cod.update({a.id: a.codigo}) %}{% endfor %}
+
+{% set n = namespace(abiertos=0, resueltos=0) %}
+{% for t in tickets %}
+    {% set e = (t.estado or '')|lower %}
+    {% if 'solucion' in e or 'cerrado' in e or 'resuelto' in e %}
+        {% set n.resueltos = n.resueltos + 1 %}
+    {% else %}
+        {% set n.abiertos = n.abiertos + 1 %}
+    {% endif %}
+{% endfor %}
 
 <div class="page-header">
     <h1>Tickets</h1>
@@ -75,31 +281,38 @@
 <div class="stack">
 
     <!-- NUEVO TICKET -->
+    {% if tiene_permiso('tickets', 'crear') %}
     <div class="card">
 
         <h2 class="card-title">Nuevo ticket</h2>
-        <p class="card-sub">Indica el ID del activo y describe el problema.</p>
+        <p class="card-sub">Elige el activo con problemas y describe lo que ocurre. El número del ticket se asigna solo.</p>
 
         <form action="/tickets/crear" method="POST">
 
             <div class="form-grid">
 
                 <div>
-                    <label for="activo_id">ID activo</label>
-                    <input id="activo_id" name="activo_id" type="number" class="form-control"
-                           placeholder="Ej: 125" required>
+                    <label for="activo_id">Activo *</label>
+                    <select id="activo_id" name="activo_id" class="form-select" required>
+                        <option value="">Selecciona un activo</option>
+                        {% for a in activos %}
+                            <option value="{{ a.id }}">
+                                {{ [a.codigo, a.tipo, a.marca, a.modelo]|select|join(' - ') }}{% if a.asignado_a %} ({{ a.asignado_a }}){% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
                 </div>
 
                 <div>
-                    <label for="titulo">Título</label>
+                    <label for="titulo">Título *</label>
                     <input id="titulo" name="titulo" type="text" class="form-control"
                            placeholder="Resumen del problema" required>
                 </div>
 
-                <div>
-                    <label for="descripcion">Descripción</label>
-                    <input id="descripcion" name="descripcion" type="text" class="form-control"
-                           placeholder="Detalle de lo que ocurre">
+                <div class="field-full">
+                    <label for="descripcion">Descripción *</label>
+                    <textarea id="descripcion" name="descripcion" class="form-control" rows="3"
+                              placeholder="Detalle de lo que ocurre" required></textarea>
                 </div>
 
             </div>
@@ -111,6 +324,7 @@
         </form>
 
     </div>
+    {% endif %}
 
 
     <!-- LISTA -->
@@ -122,19 +336,28 @@
                 <p class="card-sub">Historial de incidencias</p>
             </div>
 
-            <span class="count-pill">Total: {{ tickets|length }}</span>
+            <span class="count-pill" id="contador">Total: {{ tickets|length }}</span>
         </div>
 
-        <div class="table-responsive">
+        <div class="tabs" role="group" aria-label="Filtrar por estado">
+            <button type="button" class="tab" data-filtro="todos" aria-pressed="true">Todos <b>{{ tickets|length }}</b></button>
+            <button type="button" class="tab" data-filtro="abierto" aria-pressed="false">Abiertos <b>{{ n.abiertos }}</b></button>
+            <button type="button" class="tab" data-filtro="resuelto" aria-pressed="false">Solucionados <b>{{ n.resueltos }}</b></button>
+        </div>
 
-            <table class="table">
+        <div class="tabla-scroll">
+
+            <table class="table tabla-tickets">
 
                 <thead>
                     <tr>
                         <th>ID</th>
+                        <th>Activo</th>
                         <th>Título</th>
-                        <th>Descripción</th>
+                        <th class="c-desc">Descripción</th>
+                        <th class="c-fecha">Fecha</th>
                         <th>Estado</th>
+                        {% if tiene_permiso('tickets', 'editar') %}<th class="th-action">Acción</th>{% endif %}
                     </tr>
                 </thead>
 
@@ -144,32 +367,79 @@
 
                         {% set e = (t.estado or '')|lower %}
 
-                        {% if 'solucion' in e or 'cerrado' in e %}
+                        {% if 'solucion' in e or 'cerrado' in e or 'resuelto' in e %}
                             {% set clase = 'badge-success' %}
+                            {% set grupo = 'resuelto' %}
                         {% elif 'proceso' in e %}
                             {% set clase = 'badge-info' %}
+                            {% set grupo = 'abierto' %}
                         {% elif 'pendiente' in e or 'abierto' in e or 'repuesto' in e %}
                             {% set clase = 'badge-warning' %}
+                            {% set grupo = 'abierto' %}
                         {% else %}
                             {% set clase = '' %}
+                            {% set grupo = 'abierto' %}
                         {% endif %}
 
-                        <tr>
-                            <td class="cell-muted">{{ t.id }}</td>
-                            <td class="cell-title">{{ t.titulo }}</td>
-                            <td class="cell-desc">{{ t.descripcion or "" }}</td>
-                            <td><span class="badge {{ clase }}">{{ t.estado or '—' }}</span></td>
+                        <tr data-grupo="{{ grupo }}" class="{{ 'resuelto' if grupo == 'resuelto' }}">
+                            <td data-label="ID" class="cell-id">#{{ t.id }}</td>
+                            <td data-label="Activo" class="cell-activo">
+                                {% if t.activo_id and cod.get(t.activo_id) %}
+                                    <span class="chip">{{ cod.get(t.activo_id) }}</span>
+                                {% else %}—{% endif %}
+                            </td>
+                            <td data-label="Título" class="cell-title">{{ t.titulo }}</td>
+                            <td data-label="Descripción" class="cell-desc c-desc">{{ t.descripcion or "" }}</td>
+                            <td data-label="Fecha" class="cell-fecha c-fecha">
+                                {% set f = t.created_at or t.fecha %}
+                                {% if f %}<time class="js-fecha" datetime="{{ f }}">{{ (f|string)[:10] }}</time>{% endif %}
+                            </td>
+                            <td data-label="Estado"><span class="badge {{ clase }}">{{ t.estado or '—' }}</span></td>
+
+                            {% if tiene_permiso('tickets', 'editar') %}
+                            <td data-label="Acción" class="cell-action">
+                                <div class="row-actions">
+                                    {% if grupo == 'resuelto' %}
+                                        <form action="/tickets/{{ t.id }}/estado" method="POST">
+                                            <input type="hidden" name="estado" value="Pendiente">
+                                            <button type="submit" class="btn btn-sm btn-soft">Reabrir</button>
+                                        </form>
+                                    {% else %}
+                                        <form action="/tickets/{{ t.id }}/estado" method="POST">
+                                            <select name="estado" class="form-select estado-select"
+                                                    aria-label="Cambiar estado del ticket {{ t.id }}"
+                                                    onchange="this.form.submit()">
+                                                {% for op in ['Pendiente', 'En proceso', 'Esperando repuesto'] %}
+                                                    <option value="{{ op }}" {{ 'selected' if (t.estado or '') == op }}>{{ op }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </form>
+                                        <form action="/tickets/{{ t.id }}/estado" method="POST">
+                                            <input type="hidden" name="estado" value="Solucionado">
+                                            <button type="submit" class="btn btn-sm btn-ok"
+                                                    onclick="return confirm('¿Marcar este ticket como solucionado?');">
+                                                &#10003; Solucionar
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            {% endif %}
                         </tr>
 
                     {% else %}
 
-                        <tr>
-                            <td colspan="4">
+                        <tr class="empty-row">
+                            <td colspan="7">
                                 <div class="empty-state">No hay tickets registrados.</div>
                             </td>
                         </tr>
 
                     {% endfor %}
+
+                    <tr class="empty-row" id="sinResultados" hidden>
+                        <td colspan="7"><div class="empty-state">No hay tickets en esta categoría.</div></td>
+                    </tr>
 
                 </tbody>
 
@@ -181,4 +451,46 @@
 
 </div>
 
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+(function () {
+    /* Filtros: Todos / Abiertos / Solucionados */
+    const tabs = document.querySelectorAll(".tab");
+    const filas = Array.from(document.querySelectorAll(".tabla-tickets tbody tr[data-grupo]"));
+    const aviso = document.getElementById("sinResultados");
+    const contador = document.getElementById("contador");
+    const total = filas.length;
+
+    tabs.forEach((tab) => {
+        tab.addEventListener("click", () => {
+            const filtro = tab.dataset.filtro;
+            let visibles = 0;
+
+            tabs.forEach((t) => t.setAttribute("aria-pressed", t === tab ? "true" : "false"));
+
+            filas.forEach((fila) => {
+                const ok = filtro === "todos" || fila.dataset.grupo === filtro;
+                fila.hidden = !ok;
+                if (ok) visibles++;
+            });
+
+            if (aviso) aviso.hidden = !(total > 0 && visibles === 0);
+            contador.textContent = filtro === "todos" ? `Total: ${total}` : `${visibles} de ${total}`;
+        });
+    });
+
+    /* Fecha en hora local del navegador (el servidor guarda UTC) */
+    document.querySelectorAll("time.js-fecha").forEach((el) => {
+        const d = new Date(el.getAttribute("datetime"));
+        if (isNaN(d)) return;
+        el.textContent = d.toLocaleString("es-CO", {
+            day: "2-digit", month: "2-digit", year: "numeric",
+            hour: "numeric", minute: "2-digit"
+        });
+    });
+})();
+</script>
 {% endblock %}

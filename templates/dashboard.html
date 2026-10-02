@@ -4,18 +4,57 @@
 
 {% block extra_css %}
 <style>
-    .page-header { margin-bottom: 24px; }
-    .page-header h2 { margin: 0; font-size: 24px; font-weight: 700; }
-    .page-header p { margin: 4px 0 0; color: var(--text-light); }
+    /* ---------- Encabezado ---------- */
+    .hero {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-bottom: 24px;
+        padding: 26px 28px;
+        color: #fff;
+        border-radius: 16px;
+        background:
+            radial-gradient(circle at 92% 20%, rgba(255,255,255,.18), transparent 45%),
+            linear-gradient(135deg, var(--primary, #2563eb), #1e3a8a);
+    }
+    .hero h2 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -.02em; }
+    .hero p { margin: 6px 0 0; opacity: .85; font-size: 14px; }
+    .hero-date {
+        padding: 8px 16px;
+        font-size: 13px;
+        font-weight: 600;
+        border-radius: 999px;
+        background: rgba(255,255,255,.16);
+        white-space: nowrap;
+    }
 
+    /* ---------- KPI principales ---------- */
     .stats-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
         gap: 18px;
-        margin-bottom: 22px;
+        margin-bottom: 18px;
     }
+    .stats-grid.small { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 22px; }
 
-    .stat-card { display: flex; align-items: center; gap: 16px; }
+    .stat-card {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        overflow: hidden;
+        transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(15,23,42,.10); }
+    .stat-card::after {
+        content: "";
+        position: absolute;
+        left: 0; top: 0; bottom: 0;
+        width: 4px;
+        background: var(--accent);
+    }
 
     .stat-icon {
         display: grid;
@@ -29,44 +68,135 @@
         color: var(--accent);
         background: color-mix(in srgb, var(--accent) 14%, transparent);
     }
-
     .stat-label { margin: 0; color: var(--text-light); font-size: 13px; font-weight: 500; }
     .stat-value { margin: 2px 0 0; font-size: 30px; font-weight: 700; letter-spacing: -.03em; line-height: 1.1; }
-    .stat-total   { --accent: var(--primary); }
-    .stat-ok      { --accent: var(--success); }
-    .stat-warn    { --accent: var(--warning); }
-    .stat-danger  { --accent: var(--danger); }
+    .stat-hint { margin: 2px 0 0; color: var(--text-light); font-size: 12px; }
 
-    .card-title { margin: 0 0 18px; font-size: 16px; font-weight: 600; }
+    .stats-grid.small .stat-value { font-size: 24px; }
+    .stats-grid.small .stat-icon { width: 40px; height: 40px; font-size: 17px; border-radius: 10px; }
 
+    .stat-total  { --accent: var(--primary, #2563eb); }
+    .stat-ok     { --accent: var(--success, #16a34a); }
+    .stat-warn   { --accent: var(--warning, #f59e0b); }
+    .stat-danger { --accent: var(--danger, #dc2626); }
+    .stat-muted  { --accent: #64748b; }
+    .stat-info   { --accent: #0891b2; }
+
+    /* ---------- Rejilla de tarjetas ---------- */
+    .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+        gap: 22px;
+        margin-bottom: 22px;
+    }
+    .card-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 18px;
+    }
+    .card-title { margin: 0; font-size: 16px; font-weight: 600; }
+    .card-link { font-size: 13px; font-weight: 600; color: var(--primary, #2563eb); text-decoration: none; }
+    .card-link:hover { text-decoration: underline; }
+
+    /* ---------- Dona ---------- */
     .chart-layout {
         display: grid;
-        grid-template-columns: minmax(220px, 300px) 1fr;
+        grid-template-columns: minmax(200px, 260px) 1fr;
         align-items: center;
-        gap: 32px;
+        gap: 28px;
     }
-
-    .chart-wrap { position: relative; width: 100%; max-width: 300px; margin: 0 auto; }
-
-    .legend { display: flex; flex-direction: column; gap: 16px; }
-
+    .chart-wrap { position: relative; width: 100%; max-width: 260px; margin: 0 auto; }
+    .legend { display: flex; flex-direction: column; gap: 14px; }
     .legend-row { display: flex; align-items: center; gap: 12px; }
     .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; background: var(--accent); }
     .legend-name { flex: 1; font-weight: 500; }
     .legend-count { font-weight: 700; }
     .legend-pct { min-width: 46px; text-align: right; color: var(--text-light); font-size: 13px; }
-
-    .legend-bar {
-        height: 6px;
-        margin-top: 6px;
-        overflow: hidden;
-        border-radius: 999px;
-        background: var(--surface-2);
-    }
+    .legend-bar { height: 6px; margin-top: 6px; overflow: hidden; border-radius: 999px; background: var(--surface-2, #e5e7eb); }
     .legend-bar span { display: block; height: 100%; border-radius: 999px; background: var(--accent); }
+
+    /* ---------- Barras por tipo ---------- */
+    .bar-box { position: relative; height: 260px; }
+
+    /* ---------- Uso ---------- */
+    .usage { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--border, #e5e7eb); }
+    .usage-top { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; }
+    .usage-top strong { font-size: 15px; }
+    .usage-track { height: 10px; overflow: hidden; border-radius: 999px; background: var(--surface-2, #e5e7eb); }
+    .usage-track span {
+        display: block; height: 100%; border-radius: 999px;
+        background: linear-gradient(90deg, var(--primary, #2563eb), #38bdf8);
+    }
+
+    /* ---------- Listas ---------- */
+    .list { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+    .list li {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border, #e5e7eb);
+    }
+    .list li:last-child { border-bottom: 0; padding-bottom: 0; }
+    .list li:first-child { padding-top: 0; }
+
+    .dot-icon {
+        display: grid; place-items: center; flex-shrink: 0;
+        width: 34px; height: 34px;
+        border-radius: 50%;
+        font-size: 14px; font-weight: 700;
+        color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 14%, transparent);
+    }
+    .item-main { flex: 1; min-width: 0; }
+    .item-title { margin: 0; font-size: 14px; font-weight: 600; }
+    .item-sub { margin: 2px 0 0; color: var(--text-light); font-size: 12.5px; overflow-wrap: anywhere; }
+    .item-date { color: var(--text-light); font-size: 12px; white-space: nowrap; }
+    
+    .item-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 6px; font-size: 12px; color: var(--text-light); }
+    .chip {
+        padding: 2px 8px;
+        font-weight: 600;
+        color: var(--text);
+        border-radius: 999px;
+        background: var(--surface-2, #e5e7eb);
+    }
+    .item-user { font-weight: 600; color: var(--accent); }
+
+    .empty { padding: 28px 8px; text-align: center; color: var(--text-light); font-size: 14px; }
+
+    /* ---------- Areas ---------- */
+    .area-row { margin-bottom: 14px; }
+    .area-row:last-child { margin-bottom: 0; }
+    .area-top { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px; }
+    .area-top b { font-weight: 700; }
+
+    /* ---------- Accesos rapidos ---------- */
+    .quick { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+    .quick a {
+        display: flex; align-items: center; gap: 10px;
+        padding: 14px 16px;
+        font-size: 14px; font-weight: 600;
+        color: var(--text, #0f172a);
+        text-decoration: none;
+        border: 1px solid var(--border, #e5e7eb);
+        border-radius: 12px;
+        background: var(--surface, #fff);
+        transition: border-color .15s ease, background .15s ease, transform .15s ease;
+    }
+    .quick a:hover {
+        transform: translateY(-2px);
+        border-color: var(--primary, #2563eb);
+        background: var(--primary-soft, #eff6ff);
+    }
+    .quick span.ico { font-size: 18px; }
 
     @media (max-width: 700px) {
         .chart-layout { grid-template-columns: 1fr; gap: 24px; }
+        .grid-2 { grid-template-columns: 1fr; }
+        .hero { padding: 20px; }
     }
 </style>
 {% endblock %}
@@ -74,11 +204,23 @@
 
 {% block content %}
 
-<div class="page-header">
-    <h2>Dashboard TI</h2>
-    <p>Resumen general del inventario tecnologico</p>
+{% set meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'] %}
+{% set dias = ['lunes','martes','miércoles','jueves','viernes','sábado','domingo'] %}
+{% set uso = (asignados * 100 / total) if total else 0 %}
+
+<!-- ENCABEZADO -->
+<div class="hero">
+    <div>
+        <h2>Hola, {{ current_user.nombre.split(' ')[0] if current_user.nombre else 'equipo' }}</h2>
+        <p>Resumen general del inventario tecnológico</p>
+    </div>
+    <div class="hero-date">
+        {{ dias[hoy.weekday()]|capitalize }}, {{ hoy.day }} de {{ meses[hoy.month - 1] }} de {{ hoy.year }}
+    </div>
 </div>
 
+
+<!-- KPI PRINCIPALES -->
 <div class="stats-grid">
 
     <div class="card stat-card stat-total">
@@ -86,6 +228,7 @@
         <div>
             <p class="stat-label">Total activos</p>
             <p class="stat-value">{{ total }}</p>
+            <p class="stat-hint">Inventario completo</p>
         </div>
     </div>
 
@@ -94,6 +237,7 @@
         <div>
             <p class="stat-label">Disponibles</p>
             <p class="stat-value">{{ disponibles }}</p>
+            <p class="stat-hint">Listos para asignar</p>
         </div>
     </div>
 
@@ -102,6 +246,7 @@
         <div>
             <p class="stat-label">Asignados</p>
             <p class="stat-value">{{ asignados }}</p>
+            <p class="stat-hint">{{ '%.0f'|format(uso) }}% del inventario</p>
         </div>
     </div>
 
@@ -110,45 +255,219 @@
         <div>
             <p class="stat-label">En reparación</p>
             <p class="stat-value">{{ reparacion }}</p>
+            <p class="stat-hint">Fuera de servicio</p>
+        </div>
+    </div>
+
+</div>
+
+<!-- KPI SECUNDARIOS -->
+<div class="stats-grid small">
+
+    <div class="card stat-card stat-muted">
+        <div class="stat-icon">&#8856;</div>
+        <div>
+            <p class="stat-label">Dados de baja</p>
+            <p class="stat-value">{{ bajas }}</p>
+        </div>
+    </div>
+
+    <div class="card stat-card stat-info">
+        <div class="stat-icon">&#9823;</div>
+        <div>
+            <p class="stat-label">Personas activas</p>
+            <p class="stat-value">{{ personas_activas }}</p>
+        </div>
+    </div>
+
+    <div class="card stat-card {{ 'stat-danger' if total_tickets_abiertos else 'stat-ok' }}">
+        <div class="stat-icon">&#9873;</div>
+        <div>
+            <p class="stat-label">Tickets abiertos</p>
+            <p class="stat-value">{{ total_tickets_abiertos }}</p>
+        </div>
+    </div>
+
+    <div class="card stat-card stat-total">
+        <div class="stat-icon">&#9776;</div>
+        <div>
+            <p class="stat-label">Actas generadas</p>
+            <p class="stat-value">{{ total_actas }}</p>
         </div>
     </div>
 
 </div>
 
 
-<div class="card">
+<!-- ACCESOS RAPIDOS -->
+<div class="card" style="margin-bottom: 22px;">
+    <div class="card-head"><h3 class="card-title">Accesos rápidos</h3></div>
+    <div class="quick">
+        {% if tiene_permiso('asignaciones', 'ver') %}
+            <a href="{{ url_for('asignaciones') }}"><span class="ico">&#10133;</span> Asignar equipo</a>
+        {% endif %}
+        {% if tiene_permiso('devoluciones', 'ver') %}
+            <a href="{{ url_for('devoluciones') }}"><span class="ico">&#8617;</span> Devolución</a>
+        {% endif %}
+        {% if tiene_permiso('actas', 'ver') %}
+            <a href="{{ url_for('actas') }}"><span class="ico">&#128196;</span> Generar acta</a>
+        {% endif %}
+        {% if tiene_permiso('tickets', 'ver') %}
+            <a href="{{ url_for('tickets') }}"><span class="ico">&#127915;</span> Tickets</a>
+        {% endif %}
+        {% if tiene_permiso('personas', 'ver') %}
+            <a href="{{ url_for('personas') }}"><span class="ico">&#128101;</span> Personas</a>
+        {% endif %}
+        {% if tiene_permiso('inventario', 'ver') %}
+            <a href="{{ url_for('inventario') }}"><span class="ico">&#128187;</span> Inventario</a>
+        {% endif %}
+    </div>
+</div>
 
-    <h3 class="card-title">Activos por estado</h3>
 
-    <div class="chart-layout">
+<!-- ESTADO + TIPO -->
+<div class="grid-2">
 
-        <div class="chart-wrap">
-            <canvas id="estadoChart"></canvas>
+    <div class="card">
+        <div class="card-head"><h3 class="card-title">Activos por estado</h3></div>
+
+        <div class="chart-layout">
+            <div class="chart-wrap">
+                <canvas id="estadoChart"></canvas>
+            </div>
+
+            <div class="legend">
+                {% set filas = [
+                    ('Disponibles', disponibles, 'var(--success, #16a34a)'),
+                    ('Asignados', asignados, 'var(--warning, #f59e0b)'),
+                    ('En reparación', reparacion, 'var(--danger, #dc2626)'),
+                    ('Dados de baja', bajas, '#64748b')
+                ] %}
+
+                {% for nombre, cantidad, color in filas %}
+                    {% set pct = (cantidad * 100 / total) if total else 0 %}
+                    <div style="--accent: {{ color }};">
+                        <div class="legend-row">
+                            <span class="legend-dot"></span>
+                            <span class="legend-name">{{ nombre }}</span>
+                            <span class="legend-count">{{ cantidad }}</span>
+                            <span class="legend-pct">{{ '%.0f'|format(pct) }}%</span>
+                        </div>
+                        <div class="legend-bar"><span style="width: {{ pct }}%;"></span></div>
+                    </div>
+                {% endfor %}
+            </div>
         </div>
 
-        <div class="legend">
+        <div class="usage">
+            <div class="usage-top">
+                <span>Nivel de uso del inventario</span>
+                <strong>{{ '%.0f'|format(uso) }}%</strong>
+            </div>
+            <div class="usage-track"><span style="width: {{ uso }}%;"></span></div>
+        </div>
+    </div>
 
-            {% set filas = [
-                ('Disponibles', disponibles, 'var(--success)'),
-                ('Asignados', asignados, 'var(--warning)'),
-                ('En reparación', reparacion, 'var(--danger)')
-            ] %}
+    <div class="card">
+        <div class="card-head">
+            <h3 class="card-title">Activos por tipo</h3>
+            {% if tiene_permiso('inventario', 'ver') %}
+                <a class="card-link" href="{{ url_for('inventario') }}">Ver inventario</a>
+            {% endif %}
+        </div>
+        {% if por_tipo %}
+            <div class="bar-box"><canvas id="tipoChart"></canvas></div>
+        {% else %}
+            <div class="empty">Aún no hay activos registrados.</div>
+        {% endif %}
+    </div>
 
-            {% for nombre, cantidad, color in filas %}
-                {% set pct = (cantidad * 100 / total) if total else 0 %}
-                <div style="--accent: {{ color }};">
-                    <div class="legend-row">
-                        <span class="legend-dot"></span>
-                        <span class="legend-name">{{ nombre }}</span>
-                        <span class="legend-count">{{ cantidad }}</span>
-                        <span class="legend-pct">{{ '%.0f'|format(pct) }}%</span>
-                    </div>
-                    <div class="legend-bar"><span style="width: {{ pct }}%;"></span></div>
+</div>
+
+
+<!-- ACTIVIDAD + TICKETS + AREAS -->
+<div class="grid-2">
+
+      <div class="card">
+        <div class="card-head"><h3 class="card-title">Actividad reciente</h3></div>
+
+        {% if actividad %}
+            <ul class="list">
+                {% for mov in actividad %}
+                    {% set accion = (mov.accion or '')|lower %}
+                    {% if 'asign' in accion %}
+                        {% set color = 'var(--success, #16a34a)' %}{% set icono = '&#10133;' %}
+                    {% elif 'devol' in accion %}
+                        {% set color = 'var(--warning, #f59e0b)' %}{% set icono = '&#8617;' %}
+                    {% elif 'baja' in accion or 'inhabil' in accion %}
+                        {% set color = 'var(--danger, #dc2626)' %}{% set icono = '&#8856;' %}
+                    {% elif 'reactiv' in accion %}
+                        {% set color = 'var(--success, #16a34a)' %}{% set icono = '&#10003;' %}
+                    {% else %}
+                        {% set color = 'var(--primary, #2563eb)' %}{% set icono = '&#9679;' %}
+                    {% endif %}
+
+                    <li style="--accent: {{ color }};">
+                        <span class="dot-icon">{{ icono|safe }}</span>
+                        <div class="item-main">
+                            <p class="item-title">{{ mov.accion or 'Movimiento' }}</p>
+                            <p class="item-sub">{{ mov.detalle or '' }}</p>
+                            <div class="item-meta">
+                                <span class="item-user">{{ mov.usuario_nombre or 'Sin registro' }}</span>
+                                {% if mov.activo_codigo %}<span class="chip">{{ mov.activo_codigo }}</span>{% endif %}
+                            </div>
+                        </div>
+                        <span class="item-date">{{ mov.fecha_local }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div class="empty">Sin movimientos recientes.</div>
+        {% endif %}
+        
+    </div>
+    <div class="card">
+        <div class="card-head">
+            <h3 class="card-title">Tickets pendientes</h3>
+            {% if tiene_permiso('tickets', 'ver') %}
+                <a class="card-link" href="{{ url_for('tickets') }}">Ver todos</a>
+            {% endif %}
+        </div>
+
+        {% if tickets_abiertos %}
+            <ul class="list">
+                {% for t in tickets_abiertos %}
+                    <li style="--accent: var(--danger, #dc2626);">
+                        <span class="dot-icon">!</span>
+                        <div class="item-main">
+                            <p class="item-title">{{ t.titulo or 'Sin título' }}</p>
+                            <p class="item-sub">
+                                {% if t.activo_id and codigos.get(t.activo_id) %}{{ codigos.get(t.activo_id) }} · {% endif %}{{ t.estado or 'Pendiente' }}
+                            </p>
+                        </div>
+                        <span class="item-date">#{{ t.id }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div class="empty">No hay tickets abiertos. Todo al día.</div>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <div class="card-head"><h3 class="card-title">Equipos asignados por área</h3></div>
+
+        {% if por_area %}
+            {% set maximo = por_area[0][1] %}
+            {% for area, cantidad in por_area %}
+                <div class="area-row" style="--accent: var(--primary, #2563eb);">
+                    <div class="area-top"><span>{{ area }}</span><b>{{ cantidad }}</b></div>
+                    <div class="legend-bar"><span style="width: {{ (cantidad * 100 / maximo) }}%;"></span></div>
                 </div>
             {% endfor %}
-
-        </div>
-
+        {% else %}
+            <div class="empty">Aún no hay equipos asignados con área.</div>
+        {% endif %}
     </div>
 
 </div>
@@ -161,19 +480,44 @@
 
 <script>
     const css = getComputedStyle(document.documentElement);
+    const color = (nombre, respaldo) => css.getPropertyValue(nombre).trim() || respaldo;
+
+    const verde = color("--success", "#16a34a");
+    const ambar = color("--warning", "#f59e0b");
+    const rojo = color("--danger", "#dc2626");
+    const azul = color("--primary", "#2563eb");
+    const superficie = color("--surface", "#ffffff");
+    const textoSuave = color("--text-light", "#64748b");
+    const borde = color("--border", "#e5e7eb");
+
+    // Texto central de la dona
+    const textoCentro = {
+        id: "textoCentro",
+        afterDraw(chart) {
+            const { ctx, chartArea: a } = chart;
+            const x = (a.left + a.right) / 2;
+            const y = (a.top + a.bottom) / 2;
+            ctx.save();
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillStyle = color("--text", "#0f172a");
+            ctx.font = "700 30px system-ui, sans-serif";
+            ctx.fillText("{{ total }}", x, y - 8);
+            ctx.fillStyle = textoSuave;
+            ctx.font = "500 12px system-ui, sans-serif";
+            ctx.fillText("activos", x, y + 16);
+            ctx.restore();
+        }
+    };
 
     new Chart(document.getElementById("estadoChart"), {
         type: "doughnut",
         data: {
-            labels: ["Disponibles", "Asignados", "En reparación"],
+            labels: ["Disponibles", "Asignados", "En reparación", "Dados de baja"],
             datasets: [{
-                data: [{{ disponibles }}, {{ asignados }}, {{ reparacion }}],
-                backgroundColor: [
-                    css.getPropertyValue("--success").trim(),
-                    css.getPropertyValue("--warning").trim(),
-                    css.getPropertyValue("--danger").trim()
-                ],
-                borderColor: css.getPropertyValue("--surface").trim(),
+                data: [{{ disponibles }}, {{ asignados }}, {{ reparacion }}, {{ bajas }}],
+                backgroundColor: [verde, ambar, rojo, "#64748b"],
+                borderColor: superficie,
                 borderWidth: 4,
                 hoverOffset: 6
             }]
@@ -181,7 +525,36 @@
         options: {
             cutout: "72%",
             plugins: { legend: { display: false } }
+        },
+        plugins: [textoCentro]
+    });
+
+    {% if por_tipo %}
+    new Chart(document.getElementById("tipoChart"), {
+        type: "bar",
+        data: {
+            labels: {{ por_tipo|map('first')|list|tojson }},
+            datasets: [{
+                data: {{ por_tipo|map('last')|list|tojson }},
+                backgroundColor: azul,
+                borderRadius: 8,
+                maxBarThickness: 26
+            }]
+        },
+        options: {
+            indexAxis: "y",
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: { precision: 0, color: textoSuave },
+                    grid: { color: borde }
+                },
+                y: { ticks: { color: textoSuave }, grid: { display: false } }
+            }
         }
     });
+    {% endif %}
 </script>
 {% endblock %}

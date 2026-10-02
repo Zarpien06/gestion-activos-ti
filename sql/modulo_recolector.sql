@@ -1,0 +1,13 @@
+alter table public.activos add column if not exists hostname text;
+alter table public.activos add column if not exists usuario_windows text;
+alter table public.activos add column if not exists uuid_equipo text;
+alter table public.activos add column if not exists bios_serial text;
+alter table public.activos add column if not exists dominio text;
+alter table public.activos add column if not exists direccion_ip text;
+alter table public.activos add column if not exists direccion_mac text;
+alter table public.activos add column if not exists ultima_revision timestamptz;
+create table if not exists public.tokens_recolector(id bigserial primary key,nombre text not null,token_hash text not null unique,activo boolean default true,creado_en timestamptz default now(),ultimo_uso timestamptz);
+create table if not exists public.escaneos_equipos(id bigserial primary key,activo_id bigint references public.activos(id) on delete set null,hostname text,usuario_windows text,bios_serial text,uuid_equipo text,marca text,modelo text,procesador text,ram_gb numeric,disco_gb numeric,sistema_operativo text,direccion_ip text,direccion_mac text,dominio text,version_recolector text,estado text default 'nuevo',datos_json jsonb,fecha_escaneo timestamptz default now());
+create table if not exists public.cambios_hardware(id bigserial primary key,activo_id bigint references public.activos(id) on delete cascade,escaneo_id bigint references public.escaneos_equipos(id) on delete cascade,campo text,valor_anterior text,valor_nuevo text,estado_revision text default 'Pendiente',fecha timestamptz default now());
+insert into public.modulos(codigo,nombre,descripcion,orden,activo) values('recolector','Equipos detectados','Bandeja del recolector de Windows',11,true) on conflict(codigo) do update set activo=true;
+notify pgrst, 'reload schema';

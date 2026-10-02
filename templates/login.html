@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar sesion | Gestion Activos TI</title>
+    <title>Iniciar sesión | Gestión Activos TI</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -53,7 +53,6 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* Fondo con luces difuminadas */
         body::before,
         body::after {
             content: "";
@@ -64,6 +63,7 @@
             filter: blur(110px);
             opacity: .55;
             z-index: 0;
+            pointer-events: none;
         }
 
         body::before { top: -160px; left: -140px; background: #4f46e5; }
@@ -79,29 +79,28 @@
             border: 1px solid var(--border);
             border-radius: 20px;
             box-shadow: 0 30px 70px rgba(0,0,0,.35);
-            animation: rise .45s ease;
+            animation: rise .35s ease;
         }
 
         @keyframes rise {
-            from { opacity: 0; transform: translateY(14px); }
+            from { opacity: 0; transform: translateY(12px); }
             to   { opacity: 1; transform: none; }
         }
 
         .login-header { text-align: center; margin-bottom: 28px; }
 
         .login-icon {
-            display: grid;
-            place-items: center;
-            width: 56px;
-            height: 56px;
-            margin: 0 auto 18px;
-            color: #fff;
-            font-size: 20px;
-            font-weight: 700;
-            border-radius: 16px;
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            box-shadow: 0 10px 24px rgba(99,102,241,.45);
-        }
+    width: 90px;
+    height: 90px;
+    margin: 0 auto 18px;
+    filter: drop-shadow(0 8px 20px rgba(99,102,241,.5));
+}
+
+.login-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
 
         .login-header h1 {
             margin: 0;
@@ -140,6 +139,26 @@
             border-color: var(--primary);
             box-shadow: 0 0 0 4px var(--primary-soft);
         }
+
+        .password-wrap { position: relative; }
+        .password-wrap .form-control { padding-right: 70px; }
+
+        .toggle-pass {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            padding: 4px 8px;
+            color: var(--text-light);
+            background: transparent;
+            border: 0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12.5px;
+            font-weight: 600;
+        }
+
+        .toggle-pass:hover { color: var(--primary); }
 
         .remember-row {
             display: flex;
@@ -205,53 +224,82 @@
 <body>
     <main class="login-card">
         <header class="login-header">
-            <div class="login-icon">TI</div>
-            <h1>Gestion de Activos TI</h1>
+            <div class="login-icon">
+    <img src="{{ url_for('static', filename='img/Logo.png') }}" alt="Logo Editorial Planeta">
+</div>
+            <h1>Gestión de Activos TI</h1>
             <p>Ingresa para acceder al sistema</p>
         </header>
 
         {% with mensajes = get_flashed_messages(with_categories=true) %}
-            {% if mensajes %}
-                {% for categoria, mensaje in mensajes %}
-                    <div class="alert alert-{{ categoria }}">{{ mensaje }}</div>
-                {% endfor %}
-            {% endif %}
+            {% for categoria, mensaje in mensajes %}
+                <div class="alert alert-{{ categoria }}" role="alert">{{ mensaje }}</div>
+            {% endfor %}
         {% endwith %}
 
-        <form id="loginForm" method="POST" action="{{ url_for('login') }}">
+        <form id="loginForm" method="POST" action="{{ url_for('login', next=request.args.get('next')) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
             <div class="form-group">
                 <label for="username">Usuario</label>
                 <input id="username" name="username" type="text" class="form-control"
-                       autocomplete="username" placeholder="Ejemplo: admin" required autofocus>
+                       autocomplete="username" autocapitalize="none" spellcheck="false"
+                       placeholder="Ejemplo: uocf3a" required autofocus>
             </div>
 
             <div class="form-group">
-                <label for="password">Contrasena</label>
-                <input id="password" name="password" type="password" class="form-control"
-                       autocomplete="current-password" required>
+                <label for="password">Contraseña</label>
+                <div class="password-wrap">
+                    <input id="password" name="password" type="password" class="form-control"
+                           autocomplete="current-password" required>
+                    <button type="button" class="toggle-pass" id="togglePass" aria-label="Mostrar contraseña">Mostrar</button>
+                </div>
             </div>
 
             <label class="remember-row">
                 <input name="recordar" type="checkbox">
-                <span>Recordar sesion</span>
+                <span>Recordar sesión</span>
             </label>
 
-            <button id="loginButton" type="submit" class="login-button">Iniciar sesion</button>
+            <button id="loginButton" type="submit" class="login-button">Iniciar sesión</button>
         </form>
 
         <div class="security-note">
-            La sesion se cierra automaticamente despues de 30 minutos de inactividad.
+            La sesión se cierra automáticamente después de 30 minutos de inactividad.
         </div>
     </main>
 
     <script>
-        const form = document.getElementById("loginForm");
-        const button = document.getElementById("loginButton");
+        (function () {
+            const form = document.getElementById("loginForm");
+            const button = document.getElementById("loginButton");
+            const pass = document.getElementById("password");
+            const toggle = document.getElementById("togglePass");
 
-        form.addEventListener("submit", function () {
-            button.disabled = true;
-            button.textContent = "Ingresando...";
-        });
+            let enviado = false;
+            form.addEventListener("submit", function (e) {
+                if (enviado) { e.preventDefault(); return; }
+                enviado = true;
+                button.disabled = true;
+                button.textContent = "Ingresando...";
+            });
+
+            // Si el navegador restaura la página desde caché (botón atrás), reactiva el botón
+            window.addEventListener("pageshow", function (e) {
+                if (e.persisted) {
+                    enviado = false;
+                    button.disabled = false;
+                    button.textContent = "Iniciar sesión";
+                }
+            });
+
+            toggle.addEventListener("click", function () {
+                const visible = pass.type === "text";
+                pass.type = visible ? "password" : "text";
+                toggle.textContent = visible ? "Mostrar" : "Ocultar";
+                toggle.setAttribute("aria-label", visible ? "Mostrar contraseña" : "Ocultar contraseña");
+            });
+        })();
     </script>
 </body>
 </html>

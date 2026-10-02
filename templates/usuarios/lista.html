@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Usuarios | Gestion de Activos TI{% endblock %}
+{% block title %}Usuarios | Gestión de Activos TI{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -45,14 +45,40 @@
     }
     .form-select:disabled, .form-control:disabled { opacity: .6; cursor: not-allowed; }
 
-    .section-label {
+    /* ---------- Barra de lista: titulo + filtros ---------- */
+    .list-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
         margin: 32px 0 14px;
+    }
+
+    .section-label {
+        margin: 0;
         font-size: 13px;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: .06em;
         color: var(--text-light);
     }
+
+    .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    .chip {
+        padding: 6px 14px;
+        color: var(--text-light);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        transition: var(--transition);
+    }
+    .chip:hover { color: var(--text); border-color: var(--primary); }
+    .chip.active { color: var(--primary); background: var(--primary-soft); border-color: transparent; }
 
     .usuarios-grid {
         display: grid;
@@ -61,6 +87,7 @@
     }
 
     .usuario-card { display: flex; flex-direction: column; }
+    .usuario-card[hidden] { display: none; }
 
     .usuario-head {
         display: flex;
@@ -85,6 +112,8 @@
     .usuario-head .who { flex: 1; min-width: 0; }
     .usuario-head h3 { margin: 0; font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .usuario-head p { margin: 2px 0 0; color: var(--text-light); font-size: 13px; }
+
+    .badges { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
 
     .current-note {
         margin-bottom: 16px;
@@ -114,16 +143,20 @@
         border-top: 1px solid var(--border);
     }
 
+    .actions form { margin: 0; }
     .password-form { display: flex; flex: 1; gap: 8px; }
 
     .btn-sm { padding: 8px 14px; font-size: 12.5px; white-space: nowrap; }
-    .btn-secondary { background: #475569; }
-    .btn-secondary:hover { background: #334155; }
+    .btn-secondary { background: var(--text-light); }
+    .btn-secondary:hover { background: var(--text); }
     .btn-warning { color: #422006; background: #f59e0b; }
     .btn-warning:hover { color: #422006; background: #d97706; }
 
     .last-access { margin-top: 16px; color: var(--text-light); font-size: 13px; }
     .last-access strong { color: var(--text); font-weight: 500; }
+
+    .no-results { display: none; padding: 40px 16px; text-align: center; color: var(--text-light); }
+    .no-results.visible { display: block; }
 
     @media (max-width: 850px) {
         .edit-grid { grid-template-columns: 1fr; }
@@ -139,7 +172,7 @@
 <div class="page-header">
     <div>
         <h1>Usuarios del sistema</h1>
-        <p>Crea y edita usuarios, cambia contrasenas, roles y estados.</p>
+        <p>Crea y edita usuarios, cambia contraseñas, roles y estados.</p>
     </div>
 
     <a class="btn btn-secondary" href="{{ url_for('administrar_permisos') }}">Administrar permisos</a>
@@ -157,31 +190,32 @@
         <div class="form-grid">
 
             <div class="field">
-                <label>Nombre completo *</label>
-                <input name="nombre" class="form-control" required>
+                <label for="nuevo_nombre">Nombre completo *</label>
+                <input id="nuevo_nombre" name="nombre" class="form-control" autocomplete="off" required>
             </div>
 
             <div class="field">
-                <label>Usuario *</label>
-                <input name="username" class="form-control" minlength="4" pattern="[A-Za-z0-9._-]+" required>
-                <small>Minimo 4 caracteres, sin espacios.</small>
+                <label for="nuevo_username">Usuario *</label>
+                <input id="nuevo_username" name="username" class="form-control" minlength="4"
+                       pattern="[A-Za-z0-9._-]+" autocomplete="off" autocapitalize="none" required>
+                <small>Mínimo 4 caracteres, sin espacios.</small>
             </div>
 
             <div class="field">
-                <label>Correo</label>
-                <input name="correo" type="email" class="form-control">
+                <label for="nuevo_correo">Correo</label>
+                <input id="nuevo_correo" name="correo" type="email" class="form-control" autocomplete="off">
             </div>
 
             <div class="field">
-                <label>Contrasena *</label>
-                <input name="password" type="password" class="form-control" minlength="8"
+                <label for="nuevo_password">Contraseña *</label>
+                <input id="nuevo_password" name="password" type="password" class="form-control" minlength="8"
                        autocomplete="new-password" required>
-                <small>Minimo 8 caracteres.</small>
+                <small>Mínimo 8 caracteres.</small>
             </div>
 
             <div class="field">
-                <label>Rol *</label>
-                <select name="rol_id" class="form-select" required>
+                <label for="nuevo_rol">Rol *</label>
+                <select id="nuevo_rol" name="rol_id" class="form-select" required>
                     <option value="">Selecciona un rol</option>
                     {% for rol in roles %}
                         <option value="{{ rol.id }}">{{ rol.nombre }}</option>
@@ -200,15 +234,28 @@
 </div>
 
 
-<div class="section-label">Usuarios registrados ({{ usuarios|length }})</div>
+{% set n_activos = usuarios | selectattr('activo') | list | length %}
 
-<div class="usuarios-grid">
+<div class="list-bar">
+    <h2 class="section-label">Usuarios registrados (<span id="contador">{{ usuarios|length }}</span>)</h2>
+
+    <div class="chips" role="group" aria-label="Filtrar por estado">
+        <button type="button" class="chip active" data-filtro="todos">Todos ({{ usuarios|length }})</button>
+        <button type="button" class="chip" data-filtro="activos">Activos ({{ n_activos }})</button>
+        <button type="button" class="chip" data-filtro="inactivos">Inactivos ({{ usuarios|length - n_activos }})</button>
+    </div>
+</div>
+
+<div class="usuarios-grid" id="usuariosGrid">
 
     {% for usuario in usuarios %}
 
         {% set es_actual = usuario.id|string == current_user.id|string %}
+        {% set rol_actual = roles | selectattr('id', 'equalto', usuario.rol_id) | first %}
 
-        <article class="card usuario-card">
+        <article class="card usuario-card"
+                 data-activo="{{ '1' if usuario.activo else '0' }}"
+                 data-buscar="{{ [usuario.nombre or '', usuario.username or '', usuario.correo or '', rol_actual.nombre if rol_actual else '']|join(' ')|lower }}">
 
             <div class="usuario-head">
                 <span class="avatar">{{ (usuario.nombre or '?')[:1]|upper }}</span>
@@ -218,15 +265,20 @@
                     <p>@{{ usuario.username or 'sin_usuario' }}</p>
                 </div>
 
-                {% if usuario.activo %}
-                    <span class="badge badge-success">Activo</span>
-                {% else %}
-                    <span class="badge badge-danger">Inactivo</span>
-                {% endif %}
+                <div class="badges">
+                    {% if usuario.activo %}
+                        <span class="badge badge-success">Activo</span>
+                    {% else %}
+                        <span class="badge badge-danger">Inactivo</span>
+                    {% endif %}
+                    {% if rol_actual %}
+                        <span class="badge badge-info">{{ rol_actual.nombre }}</span>
+                    {% endif %}
+                </div>
             </div>
 
             {% if es_actual %}
-                <div class="current-note">Sesion actual. No puedes desactivarla ni cambiar su rol.</div>
+                <div class="current-note">Sesión actual. No puedes desactivarla ni cambiar su rol.</div>
             {% endif %}
 
             <form method="POST" action="{{ url_for('editar_usuario_web', usuario_id=usuario.id) }}">
@@ -234,24 +286,28 @@
                 <div class="edit-grid">
 
                     <div class="field">
-                        <label>Nombre</label>
-                        <input name="nombre" class="form-control" value="{{ usuario.nombre }}" required>
+                        <label for="nombre_{{ usuario.id }}">Nombre</label>
+                        <input id="nombre_{{ usuario.id }}" name="nombre" class="form-control"
+                               value="{{ usuario.nombre }}" required>
                     </div>
 
                     <div class="field">
-                        <label>Usuario</label>
-                        <input name="username" class="form-control" value="{{ usuario.username or '' }}"
-                               minlength="4" pattern="[A-Za-z0-9._-]+" required>
+                        <label for="username_{{ usuario.id }}">Usuario</label>
+                        <input id="username_{{ usuario.id }}" name="username" class="form-control"
+                               value="{{ usuario.username or '' }}"
+                               minlength="4" pattern="[A-Za-z0-9._-]+" autocapitalize="none" required>
                     </div>
 
                     <div class="field">
-                        <label>Correo</label>
-                        <input name="correo" type="email" class="form-control" value="{{ usuario.correo or '' }}">
+                        <label for="correo_{{ usuario.id }}">Correo</label>
+                        <input id="correo_{{ usuario.id }}" name="correo" type="email" class="form-control"
+                               value="{{ usuario.correo or '' }}">
                     </div>
 
                     <div class="field">
-                        <label>Rol</label>
-                        <select name="rol_id" class="form-select" required {% if es_actual %}disabled{% endif %}>
+                        <label for="rol_{{ usuario.id }}">Rol</label>
+                        <select id="rol_{{ usuario.id }}" name="rol_id" class="form-select" required
+                                {% if es_actual %}disabled{% endif %}>
                             {% for rol in roles %}
                                 <option value="{{ rol.id }}" {% if rol.id == usuario.rol_id %}selected{% endif %}>{{ rol.nombre }}</option>
                             {% endfor %}
@@ -271,14 +327,24 @@
 
             <div class="actions">
 
-                <form method="POST" action="{{ url_for('cambiar_password_web', usuario_id=usuario.id) }}" class="password-form">
+                <form method="POST" action="{{ url_for('cambiar_password_web', usuario_id=usuario.id) }}" class="password-form"
+                      data-confirm="Se reemplazará la contraseña actual de {{ usuario.nombre }}."
+                      data-confirm-title="¿Cambiar la contraseña?"
+                      data-confirm-ok="Cambiar contraseña">
                     <input name="password" type="password" class="form-control" minlength="8"
-                           placeholder="Nueva contrasena" autocomplete="new-password" required>
-                    <button type="submit" class="btn btn-sm btn-warning">Cambiar contrasena</button>
+                           placeholder="Nueva contraseña (mín. 8)" aria-label="Nueva contraseña"
+                           autocomplete="new-password" required>
+                    <button type="submit" class="btn btn-sm btn-warning">Cambiar contraseña</button>
                 </form>
 
                 {% if not es_actual %}
-                    <form method="POST" action="{{ url_for('cambiar_estado_usuario', usuario_id=usuario.id) }}">
+                    <form method="POST" action="{{ url_for('cambiar_estado_usuario', usuario_id=usuario.id) }}"
+                          {% if usuario.activo %}
+                          data-confirm="{{ usuario.nombre }} ya no podrá iniciar sesión hasta que lo actives de nuevo."
+                          data-confirm-title="¿Desactivar usuario?"
+                          data-confirm-ok="Desactivar"
+                          data-confirm-danger="1"
+                          {% endif %}>
                         <input type="hidden" name="activo" value="{{ 'false' if usuario.activo else 'true' }}">
                         <button type="submit" class="btn btn-sm {{ 'btn-danger' if usuario.activo else 'btn-success' }}">
                             {{ 'Desactivar' if usuario.activo else 'Activar' }}
@@ -288,7 +354,14 @@
 
             </div>
 
-            <div class="last-access"><strong>Ultimo acceso:</strong> {{ usuario.ultimo_acceso or 'Nunca' }}</div>
+            <div class="last-access">
+                <strong>Último acceso:</strong>
+                {% if usuario.ultimo_acceso %}
+                    <time class="fecha" datetime="{{ usuario.ultimo_acceso }}">{{ usuario.ultimo_acceso[:16]|replace('T', ' ') }}</time>
+                {% else %}
+                    Nunca
+                {% endif %}
+            </div>
 
         </article>
 
@@ -300,4 +373,61 @@
 
 </div>
 
+<div class="no-results" id="sinResultados">Ningún usuario coincide con el filtro.</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+    (function () {
+        // Fechas en hora local del navegador
+        document.querySelectorAll('time.fecha').forEach(function (t) {
+            let iso = t.getAttribute('datetime') || '';
+            if (!/[zZ]|[+-]\d{2}:?\d{2}$/.test(iso)) iso += 'Z';
+            const d = new Date(iso);
+            if (isNaN(d)) return;
+            t.textContent = d.toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' });
+        });
+
+        // Filtro por estado + busqueda de la barra superior
+        const tarjetas = Array.from(document.querySelectorAll('.usuario-card'));
+        const chips = document.querySelectorAll('.chip');
+        const contador = document.getElementById('contador');
+        const vacio = document.getElementById('sinResultados');
+        const buscador = document.getElementById('busquedaGlobal');
+
+        let filtro = 'todos';
+        let texto = '';
+
+        function aplicar() {
+            let visibles = 0;
+            tarjetas.forEach(function (c) {
+                const activo = c.dataset.activo === '1';
+                const okEstado = filtro === 'todos' || (filtro === 'activos' ? activo : !activo);
+                const okTexto = !texto || c.dataset.buscar.includes(texto);
+                const mostrar = okEstado && okTexto;
+                c.hidden = !mostrar;
+                if (mostrar) visibles++;
+            });
+            contador.textContent = visibles;
+            vacio.classList.toggle('visible', tarjetas.length > 0 && visibles === 0);
+        }
+
+        chips.forEach(function (chip) {
+            chip.addEventListener('click', function () {
+                filtro = chip.dataset.filtro;
+                chips.forEach(c => c.classList.toggle('active', c === chip));
+                aplicar();
+            });
+        });
+
+        if (buscador) {
+            buscador.addEventListener('input', function () {
+                texto = this.value.toLowerCase().trim();
+                aplicar();
+            });
+        }
+    })();
+</script>
 {% endblock %}

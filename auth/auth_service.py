@@ -1,3 +1,5 @@
+import threading
+import time
 from datetime import datetime, timezone
 
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -5,6 +7,47 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from auth.usuario import Usuario
 from supabase_client import supabase
 
+
+# ==================================================
+# CACHE CORTA DE USUARIOS
+# Flask-Login llama a cargar_usuario() en CADA request. Sin cache eso son
+# 3 consultas a Supabase (usuario, rol, permisos) por cada pagina. Con cache
+# de 60 s la app responde mucho mas rapido, y si Supabase se desconecta se
+# sigue usando el ultimo usuario conocido en vez de sacarte de la sesion.
+# ==================================================
+
+CACHE_TTL_SEGUNDOS = 60
+_cache_usuarios = {}
+_cache_lock = threading.Lock()
+
+
+def limpiar_cache_usuarios(usuario_id=None):
+    """Borra la cache (toda, o la de un usuario). Llamar al cambiar permisos/roles."""
+    with _cache_lock:
+        if usuario_id is None:
+            _cache_usuarios.clear()
+        else:
+            _cache_usuarios.pop(int(usuario_id), None)
+
+
+def _guardar_en_cache(usuario):
+    with _cache_lock:
+        _cache_usuarios[int(usuario.id)] = (time.monotonic(), usuario)
+
+
+def _leer_de_cache(usuario_id):
+    """Devuelve (usuario, vigente) o (None, False)."""
+    with _cache_lock:
+        entrada = _cache_usuarios.get(int(usuario_id))
+    if not entrada:
+        return None, False
+    momento, usuario = entrada
+    return usuario, (time.monotonic() - momento) < CACHE_TTL_SEGUNDOS
+
+
+# ==================================================
+# CONSULTAS
+# ==================================================
 
 def obtener_usuario_por_username(username):
     username = str(username or "").strip().lower()
@@ -120,6 +163,10 @@ def construir_usuario(registro):
     return usuario
 
 
+# ==================================================
+# LOGIN / SESION
+# ==================================================
+
 def autenticar_usuario(username, password):
     registro = obtener_usuario_por_username(username)
     if not registro or not registro.get("activo", False):
@@ -132,6 +179,8 @@ def autenticar_usuario(username, password):
     usuario = construir_usuario(registro)
     if usuario is None:
         return None
+
+    _guardar_en_cache(usuario)
 
     try:
         (
@@ -148,12 +197,39 @@ def autenticar_usuario(username, password):
 
 
 def cargar_usuario(usuario_id):
+    """user_loader de Flask-Login: cache -> Supabase con reintentos -> cache vieja."""
     try:
-        return construir_usuario(obtener_usuario_por_id(usuario_id))
-    except Exception as error:
-        print(f"No se pudo cargar el usuario {usuario_id}: {error}")
+        cacheado, vigente = _leer_de_cache(usuario_id)
+    except (TypeError, ValueError):
         return None
 
+    if cacheado is not None and vigente:
+        return cacheado
+
+    for intento in range(3):
+        try:
+            usuario = construir_usuario(obtener_usuario_por_id(usuario_id))
+            if usuario is None:
+                limpiar_cache_usuarios(usuario_id)  # desactivado o eliminado
+                return None
+            _guardar_en_cache(usuario)
+            return usuario
+        except Exception as error:
+            print(
+                f"No se pudo cargar el usuario {usuario_id} "
+                f"(intento {intento + 1}): {error}"
+            )
+            time.sleep(0.3)
+
+    # Supabase no respondio: mejor usar el ultimo dato conocido que cerrar la sesion
+    if cacheado is not None:
+        return cacheado
+    return None
+
+
+# ==================================================
+# ADMINISTRACION
+# ==================================================
 
 def crear_usuario(nombre, username, correo, password, rol_id, activo=True):
     nombre = str(nombre or "").strip()
@@ -207,6 +283,7 @@ def cambiar_password(usuario_id, password_nueva):
         .eq("id", int(usuario_id))
         .execute()
     )
+    limpiar_cache_usuarios(usuario_id)
     return respuesta.data or []
 
 
@@ -265,4 +342,5 @@ def actualizar_usuario(usuario_id, nombre, username, correo, rol_id):
         .eq("id", int(usuario_id))
         .execute()
     )
+    limpiar_cache_usuarios(usuario_id)
     return respuesta.data or []

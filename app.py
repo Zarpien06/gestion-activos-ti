@@ -1,3 +1,9 @@
+from collections import Counter
+import io
+import re
+import time
+import uuid
+import zipfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import os
@@ -7,9 +13,11 @@ from flask import (
     Flask,
     abort,
     flash,
+    has_request_context,
     redirect,
     render_template,
     request,
+    send_file,
     send_from_directory,
     session,
     url_for,
@@ -20,13 +28,16 @@ from flask_login import (
     login_user,
     logout_user,
 )
+from flask_wtf.csrf import CSRFError, CSRFProtect
 
+from api.recolector_routes import recolector_bp
 from auth import inicializar_login
 from auth.auth_service import (
     actualizar_usuario,
     autenticar_usuario,
     cambiar_password,
     crear_usuario,
+    limpiar_cache_usuarios,
 )
 from auth.decorators import permiso_requerido, solo_administrador
 from services.pdf_generator import generar_acta_pdf
@@ -49,13 +60,55 @@ app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(
     minutes=int(os.getenv("SESSION_TIMEOUT_MINUTES", "30"))
 )
 
+# Limite de tamano por envio (facturas del activo + adicionales)
+app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024  # 20 MB
+
+# Cookie "Recordar sesion" (Flask-Login)
+app.config["REMEMBER_COOKIE_DURATION"] = timedelta(days=7)
+app.config["REMEMBER_COOKIE_HTTPONLY"] = True
+app.config["REMEMBER_COOKIE_SAMESITE"] = "Lax"
+app.config["REMEMBER_COOKIE_SECURE"] = (
+    os.getenv("RENDER", "").lower() == "true"
+)
+
 inicializar_login(app)
+app.register_blueprint(recolector_bp)
+
+# Proteccion CSRF global. El recolector queda exento porque los equipos
+# se autentican con token (tabla tokens_recolector), no con sesion.
+csrf = CSRFProtect(app)
+csrf.exempt(recolector_bp)
 
 
+# El endpoint del recolector es publico para la sesion web porque
+# los equipos se autentican con un token (tabla tokens_recolector),
+# no con login.
 RUTAS_PUBLICAS = {
     "login",
     "static",
+    "recolector.recibir_equipo",
 }
+
+
+def cerrar_sesion_y_redirigir(mensaje=None, categoria="success", destino="login"):
+    """Cierra la sesion de forma definitiva y manda al login.
+
+    El orden importa: primero se limpia la sesion y despues se llama a
+    logout_user(), para que Flask-Login pueda marcar la cookie de
+    "recordar" para borrado. Ademas se borra la cookie de forma explicita.
+    """
+    session.clear()
+    logout_user()
+
+    if mensaje:
+        # El flash va despues de limpiar la sesion, si no se perderia
+        flash(mensaje, categoria)
+
+    respuesta = redirect(url_for(destino))
+    respuesta.delete_cookie(
+        app.config.get("REMEMBER_COOKIE_NAME", "remember_token")
+    )
+    return respuesta
 
 
 @app.before_request
@@ -82,22 +135,31 @@ def controlar_sesion():
 
             if ahora - ultimo > limite:
                 nombre = current_user.nombre
-                logout_user()
-                session.clear()
-                flash(
+                return cerrar_sesion_y_redirigir(
                     f"La sesion de {nombre} expiro por inactividad.",
                     "warning",
                 )
-                return redirect(url_for("login"))
         except (TypeError, ValueError):
-            session.clear()
-            logout_user()
-            flash("La sesion no es valida. Inicia sesion nuevamente.", "warning")
-            return redirect(url_for("login"))
+            return cerrar_sesion_y_redirigir(
+                "La sesion no es valida. Inicia sesion nuevamente.",
+                "warning",
+            )
 
     session["ultimo_acceso"] = ahora.isoformat()
     session.permanent = True
     return None
+
+
+@app.after_request
+def sin_cache(respuesta):
+    """Evita que el navegador guarde paginas (boton 'atras' tras cerrar sesion)."""
+    if request.endpoint != "static":
+        respuesta.headers["Cache-Control"] = (
+            "no-store, no-cache, must-revalidate, max-age=0"
+        )
+        respuesta.headers["Pragma"] = "no-cache"
+        respuesta.headers["Expires"] = "0"
+    return respuesta
 
 
 # ==================================================
@@ -105,14 +167,32 @@ def controlar_sesion():
 # ==================================================
 
 def consultar_tabla(nombre_tabla, columnas="*", ordenar_por=None):
+    # Reintenta una vez: Supabase a veces corta la conexion por inactividad
+    for intento in range(2):
+        try:
+            consulta = supabase.table(nombre_tabla).select(columnas)
+            if ordenar_por:
+                consulta = consulta.order(ordenar_por)
+            return consulta.execute().data or []
+        except Exception as error:
+            print(f"Error consultando {nombre_tabla} (intento {intento + 1}): {error}")
+            time.sleep(0.3)
+    return []
+
+
+def consultar_recientes(nombre_tabla, limite=8):
     try:
-        consulta = supabase.table(nombre_tabla).select(columnas)
-        if ordenar_por:
-            consulta = consulta.order(ordenar_por)
-        resultado = consulta.execute()
+        resultado = (
+            supabase
+            .table(nombre_tabla)
+            .select("*")
+            .order("id", desc=True)
+            .limit(limite)
+            .execute()
+        )
         return resultado.data or []
     except Exception as error:
-        print(f"Error consultando {nombre_tabla}: {error}")
+        print(f"Error consultando recientes de {nombre_tabla}: {error}")
         return []
 
 
@@ -156,16 +236,37 @@ def registrar_movimiento(
 
 
 def registrar_historial(activo_id, accion, detalle):
-    return (
-        supabase
-        .table("historial")
-        .insert({
-            "activo_id": activo_id,
-            "accion": accion,
-            "detalle": detalle,
-        })
-        .execute()
-    )
+    """Guarda la accion en el historial junto con el usuario que la hizo."""
+    registro = {
+        "activo_id": activo_id,
+        "accion": accion,
+        "detalle": detalle,
+    }
+
+    if has_request_context() and current_user.is_authenticated:
+        registro["usuario_id"] = int(current_user.id)
+        registro["usuario_nombre"] = current_user.nombre
+
+    try:
+        return supabase.table("historial").insert(registro).execute()
+    except Exception as error:
+        # Si aun no existen las columnas usuario_*, guarda igual sin el usuario
+        if "usuario_" in str(error):
+            registro.pop("usuario_id", None)
+            registro.pop("usuario_nombre", None)
+            return supabase.table("historial").insert(registro).execute()
+        raise
+
+
+def _fecha_local(valor):
+    """ISO en UTC -> '02/10 15:30' en hora Colombia."""
+    try:
+        dt = datetime.fromisoformat(str(valor).replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return (dt - timedelta(hours=5)).strftime("%d/%m %H:%M")
+    except (TypeError, ValueError):
+        return str(valor or "")[:16].replace("T", " ")
 
 
 def obtener_roles():
@@ -237,10 +338,10 @@ def login():
 @login_required
 def logout():
     nombre = current_user.nombre
-    logout_user()
-    session.clear()
-    flash(f"La sesion de {nombre} fue cerrada.", "success")
-    return redirect(url_for("login"))
+    return cerrar_sesion_y_redirigir(
+        f"La sesion de {nombre} fue cerrada.",
+        "success",
+    )
 
 
 # ==================================================
@@ -270,6 +371,43 @@ def dashboard():
         if "baja" in estado_operativo(activo)
     )
 
+    # Activos por tipo (top 6)
+    por_tipo = Counter(
+        (str(a.get("tipo") or "").strip() or "Sin tipo")
+        for a in activos
+    ).most_common(6)
+
+    # Activos asignados por area (top 5)
+    por_area = Counter(
+        str(a.get("area")).strip()
+        for a in activos
+        if estado_operativo(a) == "asignado" and a.get("area")
+    ).most_common(5)
+
+    # Tickets que siguen abiertos
+    cerrados = {"cerrado", "resuelto", "solucionado", "finalizado", "completado"}
+    tickets_abiertos = [
+        t for t in consultar_tabla("tickets", "*", "id")
+        if str(t.get("estado") or "").strip().lower() not in cerrados
+    ]
+    tickets_abiertos.sort(key=lambda t: t.get("id") or 0, reverse=True)
+
+    codigos = {a.get("id"): a.get("codigo") for a in activos}
+
+    # Actividad reciente: hora local y codigo del activo
+    actividad = consultar_recientes("historial", 8)
+    for mov in actividad:
+        mov["fecha_local"] = _fecha_local(
+            mov.get("created_at") or mov.get("fecha")
+        )
+        mov["activo_codigo"] = codigos.get(mov.get("activo_id"))
+
+    lista_personas = consultar_tabla("personas", "*", "id")
+    personas_activas = sum(
+        1 for p in lista_personas
+        if str(p.get("estado") or "Activo").strip().lower() == "activo"
+    )
+
     return render_template(
         "dashboard.html",
         total=total,
@@ -277,6 +415,15 @@ def dashboard():
         asignados=asignados,
         reparacion=reparacion,
         bajas=bajas,
+        por_tipo=por_tipo,
+        por_area=por_area,
+        tickets_abiertos=tickets_abiertos[:5],
+        total_tickets_abiertos=len(tickets_abiertos),
+        codigos=codigos,
+        personas_activas=personas_activas,
+        total_actas=len(consultar_tabla("actas", "id")),
+        actividad=actividad,
+        hoy=datetime.now(timezone.utc) - timedelta(hours=5),
     )
 
 
@@ -284,12 +431,405 @@ def dashboard():
 # INVENTARIO
 # ==================================================
 
+BUCKET_FACTURAS = "facturas"
+EXT_FACTURA = {".pdf", ".jpg", ".jpeg", ".png"}
+DISPONIBILIDADES = {
+    "Disponible",
+    "En reparación",
+    "Inhabilitado",
+    "Dado de baja",
+}
+
+
+def _es_laptop(tipo):
+    t = (tipo or "").lower()
+    return "laptop" in t or "portatil" in t or "portátil" in t
+
+
+def subir_factura(archivo, carpeta):
+    """Sube un archivo al bucket privado y devuelve la ruta (o None)."""
+    if not archivo or not archivo.filename:
+        return None
+
+    ext = Path(archivo.filename).suffix.lower()
+    if ext not in EXT_FACTURA:
+        raise ValueError("La factura debe ser PDF, JPG o PNG.")
+
+    ruta = f"{carpeta}/{uuid.uuid4().hex}{ext}"
+    supabase.storage.from_(BUCKET_FACTURAS).upload(
+        ruta,
+        archivo.read(),
+        {"content-type": archivo.mimetype or "application/octet-stream"},
+    )
+    return ruta
+
+
+@app.route("/inventario/factura/<path:ruta>")
+@login_required
+@permiso_requerido("inventario", "ver")
+def ver_factura(ruta):
+    """Redirige a un enlace temporal (5 min) de la factura."""
+    try:
+        firmado = supabase.storage.from_(BUCKET_FACTURAS).create_signed_url(
+            ruta, 300
+        )
+        url = firmado.get("signedURL") or firmado.get("signedUrl")
+        if not url:
+            raise ValueError("Sin URL")
+        return redirect(url)
+    except Exception as error:
+        print(f"Error abriendo factura: {error}")
+        flash("No fue posible abrir la factura.", "danger")
+        return redirect(url_for("inventario"))
+
+
 @app.route("/inventario")
 @login_required
 @permiso_requerido("inventario", "ver")
 def inventario():
     activos = consultar_tabla("activos", "*", "codigo")
-    return render_template("activos.html", activos=activos)
+
+    personas_activas = [
+        p for p in consultar_tabla("personas", "*", "nombre")
+        if str(p.get("estado") or "Activo").strip().lower() == "activo"
+    ]
+
+    adicionales = {}
+    for ad in consultar_tabla("activos_adicionales", "*", "id"):
+        ad["factura_url"] = (
+            url_for("ver_factura", ruta=ad["factura_ruta"])
+            if ad.get("factura_ruta") else ""
+        )
+        adicionales.setdefault(ad["activo_id"], []).append(ad)
+
+    return render_template(
+        "activos.html",
+        activos=activos,
+        personas=personas_activas,
+        adicionales=adicionales,
+    )
+
+
+def _campos_activo():
+    """Lee y limpia los campos del formulario de crear/editar activo."""
+    f = request.form
+
+    def texto(nombre):
+        return f.get(nombre, "").strip() or None
+
+    return {
+        "codigo": f.get("codigo", "").strip(),
+        "tipo": f.get("tipo", "").strip(),
+        "marca": texto("marca"),
+        "modelo": texto("modelo"),
+        "serial": texto("serial"),
+        "estado": texto("estado"),  # estado fisico
+        "cantidad": f.get("cantidad", type=int),
+        "procesador": texto("procesador"),
+        "ram": texto("ram"),
+        "disco": texto("disco"),
+        "hostname": texto("hostname"),
+        "ip": texto("ip"),
+        "mac": texto("mac"),
+        "sistema_operativo": texto("sistema_operativo"),
+        "fecha_compra": texto("fecha_compra"),
+        "garantia": texto("garantia"),
+        "observaciones": texto("observaciones"),
+    }
+
+
+def _codigo_en_uso(codigo, excluir_id=None):
+    consulta = (
+        supabase
+        .table("activos")
+        .select("id")
+        .eq("codigo", codigo)
+    )
+    if excluir_id is not None:
+        consulta = consulta.neq("id", excluir_id)
+    return bool(consulta.limit(1).execute().data)
+
+
+def _persona_para_asignar():
+    """Devuelve la persona elegida en el formulario (o None)."""
+    persona_id = request.form.get("persona_id", type=int)
+    if not persona_id:
+        return None
+
+    persona = obtener_registro("personas", persona_id)
+    if persona is None:
+        raise ValueError("La persona seleccionada no existe.")
+    if str(persona.get("estado") or "Activo").strip().lower() != "activo":
+        raise ValueError("La persona seleccionada está inactiva.")
+    return persona
+
+
+def _asignar_a_persona(activo_id, codigo, persona, anterior=None):
+    """Asigna el activo (nombre y area salen de la persona)."""
+    supabase.table("activos").update({
+        "disponibilidad": "Asignado",
+        "asignado_a": persona.get("nombre"),
+        "area": persona.get("area"),
+    }).eq("id", activo_id).execute()
+
+    registrar_movimiento(activo_id, persona["id"], "Asignacion", None)
+
+    detalle = f"Activo {codigo} asignado a {persona.get('nombre')}."
+    if anterior:
+        detalle += f" Antes: {anterior}."
+    registrar_historial(activo_id, "Asignacion", detalle)
+
+
+def _guardar_archivos(activo_id, tipo):
+    """Sube la factura y los adicionales. Devuelve una lista de avisos."""
+    avisos = []
+
+    try:
+        ruta = subir_factura(
+            request.files.get("factura"),
+            f"activos/{activo_id}",
+        )
+        if ruta:
+            supabase.table("activos").update(
+                {"factura_ruta": ruta}
+            ).eq("id", activo_id).execute()
+    except Exception as error:
+        print(f"Error subiendo factura: {error}")
+        avisos.append(f"No se pudo guardar la factura: {error}")
+
+    if _es_laptop(tipo):
+        tipos = request.form.getlist("adicional_tipo")
+        descs = request.form.getlist("adicional_descripcion")
+        archivos = request.files.getlist("adicional_factura")
+
+        for i, desc in enumerate(descs):
+            desc = desc.strip()
+            if not desc:
+                continue
+            try:
+                ruta = subir_factura(
+                    archivos[i] if i < len(archivos) else None,
+                    f"activos/{activo_id}/adicionales",
+                )
+                supabase.table("activos_adicionales").insert({
+                    "activo_id": activo_id,
+                    "tipo": tipos[i] if i < len(tipos) else None,
+                    "descripcion": desc,
+                    "factura_ruta": ruta,
+                }).execute()
+            except Exception as error:
+                print(f"Error guardando adicional: {error}")
+                avisos.append(
+                    f"No se pudo guardar el adicional '{desc}': {error}"
+                )
+
+    return avisos
+
+
+@app.route("/inventario/crear", methods=["POST"])
+@login_required
+@permiso_requerido("inventario", "crear")
+def crear_activo_web():
+    datos = _campos_activo()
+
+    if not datos["codigo"] or not datos["tipo"]:
+        flash("El codigo y el tipo son obligatorios.", "danger")
+        return redirect(url_for("inventario"))
+
+    try:
+        if _codigo_en_uso(datos["codigo"]):
+            raise ValueError(
+                f"Ya existe un activo con el codigo {datos['codigo']}."
+            )
+
+        persona = _persona_para_asignar()
+
+        disp = request.form.get("disponibilidad", "Disponible")
+        if disp not in DISPONIBILIDADES:
+            disp = "Disponible"
+        # Si se eligio persona, queda Asignado al terminar de crear
+        datos["disponibilidad"] = "Disponible" if persona else disp
+
+        nuevo = supabase.table("activos").insert(datos).execute()
+        activo = nuevo.data[0]
+
+        registrar_historial(
+            activo["id"],
+            "Creacion",
+            f"Activo {datos['codigo']} registrado en el inventario.",
+        )
+
+        if persona:
+            _asignar_a_persona(activo["id"], datos["codigo"], persona)
+
+        for aviso in _guardar_archivos(activo["id"], datos["tipo"]):
+            flash(aviso, "warning")
+
+        flash(f"Activo {datos['codigo']} creado correctamente.", "success")
+    except Exception as error:
+        print(f"Error creando activo: {error}")
+        flash(f"No fue posible crear el activo: {error}", "danger")
+
+    return redirect(url_for("inventario"))
+
+
+@app.route("/inventario/<int:activo_id>/editar", methods=["POST"])
+@login_required
+@permiso_requerido("inventario", "editar")
+def editar_activo_web(activo_id):
+    datos = _campos_activo()
+
+    if not datos["codigo"] or not datos["tipo"]:
+        flash("El codigo y el tipo son obligatorios.", "danger")
+        return redirect(url_for("inventario"))
+
+    try:
+        anterior = obtener_registro("activos", activo_id)
+        if anterior is None:
+            raise ValueError("El activo no existe.")
+
+        if _codigo_en_uso(datos["codigo"], excluir_id=activo_id):
+            raise ValueError(
+                f"Otro activo ya usa el codigo {datos['codigo']}."
+            )
+
+        persona = _persona_para_asignar()
+        esta_asignado = estado_operativo(anterior) == "asignado"
+
+        # La disponibilidad solo se edita a mano si el activo no esta asignado
+        if not esta_asignado and not persona:
+            disp = request.form.get("disponibilidad", "")
+            if disp in DISPONIBILIDADES:
+                datos["disponibilidad"] = disp
+
+        supabase.table("activos").update(datos).eq("id", activo_id).execute()
+
+        detalle = f"Datos del activo {datos['codigo']} actualizados."
+        if anterior.get("codigo") != datos["codigo"]:
+            detalle = (
+                f"Datos actualizados. Codigo: "
+                f"{anterior.get('codigo')} -> {datos['codigo']}."
+            )
+        registrar_historial(activo_id, "Edicion", detalle)
+
+        # Asignar o reasignar solo si cambio la persona.
+        # Para quitar la asignacion se usa Devoluciones.
+        if persona and persona.get("nombre") != anterior.get("asignado_a"):
+            _asignar_a_persona(
+                activo_id,
+                datos["codigo"],
+                persona,
+                anterior=anterior.get("asignado_a") if esta_asignado else None,
+            )
+
+        for aviso in _guardar_archivos(activo_id, datos["tipo"]):
+            flash(aviso, "warning")
+
+        flash(f"Activo {datos['codigo']} actualizado.", "success")
+    except Exception as error:
+        print(f"Error editando activo: {error}")
+        flash(f"No fue posible actualizar el activo: {error}", "danger")
+
+    return redirect(url_for("inventario"))
+
+
+def _cambiar_estado_activo(
+    activo_id,
+    estado_nuevo,
+    accion,
+    motivo_obligatorio=False,
+):
+    """Inhabilita o da de baja un activo que no este asignado."""
+    motivo = request.form.get("motivo", "").strip()
+
+    if motivo_obligatorio and not motivo:
+        flash("El motivo es obligatorio.", "danger")
+        return redirect(url_for("inventario"))
+
+    try:
+        activo = obtener_registro("activos", activo_id)
+        if activo is None:
+            raise ValueError("El activo no existe.")
+
+        actual = estado_operativo(activo)
+        if actual == "asignado":
+            raise ValueError(
+                "El activo esta asignado. Registra primero la devolucion."
+            )
+        if "baja" in actual or "inhabilit" in actual:
+            raise ValueError("El activo ya esta fuera del inventario operativo.")
+
+        supabase.table("activos").update({
+            "disponibilidad": estado_nuevo,
+        }).eq("id", activo_id).execute()
+
+        codigo = activo.get("codigo")
+        detalle = f"Activo {codigo}: {accion.lower()}."
+        if motivo:
+            detalle += f" Motivo: {motivo}"
+        registrar_historial(activo_id, accion, detalle)
+
+        flash(f"{codigo}: {accion.lower()} registrada.", "success")
+    except Exception as error:
+        print(f"Error en {accion.lower()} de activo: {error}")
+        flash(str(error), "danger")
+
+    return redirect(url_for("inventario"))
+
+
+@app.route("/inventario/<int:activo_id>/inhabilitar", methods=["POST"])
+@login_required
+@permiso_requerido("inventario", "editar")
+def inhabilitar_activo_web(activo_id):
+    return _cambiar_estado_activo(
+        activo_id,
+        "Inhabilitado",
+        "Inhabilitacion",
+    )
+
+
+@app.route("/inventario/<int:activo_id>/baja", methods=["POST"])
+@login_required
+@permiso_requerido("inventario", "eliminar")
+def dar_de_baja_activo_web(activo_id):
+    return _cambiar_estado_activo(
+        activo_id,
+        "Dado de baja",
+        "Baja",
+        motivo_obligatorio=True,
+    )
+
+
+@app.route("/inventario/<int:activo_id>/reactivar", methods=["POST"])
+@login_required
+@permiso_requerido("inventario", "eliminar")  # antes: "editar"
+def reactivar_activo_web(activo_id):
+    try:
+        activo = obtener_registro("activos", activo_id)
+        if activo is None:
+            raise ValueError("El activo no existe.")
+
+        actual = estado_operativo(activo)
+        if "baja" not in actual and "inhabilit" not in actual:
+            raise ValueError("Solo se pueden reactivar activos inhabilitados o dados de baja.")
+
+        supabase.table("activos").update({
+            "disponibilidad": "Disponible",
+        }).eq("id", activo_id).execute()
+
+        codigo = activo.get("codigo")
+        registrar_historial(
+            activo_id,
+            "Reactivacion",
+            f"Activo {codigo} reactivado. Estado anterior: "
+            f"{activo.get('disponibilidad') or activo.get('estado')}.",
+        )
+        flash(f"{codigo} reactivado y disponible.", "success")
+    except Exception as error:
+        print(f"Error reactivando activo: {error}")
+        flash(str(error), "danger")
+
+    return redirect(url_for("inventario"))
 
 
 # ==================================================
@@ -345,25 +885,38 @@ def editar_persona_web(persona_id):
     correo = request.form.get("correo", "").strip()
     cargo = request.form.get("cargo", "").strip()
     area = request.form.get("area", "").strip()
+    estado = request.form.get("estado", "Activo").strip()
 
     if not nombre:
         flash("El nombre es obligatorio.", "danger")
-        return redirect(url_for("personas"))
+        return redirect(url_for("persona_detalle", persona_id=persona_id))
+
+    if estado not in {"Activo", "Inactivo"}:
+        estado = "Activo"
 
     try:
+        anterior = obtener_registro("personas", persona_id)
         supabase.table("personas").update({
             "nombre": nombre,
             "documento": documento or None,
             "correo": correo or None,
             "cargo": cargo or None,
             "area": area or None,
+            "estado": estado,
         }).eq("id", persona_id).execute()
+
+        # Los activos se vinculan por nombre: si cambia, se mantiene el vínculo
+        if anterior and anterior.get("nombre") and anterior["nombre"] != nombre:
+            supabase.table("activos").update({
+                "asignado_a": nombre,
+            }).eq("asignado_a", anterior["nombre"]).execute()
+
         flash("Persona actualizada correctamente.", "success")
     except Exception as error:
         print(f"Error actualizando persona: {error}")
         flash(f"No fue posible actualizar la persona: {error}", "danger")
 
-    return redirect(url_for("personas"))
+    return redirect(url_for("persona_detalle", persona_id=persona_id))
 
 
 @app.route("/personas/<int:persona_id>/desactivar", methods=["POST"])
@@ -379,7 +932,102 @@ def desactivar_persona_web(persona_id):
         print(f"Error desactivando persona: {error}")
         flash(f"No fue posible desactivar la persona: {error}", "danger")
 
+    destino = request.form.get("volver")
+    if destino == "detalle":
+        return redirect(url_for("persona_detalle", persona_id=persona_id))
     return redirect(url_for("personas"))
+
+@app.route("/personas/<int:persona_id>/activar", methods=["POST"])
+@login_required
+@permiso_requerido("personas", "editar")
+def activar_persona_web(persona_id):
+    try:
+        supabase.table("personas").update({
+            "estado": "Activo"
+        }).eq("id", persona_id).execute()
+        flash("Persona activada correctamente.", "success")
+    except Exception as error:
+        print(f"Error activando persona: {error}")
+        flash(f"No fue posible activar la persona: {error}", "danger")
+
+    destino = request.form.get("volver")
+    if destino == "detalle":
+        return redirect(url_for("persona_detalle", persona_id=persona_id))
+    return redirect(url_for("personas"))
+
+@app.route("/personas/<int:persona_id>")
+@login_required
+@permiso_requerido("personas", "ver")
+def persona_detalle(persona_id):
+    persona = obtener_registro("personas", persona_id)
+    if persona is None:
+        abort(404)
+
+    nombre = str(persona.get("nombre") or "").strip()
+
+    # Activos asignados actualmente
+    try:
+        activos_asignados = (
+            supabase.table("activos")
+            .select("*")
+            .eq("asignado_a", nombre)
+            .order("codigo")
+            .execute()
+        ).data or []
+    except Exception as error:
+        print(f"Error consultando activos de persona: {error}")
+        activos_asignados = []
+
+    # Historial de movimientos (asignaciones / devoluciones)
+    try:
+        movimientos = (
+            supabase.table("movimientos")
+            .select("*")
+            .eq("persona_id", persona_id)
+            .order("id", desc=True)
+            .limit(50)
+            .execute()
+        ).data or []
+    except Exception as error:
+        print(f"Error consultando movimientos: {error}")
+        movimientos = []
+
+    # Mapa id -> código de activo para mostrar el código en los movimientos
+    codigos = {}
+    ids = {m.get("activo_id") for m in movimientos if m.get("activo_id")}
+    if ids:
+        try:
+            filas = (
+                supabase.table("activos")
+                .select("id,codigo")
+                .in_("id", list(ids))
+                .execute()
+            ).data or []
+            codigos = {f["id"]: f["codigo"] for f in filas}
+        except Exception as error:
+            print(f"Error consultando códigos: {error}")
+
+    # Actas de la persona
+    try:
+        actas_persona = (
+            supabase.table("actas")
+            .select("*")
+            .eq("persona_id", persona_id)
+            .order("id", desc=True)
+            .execute()
+        ).data or []
+    except Exception as error:
+        print(f"Error consultando actas: {error}")
+        actas_persona = []
+
+    return render_template(
+        "persona_detalle.html",
+        persona=persona,
+        activos=activos_asignados,
+        movimientos=movimientos,
+        codigos=codigos,
+        actas=actas_persona,
+    )
 
 
 # ==================================================
@@ -551,6 +1199,7 @@ def devolver_activo_web(activo_id):
 @permiso_requerido("tickets", "ver")
 def tickets():
     lista_tickets = consultar_tabla("tickets", "*", "id")
+    lista_tickets.sort(key=lambda t: t.get("id") or 0, reverse=True)
     activos = consultar_tabla("activos", "*", "codigo")
     return render_template(
         "tickets.html",
@@ -568,8 +1217,8 @@ def crear_ticket_web():
     titulo = request.form.get("titulo", "").strip()
     descripcion = request.form.get("descripcion", "").strip()
 
-    if not titulo or not descripcion:
-        flash("El titulo y la descripcion son obligatorios.", "danger")
+    if not activo_id or not titulo or not descripcion:
+        flash("El activo, el titulo y la descripcion son obligatorios.", "danger")
         return redirect(url_for("tickets"))
 
     try:
@@ -583,6 +1232,55 @@ def crear_ticket_web():
     except Exception as error:
         print(f"Error creando ticket: {error}")
         flash(f"No fue posible crear el ticket: {error}", "danger")
+
+    return redirect(url_for("tickets"))
+
+
+ESTADOS_TICKET = {
+    "Pendiente",
+    "En proceso",
+    "Esperando repuesto",
+    "Solucionado",
+}
+
+
+@app.route("/tickets/<int:ticket_id>/estado", methods=["POST"])
+@login_required
+@permiso_requerido("tickets", "editar")
+def cambiar_estado_ticket_web(ticket_id):
+    estado = request.form.get("estado", "").strip()
+
+    if estado not in ESTADOS_TICKET:
+        flash("El estado del ticket no es valido.", "danger")
+        return redirect(url_for("tickets"))
+
+    try:
+        if obtener_registro("tickets", ticket_id) is None:
+            raise ValueError("El ticket no existe.")
+
+        supabase.table("tickets").update({
+            "estado": estado,
+        }).eq("id", ticket_id).execute()
+
+        # Opcional: guarda la fecha de solucion si la columna existe
+        # (ver SQL en las notas). Si no existe, se ignora sin afectar.
+        try:
+            supabase.table("tickets").update({
+                "fecha_solucion": (
+                    datetime.now(timezone.utc).isoformat()
+                    if estado == "Solucionado" else None
+                ),
+            }).eq("id", ticket_id).execute()
+        except Exception:
+            pass
+
+        if estado == "Solucionado":
+            flash(f"Ticket #{ticket_id} marcado como solucionado.", "success")
+        else:
+            flash(f"Ticket #{ticket_id} actualizado a {estado}.", "success")
+    except Exception as error:
+        print(f"Error actualizando ticket: {error}")
+        flash(str(error), "danger")
 
     return redirect(url_for("tickets"))
 
@@ -695,25 +1393,343 @@ def descargar_acta(nombre_archivo):
 # REPORTES Y CONFIGURACION
 # ==================================================
 
+def _sello_archivo():
+    """Fecha de hoy (hora Colombia) para nombrar los archivos."""
+    return (datetime.now(timezone.utc) - timedelta(hours=5)).strftime("%Y%m%d")
+
+
+def respuesta_excel(nombre_archivo, hoja, encabezados, filas):
+    """Construye un .xlsx en memoria y lo devuelve como descarga."""
+    from openpyxl import Workbook
+    from openpyxl.styles import Alignment, Font, PatternFill
+    from openpyxl.utils import get_column_letter
+
+    libro = Workbook()
+    ws = libro.active
+    ws.title = hoja[:31]
+
+    ws.append(list(encabezados))
+    for celda in ws[1]:
+        celda.font = Font(bold=True, color="FFFFFF")
+        celda.fill = PatternFill("solid", fgColor="1F3A5F")
+        celda.alignment = Alignment(vertical="center")
+
+    anchos = [len(str(h)) for h in encabezados]
+    for fila in filas:
+        valores = ["" if v is None else v for v in fila]
+        ws.append(valores)
+        for i, valor in enumerate(valores):
+            anchos[i] = max(anchos[i], len(str(valor)))
+
+    # Un texto que empieza con "=" no debe interpretarse como formula
+    for fila_celdas in ws.iter_rows(min_row=2):
+        for celda in fila_celdas:
+            if isinstance(celda.value, str) and celda.value.startswith("="):
+                celda.data_type = "s"
+
+    for i, ancho in enumerate(anchos, start=1):
+        ws.column_dimensions[get_column_letter(i)].width = min(ancho, 50) + 2
+
+    ws.freeze_panes = "A2"
+    ws.auto_filter.ref = ws.dimensions
+
+    buffer = io.BytesIO()
+    libro.save(buffer)
+    buffer.seek(0)
+
+    return send_file(
+        buffer,
+        mimetype=(
+            "application/vnd.openxmlformats-officedocument."
+            "spreadsheetml.sheet"
+        ),
+        as_attachment=True,
+        download_name=nombre_archivo,
+    )
+
+
+def _texto_fecha(valor):
+    """'2026-09-30T20:53:27+00:00' -> '2026-09-30 20:53'."""
+    return str(valor or "")[:16].replace("T", " ")
+
+
 @app.route("/reportes")
 @login_required
 @permiso_requerido("reportes", "ver")
 def reportes():
     resumen = {
-        "activos": len(consultar_tabla("activos")),
-        "personas": len(consultar_tabla("personas")),
-        "tickets": len(consultar_tabla("tickets")),
-        "actas": len(consultar_tabla("actas")),
+        "activos": len(consultar_tabla("activos", "id")),
+        "personas": len(consultar_tabla("personas", "id")),
+        "tickets": len(consultar_tabla("tickets", "id")),
+        "actas": len(consultar_tabla("actas", "id")),
+        "historial": len(consultar_tabla("historial", "id")),
     }
     return render_template("reportes.html", resumen=resumen)
 
 
-@app.route("/configuracion")
+@app.route("/reportes/inventario.xlsx")
+@login_required
+@permiso_requerido("reportes", "ver")
+def reporte_inventario():
+    filtro = request.args.get("estado", "todos").strip().lower()
+    activos = consultar_tabla("activos", "*", "codigo")
+
+    if filtro in {"disponible", "asignado", "repar", "baja"}:
+        activos = [a for a in activos if filtro in estado_operativo(a)]
+
+    filas = [
+        [
+            a.get("codigo"),
+            a.get("tipo"),
+            a.get("marca"),
+            a.get("modelo"),
+            a.get("serial"),
+            a.get("disponibilidad") or a.get("estado"),
+            a.get("asignado_a"),
+            a.get("area"),
+            a.get("observaciones"),
+        ]
+        for a in activos
+    ]
+
+    try:
+        return respuesta_excel(
+            f"inventario_{_sello_archivo()}.xlsx",
+            "Inventario",
+            ["Codigo", "Tipo", "Marca", "Modelo", "Serial",
+             "Estado", "Asignado a", "Area", "Observaciones"],
+            filas,
+        )
+    except ImportError:
+        flash("Falta instalar openpyxl (pip install openpyxl).", "danger")
+        return redirect(url_for("reportes"))
+
+
+@app.route("/reportes/personas.xlsx")
+@login_required
+@permiso_requerido("reportes", "ver")
+def reporte_personas():
+    lista = consultar_tabla("personas", "*", "nombre")
+    filas = [
+        [
+            p.get("nombre"), p.get("documento"), p.get("correo"),
+            p.get("cargo"), p.get("area"), p.get("estado") or "Activo",
+        ]
+        for p in lista
+    ]
+
+    try:
+        return respuesta_excel(
+            f"personas_{_sello_archivo()}.xlsx",
+            "Personas",
+            ["Nombre", "Documento", "Correo", "Cargo", "Area", "Estado"],
+            filas,
+        )
+    except ImportError:
+        flash("Falta instalar openpyxl (pip install openpyxl).", "danger")
+        return redirect(url_for("reportes"))
+
+
+@app.route("/reportes/tickets.xlsx")
+@login_required
+@permiso_requerido("reportes", "ver")
+def reporte_tickets():
+    filtro = request.args.get("estado", "todos").strip().lower()
+    lista = consultar_tabla("tickets", "*", "id")
+    codigos = {
+        a.get("id"): a.get("codigo")
+        for a in consultar_tabla("activos", "id,codigo")
+    }
+
+    def resuelto(t):
+        e = str(t.get("estado") or "").lower()
+        return "solucion" in e or "cerrado" in e or "resuelto" in e
+
+    if filtro == "abiertos":
+        lista = [t for t in lista if not resuelto(t)]
+    elif filtro == "solucionados":
+        lista = [t for t in lista if resuelto(t)]
+
+    filas = [
+        [
+            t.get("id"),
+            codigos.get(t.get("activo_id")) or t.get("activo_id"),
+            t.get("titulo"),
+            t.get("descripcion"),
+            t.get("estado"),
+            _texto_fecha(t.get("created_at") or t.get("fecha")),
+            _texto_fecha(t.get("fecha_solucion")),
+        ]
+        for t in sorted(lista, key=lambda t: t.get("id") or 0, reverse=True)
+    ]
+
+    try:
+        return respuesta_excel(
+            f"tickets_{_sello_archivo()}.xlsx",
+            "Tickets",
+            ["ID", "Activo", "Titulo", "Descripcion", "Estado",
+             "Fecha", "Fecha solucion"],
+            filas,
+        )
+    except ImportError:
+        flash("Falta instalar openpyxl (pip install openpyxl).", "danger")
+        return redirect(url_for("reportes"))
+
+
+@app.route("/reportes/historial.xlsx")
+@login_required
+@permiso_requerido("reportes", "ver")
+def reporte_historial():
+    desde = request.args.get("desde", "").strip()
+    hasta = request.args.get("hasta", "").strip()
+
+    lista = consultar_tabla("historial", "*", "id")
+    codigos = {
+        a.get("id"): a.get("codigo")
+        for a in consultar_tabla("activos", "id,codigo")
+    }
+
+    def dentro_del_rango(fila):
+        dia = str(fila.get("created_at") or fila.get("fecha") or "")[:10]
+        if not dia:
+            return True
+        if desde and dia < desde:
+            return False
+        if hasta and dia > hasta:
+            return False
+        return True
+
+    if desde or hasta:
+        lista = [h for h in lista if dentro_del_rango(h)]
+
+    filas = [
+        [
+            _texto_fecha(h.get("created_at") or h.get("fecha")),
+            codigos.get(h.get("activo_id")) or h.get("activo_id"),
+            h.get("accion"),
+            h.get("detalle"),
+        ]
+        for h in sorted(lista, key=lambda h: h.get("id") or 0, reverse=True)
+    ]
+
+    try:
+        return respuesta_excel(
+            f"historial_{_sello_archivo()}.xlsx",
+            "Historial",
+            ["Fecha", "Activo", "Accion", "Detalle"],
+            filas,
+        )
+    except ImportError:
+        flash("Falta instalar openpyxl (pip install openpyxl).", "danger")
+        return redirect(url_for("reportes"))
+
+
+@app.route("/reportes/actas.zip")
+@login_required
+@permiso_requerido("reportes", "ver")
+def reporte_actas():
+    carpeta = Path("pdf").resolve()
+    buffer = io.BytesIO()
+    incluidos = set()
+
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+        for acta in consultar_tabla("actas", "*", "id"):
+            nombre = Path(str(acta.get("ruta_pdf") or "")).name
+            if not nombre or nombre in incluidos:
+                continue
+            ruta = carpeta / nombre
+            if ruta.exists():
+                zf.write(ruta, nombre)
+                incluidos.add(nombre)
+
+    if not incluidos:
+        flash("No hay archivos PDF de actas para descargar.", "warning")
+        return redirect(url_for("reportes"))
+
+    buffer.seek(0)
+    return send_file(
+        buffer,
+        mimetype="application/zip",
+        as_attachment=True,
+        download_name=f"actas_{_sello_archivo()}.zip",
+    )
+
+
+# --------------------------------------------------
+# CONFIGURACION
+# --------------------------------------------------
+
+CONFIG_DEFECTO = {
+    "nombre_empresa": "Editorial Planeta",
+    "correo_soporte": "",
+    "dias_alerta_garantia": 30,
+}
+
+
+def obtener_config():
+    try:
+        r = (
+            supabase.table("configuracion")
+            .select("*")
+            .eq("id", 1)
+            .limit(1)
+            .execute()
+        )
+        if r.data:
+            return {**CONFIG_DEFECTO, **r.data[0]}
+    except Exception as error:
+        print(f"Error leyendo configuracion: {error}")
+    return dict(CONFIG_DEFECTO)
+
+
+@app.route("/configuracion", methods=["GET", "POST"])
 @login_required
 @permiso_requerido("configuracion", "ver")
 def configuracion():
-    areas = consultar_tabla("areas", "*", "id")
-    return render_template("configuracion.html", areas=areas)
+    cfg = obtener_config()
+    errores = {}
+
+    if request.method == "POST":
+        if not current_user.tiene_permiso("configuracion", "editar"):
+            abort(403)
+
+        nombre = request.form.get("nombre_empresa", "").strip()
+        correo = request.form.get("correo_soporte", "").strip().lower()
+        dias_txt = request.form.get("dias_alerta_garantia", "").strip()
+
+        if not nombre:
+            errores["nombre_empresa"] = "El nombre es obligatorio."
+        if correo and not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", correo):
+            errores["correo_soporte"] = "Correo inválido."
+        try:
+            dias = int(dias_txt)
+            if not 1 <= dias <= 365:
+                raise ValueError
+        except ValueError:
+            dias = dias_txt
+            errores["dias_alerta_garantia"] = "Debe ser un número entre 1 y 365."
+
+        cfg.update({
+            "nombre_empresa": nombre,
+            "correo_soporte": correo,
+            "dias_alerta_garantia": dias,
+        })
+
+        if not errores:
+            try:
+                supabase.table("configuracion").upsert({
+                    "id": 1,
+                    "nombre_empresa": nombre,
+                    "correo_soporte": correo or None,
+                    "dias_alerta_garantia": dias,
+                }).execute()
+                flash("Configuración guardada correctamente.", "success")
+                return redirect(url_for("configuracion"))
+            except Exception as error:
+                print(f"Error guardando configuracion: {error}")
+                flash(f"No fue posible guardar: {error}", "danger")
+
+    return render_template("configuracion.html", cfg=cfg, errores=errores)
 
 
 # ==================================================
@@ -840,6 +1856,7 @@ def cambiar_estado_usuario(usuario_id):
         supabase.table("usuarios").update({
             "activo": activo
         }).eq("id", usuario_id).execute()
+        limpiar_cache_usuarios(usuario_id)
         flash("Estado de usuario actualizado.", "success")
     except Exception as error:
         print(f"Error actualizando usuario: {error}")
@@ -908,6 +1925,7 @@ def administrar_permisos():
                 else:
                     supabase.table("permisos").insert(datos).execute()
 
+            limpiar_cache_usuarios()
             flash("Permisos actualizados correctamente.", "success")
         except Exception as error:
             print(f"Error actualizando permisos: {error}")
@@ -952,6 +1970,15 @@ def administrar_permisos():
 # ==================================================
 # ERRORES Y TEST
 # ==================================================
+
+@app.errorhandler(CSRFError)
+def error_csrf(error):
+    flash(
+        "El formulario expiró o no es válido. Intenta de nuevo.",
+        "danger",
+    )
+    return redirect(request.referrer or url_for("login"))
+
 
 @app.errorhandler(403)
 def acceso_denegado(error):

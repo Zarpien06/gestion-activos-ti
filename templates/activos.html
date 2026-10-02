@@ -1,112 +1,1359 @@
 {% extends "base.html" %}
 
-{% block title %}Inventario | Gestion de Activos TI{% endblock %}
+{% block title %}Inventario | Gestión de Activos TI{% endblock %}
 
 {% block extra_css %}
 <style>
-    .page-header {
-        display: flex;
-        align-items: flex-end;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 12px;
-        margin-bottom: 22px;
-    }
+/* ===== HEADER ===== */
+.page-header{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:22px}
+.page-header h2{margin:0;font-size:25px;font-weight:750}
+.page-header p{margin:5px 0 0;color:var(--text-light)}
+.header-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.count-pill{padding:7px 14px;color:var(--primary);background:var(--primary-soft);border-radius:999px;font-size:13px;font-weight:700}
 
-    .page-header h2 { margin: 0; font-size: 24px; font-weight: 700; }
-    .page-header p { margin: 4px 0 0; color: var(--text-light); }
+/* ===== DASHBOARD ===== */
+.inventory-dashboard{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;margin-bottom:20px}
+.stat-card{position:relative;overflow:hidden;padding:18px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:0 3px 12px rgba(15,23,42,.04);transition:transform .18s ease,box-shadow .18s ease}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(15,23,42,.08)}
+.stat-card::after{content:"";position:absolute;width:65px;height:65px;border-radius:50%;right:-25px;bottom:-25px;opacity:.08}
+.stat-icon{width:38px;height:38px;display:flex;align-items:center;justify-content:center;border-radius:10px;margin-bottom:12px}
+.stat-icon svg{width:19px;height:19px}
+.stat-card .stat-number{display:block;font-size:25px;line-height:1;font-weight:800;margin-bottom:5px}
+.stat-card .stat-label{font-size:12.5px;color:var(--text-light);font-weight:600}
+.stat-total .stat-icon{color:var(--primary);background:var(--primary-soft)}
+.stat-total::after{background:var(--primary)}
+.stat-assigned .stat-icon{color:#2563eb;background:rgba(37,99,235,.10)}
+.stat-assigned::after{background:#2563eb}
+.stat-available .stat-icon{color:#16a34a;background:rgba(22,163,74,.10)}
+.stat-available::after{background:#16a34a}
+.stat-repair .stat-icon{color:#ea580c;background:rgba(234,88,12,.10)}
+.stat-repair::after{background:#ea580c}
+.stat-baja .stat-icon{color:#dc2626;background:rgba(220,38,38,.10)}
+.stat-baja::after{background:#dc2626}
 
-    .count-pill {
-        padding: 6px 14px;
-        color: var(--primary);
-        background: var(--primary-soft);
-        border-radius: 999px;
-        font-size: 13px;
-        font-weight: 600;
-    }
+/* ===== TOOLBAR ===== */
+.inventory-toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:16px;margin-bottom:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg)}
+.search-box{position:relative;flex:1 1 280px;min-width:240px}
+.search-box svg{position:absolute;left:13px;top:50%;width:17px;height:17px;transform:translateY(-50%);color:var(--text-light);pointer-events:none}
+.search-box input{width:100%;padding:11px 40px;border:1px solid var(--border);border-radius:10px;color:var(--text);background:var(--surface-2);outline:none;transition:.18s ease}
+.search-box input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+.search-clear{position:absolute;right:10px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:var(--text-light);cursor:pointer;display:none;padding:4px}
+.search-clear.visible{display:block}
+.filter-select{min-width:170px;padding:11px 34px 11px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2);color:var(--text);outline:none;cursor:pointer}
+.filter-select:focus{border-color:var(--primary)}
+.reset-filters{padding:10px 13px;border:1px solid var(--border);border-radius:9px;background:var(--surface);color:var(--text-light);cursor:pointer;font-weight:600}
+.reset-filters:hover{color:var(--text);background:var(--surface-2)}
 
-    .card-flush { padding: 0; overflow: hidden; }
-    .card-flush .table-responsive { border: 0; border-radius: 0; }
+/* ===== CHIPS ===== */
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:18px}
+.chip{padding:7px 14px;color:var(--text-light);background:var(--surface);border:1px solid var(--border);border-radius:999px;cursor:pointer;font-size:12.5px;font-weight:650;transition:var(--transition)}
+.chip:hover{color:var(--text);border-color:var(--primary)}
+.chip.active{color:var(--primary);background:var(--primary-soft);border-color:transparent}
 
-    .cell-code { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-weight: 600; font-size: 13px; }
-    .cell-muted { color: var(--text-light); }
+/* ===== LAYOUT ===== */
+.inventory-layout{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:18px;align-items:start}
+.card-flush{padding:0;overflow:hidden}
+.card-flush .table-responsive{border:0;border-radius:0}
 
-    .empty-state { padding: 48px 16px; text-align: center; color: var(--text-light); }
+/* ===== SIDEBAR ===== */
+.type-sidebar{padding:18px}
+.type-sidebar h3{margin:0 0 4px;font-size:15px}
+.type-sidebar-sub{margin:0 0 15px;color:var(--text-light);font-size:12px}
+.type-list{display:flex;flex-direction:column;gap:8px}
+.type-item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;background:var(--surface-2);transition:.15s ease}
+.type-item:hover{background:var(--primary-soft)}
+.type-name{font-size:12.5px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.type-count{min-width:27px;text-align:center;padding:3px 7px;border-radius:999px;background:var(--surface);border:1px solid var(--border);font-size:11px;font-weight:700}
+
+/* ===== TABLE ===== */
+.cell-code{font-family:ui-monospace,"SF Mono",Consolas,monospace;font-weight:650;font-size:12.5px}
+.cell-muted{color:var(--text-light)}
+.cell-ellipsis{max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.table tbody tr{transition:background .15s ease}
+.table tbody tr:hover{background:var(--surface-2)}
+tr.fila-apagada td:not(.cell-action){opacity:.55}
+
+/* ===== BADGES ===== */
+.badge-disponible{color:#15803d;background:rgba(22,163,74,.11)}
+.badge-asignado{color:#2563eb;background:rgba(37,99,235,.11)}
+.badge-reparacion{color:#c2410c;background:rgba(234,88,12,.12)}
+.badge-baja{color:#dc2626;background:rgba(220,38,38,.11)}
+.badge-inhabilitado{color:#a16207;background:rgba(234,179,8,.16)}
+.badge-default{color:var(--text-light);background:var(--surface-2)}
+
+/* ===== ACTIONS ===== */
+.th-action,.cell-action{text-align:right;width:1%;white-space:nowrap}
+.row-actions{display:inline-flex;align-items:center;gap:6px}
+.row-actions form{margin:0;display:inline-flex}
+.btn-sm{padding:7px 10px;font-size:12px;white-space:nowrap;line-height:1.2}
+.btn-soft{color:var(--text);background:var(--surface-2);border-color:var(--border);box-shadow:none}
+.btn-soft:hover{color:var(--text);background:var(--primary-soft)}
+.btn-soft-danger{color:var(--danger);background:color-mix(in srgb,var(--danger) 10%,transparent);border-color:transparent;box-shadow:none}
+.btn-soft-danger:hover{color:#fff;background:var(--danger)}
+.btn-soft-warning{color:var(--warning);background:color-mix(in srgb,var(--warning) 12%,transparent);border-color:transparent;box-shadow:none}
+.btn-soft-warning:hover{color:#fff;background:var(--warning)}
+.btn svg{width:14px;height:14px;flex-shrink:0}
+
+/* ===== PAGINATION ===== */
+.table-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 16px;border-top:1px solid var(--border)}
+.pagination-info{color:var(--text-light);font-size:12.5px}
+.pagination{display:flex;align-items:center;gap:5px}
+.page-btn{min-width:34px;height:34px;padding:0 9px;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:8px;cursor:pointer;font-size:12px;font-weight:600}
+.page-btn:hover{border-color:var(--primary);background:var(--primary-soft)}
+.page-btn.active{color:var(--primary);border-color:var(--primary);background:var(--primary-soft)}
+.page-btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* ===== EMPTY ===== */
+.empty-state{padding:48px 16px;text-align:center;color:var(--text-light)}
+.no-results{display:none;padding:45px 16px;text-align:center;color:var(--text-light)}
+.no-results.visible{display:block}
+
+/* ===== DETAIL MODAL ===== */
+.detail-dialog{width:min(900px,calc(100% - 30px));max-height:90vh;padding:0;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:0 30px 80px rgba(0,0,0,.45);overflow:hidden}
+.detail-dialog[open]{animation:popIn .18s ease}
+.detail-dialog::backdrop{background:rgba(2,6,23,.62);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+.detail-header{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;padding:22px 24px;border-bottom:1px solid var(--border)}
+.detail-header h3{margin:0 0 4px;font-size:20px}
+.detail-header p{margin:0;color:var(--text-light);font-size:13px}
+.detail-close{width:34px;height:34px;border:1px solid var(--border);border-radius:8px;background:var(--surface-2);color:var(--text-light);cursor:pointer}
+.detail-body{max-height:calc(90vh - 160px);overflow-y:auto;padding:22px 24px}
+.detail-section{margin-bottom:22px}
+.detail-section:last-child{margin-bottom:0}
+.detail-section h4{margin:0 0 12px;font-size:14px}
+.detail-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.detail-item{padding:11px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:9px}
+.detail-item.full{grid-column:1/-1}
+.detail-label{display:block;margin-bottom:4px;color:var(--text-light);font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;font-weight:700}
+.detail-value{display:block;color:var(--text);font-size:13px;word-break:break-word}
+.detail-value a{color:var(--primary);font-weight:650;text-decoration:none}
+.detail-value a:hover{text-decoration:underline}
+.laptop-card{padding:16px;border-radius:12px;border:1px solid rgba(37,99,235,.18);background:rgba(37,99,235,.055)}
+.laptop-card h4{color:#2563eb}
+.adicional-list{display:flex;flex-direction:column;gap:8px}
+.adicional-item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;font-size:13px}
+.adicional-item small{color:var(--text-light)}
+.adicional-item a{color:var(--primary);font-weight:650;text-decoration:none;white-space:nowrap}
+
+/* ===== FORM DIALOGS ===== */
+.form-dialog{width:min(820px,calc(100% - 32px));max-height:90vh;overflow-y:auto;padding:26px;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:0 30px 70px rgba(0,0,0,.45)}
+.form-dialog[open]{animation:popIn .18s ease}
+.form-dialog::backdrop{background:rgba(2,6,23,.6);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+.form-dialog h3{margin:0 0 4px;font-size:18px;font-weight:600}
+.form-dialog .dlg-sub{margin:0 0 18px;color:var(--text-light);font-size:13.5px}
+.dlg-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.form-section{margin-top:22px;padding-top:20px;border-top:1px solid var(--border)}
+.form-section:first-of-type{margin-top:0;padding-top:0;border-top:0}
+.form-section-title{margin:0 0 12px;font-size:14px;font-weight:750}
+.form-section-subtitle{margin:-6px 0 14px;color:var(--text-light);font-size:12px}
+.form-laptop-section{padding:16px;border:1px solid rgba(37,99,235,.18);border-radius:12px;background:rgba(37,99,235,.055)}
+.form-laptop-section .form-section-title{color:#2563eb}
+.form-laptop-section[hidden]{display:none!important}
+.form-control,.form-dialog select{width:100%;box-sizing:border-box}
+.form-dialog label{display:block;margin-bottom:6px;font-size:12px;font-weight:700;color:var(--text)}
+.dlg-grid .full{grid-column:1/-1}
+.form-dialog textarea.form-control{min-height:84px;resize:vertical}
+.form-hint{margin:6px 0 0;color:var(--text-light);font-size:11.5px}
+.form-hint a{color:var(--primary);font-weight:650}
+.dlg-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px;padding-top:18px;border-top:1px solid var(--border)}
+
+/* Adicionales (formulario) */
+.sub-block{margin-top:18px;padding-top:16px;border-top:1px dashed rgba(37,99,235,.25)}
+.sub-block h5{margin:0 0 4px;font-size:13px;font-weight:750}
+.adicional-row{display:grid;grid-template-columns:150px minmax(0,1fr) minmax(0,1fr) auto;gap:10px;align-items:end;margin-bottom:10px}
+.adicional-row input[type=file]{font-size:12px}
+.btn-quitar{height:38px;padding:0 12px;border:1px solid var(--border);border-radius:9px;background:var(--surface);color:var(--danger);cursor:pointer;font-weight:700}
+.btn-quitar:hover{background:color-mix(in srgb,var(--danger) 10%,transparent)}
+
+@keyframes popIn{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width:1150px){
+  .inventory-dashboard{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .inventory-layout{grid-template-columns:1fr}
+  .type-sidebar{order:-1}
+  .type-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media (max-width:800px){
+  .inventory-dashboard{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .inventory-toolbar{align-items:stretch}
+  .search-box{flex-basis:100%}
+  .filter-select{flex:1 1 150px}
+  .detail-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .type-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .adicional-row{grid-template-columns:1fr 1fr}
+  .btn-quitar{grid-column:1/-1}
+}
+@media (max-width:600px){
+  .inventory-dashboard,.dlg-grid,.detail-grid,.type-list{grid-template-columns:1fr}
+  .detail-item.full{grid-column:auto}
+  .table-footer{align-items:stretch;flex-direction:column}
+  .pagination{justify-content:center}
+  .row-actions{flex-wrap:wrap;justify-content:flex-end}
+  .adicional-row{grid-template-columns:1fr}
+}
+
+/* ===== PRINT ===== */
+@media print{
+  body{background:#fff!important}
+  .page-header button,.inventory-toolbar,.chips,.type-sidebar,.row-actions,.cell-action,.th-action,.table-footer,.detail-dialog,.form-dialog{display:none!important}
+  .inventory-layout{display:block}
+  .card{box-shadow:none!important;border:0!important}
+  .inventory-dashboard{grid-template-columns:repeat(5,1fr)}
+  .stat-card{box-shadow:none}
+  .table{font-size:10px}
+  .table th,.table td{padding:5px!important}
+}
 </style>
 {% endblock %}
 
 
 {% block content %}
 
+{# ===== PERMISOS ===== #}
+{% set puede_crear = tiene_permiso('inventario', 'crear') %}
+{% set puede_editar = tiene_permiso('inventario', 'editar') %}
+{% set puede_baja = tiene_permiso('inventario', 'eliminar') %}
+
+{# ===== DATOS PARA FILTROS ===== #}
+{% set tipos = activos | map(attribute='tipo') | select | unique | sort | list %}
+{% set marcas = activos | map(attribute='marca') | select | unique | sort | list %}
+{% set areas = activos | map(attribute='area') | select | unique | sort | list %}
+
+{# ===== ATRIBUTOS COMUNES DE LOS BOTONES VER / EDITAR ===== #}
+{% macro datos_activo(activo, adicionales) %}
+data-id="{{ activo.id }}"
+data-codigo="{{ activo.codigo or '' }}"
+data-tipo="{{ activo.tipo or '' }}"
+data-marca="{{ activo.marca or '' }}"
+data-modelo="{{ activo.modelo or '' }}"
+data-serial="{{ activo.serial or '' }}"
+data-disponibilidad="{{ activo.disponibilidad or '' }}"
+data-estado="{{ activo.estado or '' }}"
+data-area="{{ activo.area or '' }}"
+data-asignado="{{ activo.asignado_a or '' }}"
+data-observaciones="{{ activo.observaciones or '' }}"
+data-cantidad="{{ activo.cantidad if activo.cantidad is not none else '' }}"
+data-procesador="{{ activo.procesador or '' }}"
+data-ram="{{ activo.ram or '' }}"
+data-disco="{{ activo.disco or '' }}"
+data-hostname="{{ activo.hostname or '' }}"
+data-ip="{{ activo.ip or '' }}"
+data-mac="{{ activo.mac or '' }}"
+data-so="{{ activo.sistema_operativo or '' }}"
+data-fecha-compra="{{ activo.fecha_compra or '' }}"
+data-garantia="{{ activo.garantia or '' }}"
+data-factura-url="{{ url_for('ver_factura', ruta=activo.factura_ruta) if activo.factura_ruta else '' }}"
+data-adicionales='{{ adicionales.get(activo.id, [])|tojson }}'
+{%- endmacro %}
+
+
+{# ===== CABECERA ===== #}
 <div class="page-header">
     <div>
-        <h2>Inventario</h2>
-        <p>Todos los equipos registrados en el sistema</p>
+        <h2>Inventario de Activos TI</h2>
+        <p>Administración y control de equipos registrados</p>
     </div>
-
-    <span class="count-pill">{{ activos|length }} activos</span>
+    <div class="header-right">
+        <span class="count-pill"><span id="contador">{{ activos|length }}</span> activos</span>
+        {% if puede_crear %}
+            <button type="button" class="btn" id="btnNuevo">+ Nuevo activo</button>
+        {% endif %}
+    </div>
 </div>
 
-<div class="card card-flush">
 
-    <div class="table-responsive">
+{# ===== DASHBOARD ===== #}
+<div class="inventory-dashboard">
+    <div class="stat-card stat-total">
+        <div class="stat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+        </div>
+        <span class="stat-number" id="statTotal">{{ activos|length }}</span>
+        <span class="stat-label">Activos totales</span>
+    </div>
+    <div class="stat-card stat-assigned">
+        <div class="stat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <span class="stat-number" id="statAsignados">0</span>
+        <span class="stat-label">Asignados</span>
+    </div>
+    <div class="stat-card stat-available">
+        <div class="stat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+        </div>
+        <span class="stat-number" id="statDisponibles">0</span>
+        <span class="stat-label">Disponibles</span>
+    </div>
+    <div class="stat-card stat-repair">
+        <div class="stat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.4L2.5 17a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 3.4a2 2 0 0 0-3.4 0z"/></svg>
+        </div>
+        <span class="stat-number" id="statReparacion">0</span>
+        <span class="stat-label">En reparación</span>
+    </div>
+    <div class="stat-card stat-baja">
+        <div class="stat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>
+        </div>
+        <span class="stat-number" id="statBaja">0</span>
+        <span class="stat-label">Dados de baja</span>
+    </div>
+</div>
 
-        <table id="tablaActivos" class="table">
 
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Código</th>
-                    <th>Tipo</th>
-                    <th>Marca</th>
-                    <th>Modelo</th>
-                    <th>Estado</th>
-                </tr>
-            </thead>
+{# ===== BUSCADOR Y FILTROS ===== #}
+<div class="inventory-toolbar">
+    <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+        <input type="search" id="buscador" placeholder="Buscar código, serial, marca, modelo, área, usuario, tipo..." autocomplete="off">
+        <button type="button" class="search-clear" id="limpiarBusqueda" aria-label="Limpiar búsqueda">×</button>
+    </div>
 
-            <tbody>
+    <select id="filtroTipo" class="filter-select">
+        <option value="">Todos los tipos</option>
+        {% for tipo in tipos %}<option value="{{ tipo|lower }}">{{ tipo }}</option>{% endfor %}
+    </select>
 
+    <select id="filtroArea" class="filter-select">
+        <option value="">Todas las áreas</option>
+        {% for area in areas %}<option value="{{ area|lower }}">{{ area }}</option>{% endfor %}
+    </select>
+
+    <select id="filtroDisponibilidad" class="filter-select">
+        <option value="">Todas las disponibilidades</option>
+        <option value="disponible">Disponible</option>
+        <option value="asignado">Asignado</option>
+        <option value="reparacion">En reparación</option>
+        <option value="baja">Dado de baja</option>
+        <option value="inhabilitado">Inhabilitado</option>
+    </select>
+
+    <button type="button" class="reset-filters" id="resetFiltros">Limpiar</button>
+</div>
+
+
+{# ===== CHIPS ===== #}
+<div class="chips" role="group" aria-label="Filtrar por disponibilidad">
+    <button type="button" class="chip active" data-filtro="todos">Todos <span data-count="todos"></span></button>
+    <button type="button" class="chip" data-filtro="disponible">Disponibles <span data-count="disponible"></span></button>
+    <button type="button" class="chip" data-filtro="asignado">Asignados <span data-count="asignado"></span></button>
+    <button type="button" class="chip" data-filtro="reparacion">Reparación <span data-count="reparacion"></span></button>
+    <button type="button" class="chip" data-filtro="inhabilitado">Inhabilitados <span data-count="inhabilitado"></span></button>
+    <button type="button" class="chip" data-filtro="baja">De baja <span data-count="baja"></span></button>
+</div>
+
+
+{# ===== INVENTARIO + ESTADÍSTICAS ===== #}
+<div class="inventory-layout">
+
+    <div class="card card-flush">
+        <div class="table-responsive">
+            <table id="tablaActivos" class="table">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Tipo</th>
+                        <th>Marca</th>
+                        <th>Modelo</th>
+                        <th>Serial</th>
+                        <th>Disponibilidad</th>
+                        <th>Estado físico</th>
+                        <th>Área</th>
+                        <th>Asignado a</th>
+                        <th class="th-action">Acciones</th>
+                    </tr>
+                </thead>
+
+                <tbody>
                 {% for activo in activos %}
 
-                    {% set e = (activo.estado or '')|lower %}
+                    {% set disponibilidad = (activo.disponibilidad or '')|lower %}
+                    {% set estado = (activo.estado or '')|lower %}
 
-                    {% if 'disponible' in e or 'bueno' in e or 'activo' in e %}
-                        {% set clase = 'badge-success' %}
-                    {% elif 'asignado' in e or 'uso' in e %}
-                        {% set clase = 'badge-info' %}
-                    {% elif 'reparaci' in e or 'mantenimiento' in e %}
-                        {% set clase = 'badge-warning' %}
-                    {% elif 'baja' in e or 'da' in e and 'ñ' in e or 'perdido' in e %}
-                        {% set clase = 'badge-danger' %}
+                    {% set texto_busqueda = (
+                        (activo.id|string) ~ ' ' ~
+                        (activo.codigo or '') ~ ' ' ~
+                        (activo.tipo or '') ~ ' ' ~
+                        (activo.marca or '') ~ ' ' ~
+                        (activo.modelo or '') ~ ' ' ~
+                        (activo.serial or '') ~ ' ' ~
+                        (activo.area or '') ~ ' ' ~
+                        (activo.asignado_a or '') ~ ' ' ~
+                        (activo.observaciones or '') ~ ' ' ~
+                        (activo.procesador or '') ~ ' ' ~
+                        (activo.ram or '') ~ ' ' ~
+                        (activo.disco or '') ~ ' ' ~
+                        (activo.hostname or '') ~ ' ' ~
+                        (activo.ip or '') ~ ' ' ~
+                        (activo.mac or '') ~ ' ' ~
+                        (activo.sistema_operativo or '')
+                    )|lower %}
+
+                    {% if 'baja' in disponibilidad or 'baja' in estado %}
+                        {% set grupo = 'baja' %}{% set clase_disponibilidad = 'badge-baja' %}
+                    {% elif 'inhabilit' in disponibilidad or 'inhabilit' in estado %}
+                        {% set grupo = 'inhabilitado' %}{% set clase_disponibilidad = 'badge-inhabilitado' %}
+                    {% elif 'reparaci' in disponibilidad or 'mantenim' in disponibilidad %}
+                        {% set grupo = 'reparacion' %}{% set clase_disponibilidad = 'badge-reparacion' %}
+                    {% elif 'asignado' in disponibilidad %}
+                        {% set grupo = 'asignado' %}{% set clase_disponibilidad = 'badge-asignado' %}
+                    {% elif 'disponible' in disponibilidad %}
+                        {% set grupo = 'disponible' %}{% set clase_disponibilidad = 'badge-disponible' %}
                     {% else %}
-                        {% set clase = '' %}
+                        {% set grupo = 'otro' %}{% set clase_disponibilidad = 'badge-default' %}
                     {% endif %}
 
-                    <tr>
-                        <td class="cell-muted">{{ activo.id }}</td>
-                        <td class="cell-code">{{ activo.codigo }}</td>
-                        <td>{{ activo.tipo }}</td>
-                        <td>{{ activo.marca }}</td>
-                        <td>{{ activo.modelo }}</td>
-                        <td><span class="badge {{ clase }}">{{ activo.estado or '—' }}</span></td>
-                    </tr>
+                    <tr data-id="{{ activo.id }}"
+                        data-grupo="{{ grupo }}"
+                        data-tipo="{{ (activo.tipo or '')|lower }}"
+                        data-area="{{ (activo.area or '')|lower }}"
+                        data-busqueda="{{ texto_busqueda }}">
 
-                {% else %}
+                        <td class="cell-code">{{ activo.codigo or '—' }}</td>
+                        <td>{{ activo.tipo or '—' }}</td>
+                        <td>{{ activo.marca or '—' }}</td>
+                        <td>{{ activo.modelo or '—' }}</td>
+                        <td class="cell-muted cell-ellipsis" title="{{ activo.serial or '' }}">{{ activo.serial or '—' }}</td>
+                        <td><span class="badge {{ clase_disponibilidad }}">{{ activo.disponibilidad or '—' }}</span></td>
+                        <td>
+                            {% if activo.estado %}
+                                <span class="badge badge-default">{{ activo.estado }}</span>
+                            {% else %}
+                                <span class="cell-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="cell-muted">{{ activo.area or '—' }}</td>
+                        <td class="cell-muted">{{ activo.asignado_a or '—' }}</td>
 
-                    <tr>
-                        <td colspan="6">
-                            <div class="empty-state">No hay activos registrados.</div>
+                        <td class="cell-action">
+                            <div class="row-actions">
+
+                                {# VER (siempre visible) #}
+                                <button type="button" class="btn btn-sm btn-soft" data-ver
+                                    {{ datos_activo(activo, adicionales) }}>Ver</button>
+
+                                {# EDITAR #}
+                                {% if puede_editar %}
+                                    <button type="button" class="btn btn-sm btn-soft" data-editar
+                                        data-action="{{ url_for('editar_activo_web', activo_id=activo.id) }}"
+                                        {{ datos_activo(activo, adicionales) }}>Editar</button>
+                                {% endif %}
+
+                                {# REACTIVAR #}
+                                {% if grupo in ('baja', 'inhabilitado') %}
+                                    {% if puede_editar %}
+                                        <form method="POST" action="{{ url_for('reactivar_activo_web', activo_id=activo.id) }}">
+                                            {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
+                                            <button type="submit" class="btn btn-sm btn-soft-warning">Reactivar</button>
+                                        </form>
+                                    {% endif %}
+
+                                {# INHABILITAR / BAJA #}
+                                {% elif grupo != 'asignado' %}
+                                    {% if puede_editar %}
+                                        <button type="button" class="btn btn-sm btn-soft-warning" data-motivo
+                                            data-action="{{ url_for('inhabilitar_activo_web', activo_id=activo.id) }}"
+                                            data-title="¿Inhabilitar {{ activo.codigo }}?"
+                                            data-text="El activo dejará de estar disponible para asignaciones. Puedes reactivarlo cuando quieras."
+                                            data-ok="Inhabilitar"
+                                            data-class="btn-warning">Inhabilitar</button>
+                                    {% endif %}
+                                    {% if puede_baja %}
+                                        <button type="button" class="btn btn-sm btn-soft-danger" data-motivo data-required="1"
+                                            data-action="{{ url_for('dar_de_baja_activo_web', activo_id=activo.id) }}"
+                                            data-title="¿Dar de baja {{ activo.codigo }}?"
+                                            data-text="El activo sale del inventario operativo. Se conserva su historial y se puede reactivar."
+                                            data-ok="Dar de baja"
+                                            data-class="btn-danger">Baja</button>
+                                    {% endif %}
+                                {% endif %}
+
+                            </div>
                         </td>
                     </tr>
 
+                {% else %}
+                    <tr>
+                        <td colspan="10"><div class="empty-state">No hay activos registrados.</div></td>
+                    </tr>
                 {% endfor %}
+                </tbody>
+            </table>
 
-            </tbody>
+            <div class="no-results" id="sinResultados">No encontramos activos que coincidan con los filtros.</div>
+        </div>
 
-        </table>
-
+        {# PAGINACIÓN #}
+        <div class="table-footer">
+            <div class="pagination-info">
+                Mostrando <strong id="desdeRegistro">0</strong> - <strong id="hastaRegistro">0</strong>
+                de <strong id="totalFiltrado">0</strong>
+            </div>
+            <div class="pagination">
+                <button type="button" class="page-btn" id="paginaAnterior">‹</button>
+                <div id="numerosPagina" style="display:flex;gap:5px;"></div>
+                <button type="button" class="page-btn" id="paginaSiguiente">›</button>
+            </div>
+        </div>
     </div>
+
+    <aside class="card type-sidebar">
+        <h3>Inventario por tipo</h3>
+        <p class="type-sidebar-sub">Cantidad registrada</p>
+        <div class="type-list" id="listaTipos">
+            {% for tipo in tipos %}
+                <div class="type-item" data-tipo-item="{{ tipo|lower }}">
+                    <span class="type-name">{{ tipo }}</span>
+                    <span class="type-count">0</span>
+                </div>
+            {% endfor %}
+        </div>
+    </aside>
 
 </div>
 
+
+{# ===== MODAL DETALLE ===== #}
+<dialog class="detail-dialog" id="detalleDialog" aria-labelledby="detalleTitulo">
+
+    <div class="detail-header">
+        <div>
+            <h3 id="detalleTitulo">Detalle del activo</h3>
+            <p id="detalleSubtitulo">Información completa</p>
+        </div>
+        <button type="button" class="detail-close" id="cerrarDetalle">×</button>
+    </div>
+
+    <div class="detail-body">
+
+        <div class="detail-section">
+            <h4>Identificación</h4>
+            <div class="detail-grid">
+                <div class="detail-item"><span class="detail-label">ID</span><span class="detail-value" id="d_id"></span></div>
+                <div class="detail-item"><span class="detail-label">Código</span><span class="detail-value" id="d_codigo"></span></div>
+                <div class="detail-item"><span class="detail-label">Tipo</span><span class="detail-value" id="d_tipo"></span></div>
+                <div class="detail-item"><span class="detail-label">Marca</span><span class="detail-value" id="d_marca"></span></div>
+                <div class="detail-item"><span class="detail-label">Modelo</span><span class="detail-value" id="d_modelo"></span></div>
+                <div class="detail-item"><span class="detail-label">Serial</span><span class="detail-value" id="d_serial"></span></div>
+            </div>
+        </div>
+
+        <div class="detail-section">
+            <h4>Asignación y estado</h4>
+            <div class="detail-grid">
+                <div class="detail-item"><span class="detail-label">Disponibilidad</span><span class="detail-value" id="d_disponibilidad"></span></div>
+                <div class="detail-item"><span class="detail-label">Estado físico</span><span class="detail-value" id="d_estado"></span></div>
+                <div class="detail-item"><span class="detail-label">Área</span><span class="detail-value" id="d_area"></span></div>
+                <div class="detail-item"><span class="detail-label">Asignado a</span><span class="detail-value" id="d_asignado"></span></div>
+                <div class="detail-item"><span class="detail-label">Cantidad</span><span class="detail-value" id="d_cantidad"></span></div>
+            </div>
+        </div>
+
+        <div class="detail-section laptop-card" id="laptopTechnicalCard" style="display:none;">
+            <h4>Ficha técnica del equipo</h4>
+            <div class="detail-grid">
+                <div class="detail-item" id="box_procesador"><span class="detail-label">Procesador</span><span class="detail-value" id="d_procesador"></span></div>
+                <div class="detail-item" id="box_ram"><span class="detail-label">RAM</span><span class="detail-value" id="d_ram"></span></div>
+                <div class="detail-item" id="box_disco"><span class="detail-label">Disco</span><span class="detail-value" id="d_disco"></span></div>
+                <div class="detail-item" id="box_hostname"><span class="detail-label">Hostname</span><span class="detail-value" id="d_hostname"></span></div>
+                <div class="detail-item" id="box_ip"><span class="detail-label">IP</span><span class="detail-value" id="d_ip"></span></div>
+                <div class="detail-item" id="box_mac"><span class="detail-label">MAC</span><span class="detail-value" id="d_mac"></span></div>
+                <div class="detail-item" id="box_so"><span class="detail-label">Sistema operativo</span><span class="detail-value" id="d_so"></span></div>
+            </div>
+        </div>
+
+        <div class="detail-section" id="adicionalesSection" style="display:none;">
+            <h4>Adicionales</h4>
+            <div class="adicional-list" id="d_adicionales"></div>
+        </div>
+
+        <div class="detail-section">
+            <h4>Información de compra</h4>
+            <div class="detail-grid">
+                <div class="detail-item"><span class="detail-label">Fecha de compra</span><span class="detail-value" id="d_fecha_compra"></span></div>
+                <div class="detail-item"><span class="detail-label">Garantía</span><span class="detail-value" id="d_garantia"></span></div>
+                <div class="detail-item"><span class="detail-label">Factura</span><span class="detail-value" id="d_factura"></span></div>
+            </div>
+        </div>
+
+        <div class="detail-section" id="observacionesSection">
+            <h4>Observaciones</h4>
+            <div class="detail-item"><span class="detail-value" id="d_observaciones"></span></div>
+        </div>
+
+    </div>
+</dialog>
+
+
+{# ===== DIÁLOGO CREAR / EDITAR ===== #}
+{% if puede_crear or puede_editar %}
+
+<dialog class="form-dialog" id="activoDialog" aria-labelledby="activoTitulo">
+
+    <form method="POST" id="activoForm" enctype="multipart/form-data"
+          action="{{ url_for('crear_activo_web') }}"
+          data-crear="{{ url_for('crear_activo_web') }}">
+
+        {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
+
+        <h3 id="activoTitulo">Nuevo activo</h3>
+        <p class="dlg-sub">Los campos con * son obligatorios.</p>
+
+        {# Identificación #}
+        <div class="form-section">
+            <h4 class="form-section-title">Identificación</h4>
+            <div class="dlg-grid">
+                <div><label for="f_codigo">Código *</label><input id="f_codigo" name="codigo" class="form-control" autocomplete="off" required></div>
+                <div>
+                    <label for="f_tipo">Tipo *</label>
+                    <input id="f_tipo" name="tipo" class="form-control" list="lista_tipos" autocomplete="off" placeholder="Laptop, Monitor, Teclado…" required>
+                    <datalist id="lista_tipos">{% for t in tipos %}<option value="{{ t }}">{% endfor %}</datalist>
+                </div>
+                <div>
+                    <label for="f_marca">Marca</label>
+                    <input id="f_marca" name="marca" class="form-control" list="lista_marcas" autocomplete="off">
+                    <datalist id="lista_marcas">{% for m in marcas %}<option value="{{ m }}">{% endfor %}</datalist>
+                </div>
+                <div><label for="f_modelo">Modelo</label><input id="f_modelo" name="modelo" class="form-control" autocomplete="off"></div>
+                <div class="full"><label for="f_serial">Serial</label><input id="f_serial" name="serial" class="form-control" autocomplete="off"></div>
+            </div>
+        </div>
+
+        {# Estado y asignación #}
+        <div class="form-section">
+            <h4 class="form-section-title">Estado y asignación</h4>
+            <div class="dlg-grid">
+                <div>
+                    <label for="f_disponibilidad">Disponibilidad</label>
+                    <select id="f_disponibilidad" name="disponibilidad" class="form-control">
+                        <option value="Disponible">Disponible</option>
+                        <option value="En reparación">En reparación</option>
+                        <option value="Inhabilitado">Inhabilitado</option>
+                        <option value="Dado de baja">Dado de baja</option>
+                    </select>
+                    <p class="form-hint" id="hintDisponibilidad" hidden>El activo está asignado: la disponibilidad no se edita a mano.</p>
+                </div>
+                <div><label for="f_estado">Estado físico</label><input id="f_estado" name="estado" class="form-control" placeholder="Bueno, regular, malo…"></div>
+                <div>
+                    <label for="f_persona">Asignar a</label>
+                    <select id="f_persona" name="persona_id" class="form-control">
+                        <option value="">— Sin asignar —</option>
+                        {% for p in personas %}
+                            <option value="{{ p.id }}" data-nombre="{{ p.nombre }}">{{ p.nombre }}{% if p.area %} · {{ p.area }}{% endif %}</option>
+                        {% endfor %}
+                    </select>
+                    <p class="form-hint">El área se toma de la persona. Para quitar una asignación usa Devoluciones.</p>
+                </div>
+                <div><label for="f_cantidad">Cantidad</label><input id="f_cantidad" name="cantidad" class="form-control" type="number" min="0" step="1"></div>
+            </div>
+        </div>
+
+        {# Ficha técnica + adicionales (solo laptops) #}
+        <div class="form-section form-laptop-section" id="formLaptopSection" hidden>
+            <h4 class="form-section-title">Ficha técnica del equipo</h4>
+            <p class="form-section-subtitle">Estos campos aparecen automáticamente para portátiles/laptops.</p>
+            <div class="dlg-grid">
+                <div><label for="f_procesador">Procesador</label><input id="f_procesador" name="procesador" class="form-control" autocomplete="off"></div>
+                <div><label for="f_ram">RAM</label><input id="f_ram" name="ram" class="form-control" placeholder="8 GB, 16 GB…"></div>
+                <div><label for="f_disco">Disco</label><input id="f_disco" name="disco" class="form-control" placeholder="256 GB SSD, 1 TB…"></div>
+                <div><label for="f_hostname">Hostname</label><input id="f_hostname" name="hostname" class="form-control" autocomplete="off"></div>
+                <div><label for="f_ip">IP</label><input id="f_ip" name="ip" class="form-control" autocomplete="off"></div>
+                <div><label for="f_mac">MAC</label><input id="f_mac" name="mac" class="form-control" autocomplete="off"></div>
+                <div class="full"><label for="f_so">Sistema Operativo</label><input id="f_so" name="sistema_operativo" class="form-control" placeholder="Windows 11 Pro, Windows 10…"></div>
+            </div>
+
+            <div class="sub-block">
+                <h5>Adicionales</h5>
+                <p class="form-section-subtitle" style="margin:0 0 12px">Cargador, mouse, maletín, memoria extra… cada uno con su factura (opcional).</p>
+
+                <div class="adicional-list" id="adicionalesExistentes" style="margin-bottom:12px"></div>
+
+                <div id="adicionalesNuevos"></div>
+
+                <button type="button" class="btn btn-sm btn-soft" id="btnAgregarAdicional">+ Agregar adicional</button>
+            </div>
+        </div>
+
+        {# Compra #}
+        <div class="form-section">
+            <h4 class="form-section-title">Información de compra</h4>
+            <div class="dlg-grid">
+                <div><label for="f_fecha_compra">Fecha de compra</label><input id="f_fecha_compra" name="fecha_compra" class="form-control" type="date"></div>
+                <div><label for="f_garantia">Garantía</label><input id="f_garantia" name="garantia" class="form-control" placeholder="12 meses, vigente hasta…"></div>
+                <div class="full">
+                    <label for="f_factura">Factura (PDF, JPG o PNG)</label>
+                    <input id="f_factura" name="factura" class="form-control" type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png">
+                    <p class="form-hint" id="facturaActual" hidden></p>
+                    <p class="form-hint">Máximo 20 MB por envío. Al subir una nueva se reemplaza la ruta guardada; el archivo anterior se conserva en el almacenamiento.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h4 class="form-section-title">Observaciones</h4>
+            <textarea id="f_obs" name="observaciones" class="form-control" placeholder="Información adicional del activo…"></textarea>
+        </div>
+
+        <div class="dlg-actions">
+            <button type="button" class="btn btn-outline" data-cerrar>Cancelar</button>
+            <button type="submit" class="btn btn-success" id="activoGuardar">Guardar activo</button>
+        </div>
+
+    </form>
+</dialog>
+
+{% endif %}
+
+
+{# ===== DIÁLOGO INHABILITAR / BAJA ===== #}
+{% if puede_editar or puede_baja %}
+
+<dialog class="form-dialog" id="motivoDialog" aria-labelledby="motivoTitulo" style="max-width:460px">
+    <form method="POST" id="motivoForm">
+        {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
+
+        <h3 id="motivoTitulo"></h3>
+        <p class="dlg-sub" id="motivoTexto"></p>
+
+        <label for="f_motivo" id="motivoLabel">Motivo</label>
+        <textarea id="f_motivo" name="motivo" class="form-control" placeholder="Ej: equipo dañado sin reparación"></textarea>
+
+        <div class="dlg-actions">
+            <button type="button" class="btn btn-outline" data-cerrar>Cancelar</button>
+            <button type="submit" class="btn" id="motivoOk">Confirmar</button>
+        </div>
+    </form>
+</dialog>
+
+{% endif %}
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+(function () {
+    "use strict";
+
+    /* ===== ELEMENTOS ===== */
+    const filas = Array.from(document.querySelectorAll("#tablaActivos tbody tr[data-grupo]"));
+    const contador = document.getElementById("contador");
+    const vacio = document.getElementById("sinResultados");
+    const buscador = document.getElementById("buscador");
+    const limpiarBusqueda = document.getElementById("limpiarBusqueda");
+    const filtroTipo = document.getElementById("filtroTipo");
+    const filtroArea = document.getElementById("filtroArea");
+    const filtroDisponibilidad = document.getElementById("filtroDisponibilidad");
+    const resetFiltros = document.getElementById("resetFiltros");
+
+    let filtroChip = "todos";
+    let paginaActual = 1;
+    const registrosPorPagina = 50;
+    let filasFiltradas = [];
+
+    /* ===== UTILIDADES ===== */
+    function normalizar(texto) {
+        return (texto || "").toString().toLowerCase()
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    }
+
+    function esTipoLaptop(tipo) {
+        const t = normalizar(tipo);
+        return t.includes("laptop") || t.includes("portatil");
+    }
+
+    function obtenerGrupo(fila) { return fila.dataset.grupo || "otro"; }
+
+    function textoSeguro(valor) {
+        if (valor === null || valor === undefined || String(valor).trim() === "") return "—";
+        return String(valor);
+    }
+
+    function poner(id, valor) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = textoSeguro(valor);
+    }
+
+    function parseAdicionales(texto) {
+        try {
+            const lista = JSON.parse(texto || "[]");
+            return Array.isArray(lista) ? lista : [];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function crearEnlaceFactura(url, texto) {
+        const a = document.createElement("a");
+        a.href = url;
+        a.target = "_blank";
+        a.rel = "noopener";
+        a.textContent = texto || "Ver factura";
+        return a;
+    }
+
+    function pintarAdicionales(contenedor, lista) {
+        contenedor.innerHTML = "";
+        lista.forEach(function (ad) {
+            const item = document.createElement("div");
+            item.className = "adicional-item";
+
+            const info = document.createElement("div");
+            const titulo = document.createElement("strong");
+            titulo.textContent = ad.descripcion || "—";
+            info.appendChild(titulo);
+            if (ad.tipo) {
+                const tipo = document.createElement("small");
+                tipo.textContent = " · " + ad.tipo;
+                info.appendChild(tipo);
+            }
+            item.appendChild(info);
+
+            if (ad.factura_url) {
+                item.appendChild(crearEnlaceFactura(ad.factura_url));
+            }
+            contenedor.appendChild(item);
+        });
+    }
+
+    /* ===== ESTADÍSTICAS ===== */
+    function actualizarEstadisticas() {
+        let asignados = 0, disponibles = 0, reparacion = 0, baja = 0;
+        const tiposConteo = {};
+
+        filas.forEach(function (fila) {
+            const grupo = obtenerGrupo(fila);
+            if (grupo === "asignado") asignados++;
+            if (grupo === "disponible") disponibles++;
+            if (grupo === "reparacion") reparacion++;
+            if (grupo === "baja") baja++;
+
+            const tipo = normalizar(fila.dataset.tipo);
+            if (tipo) tiposConteo[tipo] = (tiposConteo[tipo] || 0) + 1;
+        });
+
+        const set = function (id, v) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = v;
+        };
+        set("statAsignados", asignados);
+        set("statDisponibles", disponibles);
+        set("statReparacion", reparacion);
+        set("statBaja", baja);
+
+        document.querySelectorAll("[data-count]").forEach(function (el) {
+            const grupo = el.dataset.count;
+            const cantidad = grupo === "todos"
+                ? filas.length
+                : filas.filter(function (f) { return obtenerGrupo(f) === grupo; }).length;
+            el.textContent = "(" + cantidad + ")";
+        });
+
+        document.querySelectorAll("[data-tipo-item]").forEach(function (el) {
+            const c = el.querySelector(".type-count");
+            if (c) c.textContent = tiposConteo[normalizar(el.dataset.tipoItem)] || 0;
+        });
+    }
+
+    /* ===== FILTRADO ===== */
+    function obtenerFiltradas() {
+        const texto = normalizar(buscador ? buscador.value : "");
+        const tipo = normalizar(filtroTipo ? filtroTipo.value : "");
+        const area = normalizar(filtroArea ? filtroArea.value : "");
+        const disp = normalizar(filtroDisponibilidad ? filtroDisponibilidad.value : "");
+
+        return filas.filter(function (fila) {
+            const grupo = obtenerGrupo(fila);
+            return (
+                (!texto || normalizar(fila.dataset.busqueda).includes(texto)) &&
+                (!tipo || normalizar(fila.dataset.tipo) === tipo) &&
+                (!area || normalizar(fila.dataset.area) === area) &&
+                (!disp || grupo === disp) &&
+                (filtroChip === "todos" || grupo === filtroChip)
+            );
+        });
+    }
+
+    /* ===== PAGINACIÓN ===== */
+    function renderPaginacion() {
+        const total = filasFiltradas.length;
+        const paginas = Math.max(1, Math.ceil(total / registrosPorPagina));
+        if (paginaActual > paginas) paginaActual = paginas;
+
+        const inicio = total === 0 ? 0 : (paginaActual - 1) * registrosPorPagina;
+        const fin = Math.min(inicio + registrosPorPagina, total);
+
+        filas.forEach(function (f) { f.hidden = true; });
+        filasFiltradas.slice(inicio, fin).forEach(function (f) { f.hidden = false; });
+
+        const set = function (id, v) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = v;
+        };
+        set("desdeRegistro", total === 0 ? 0 : inicio + 1);
+        set("hastaRegistro", fin);
+        set("totalFiltrado", total);
+
+        const anterior = document.getElementById("paginaAnterior");
+        const siguiente = document.getElementById("paginaSiguiente");
+        if (anterior) anterior.disabled = paginaActual <= 1;
+        if (siguiente) siguiente.disabled = paginaActual >= paginas;
+
+        if (vacio) vacio.classList.toggle("visible", total === 0);
+
+        const numeros = document.getElementById("numerosPagina");
+        if (!numeros) return;
+        numeros.innerHTML = "";
+
+        const maxBotones = 5;
+        let ini = Math.max(1, paginaActual - Math.floor(maxBotones / 2));
+        let end = Math.min(paginas, ini + maxBotones - 1);
+        if (end - ini < maxBotones - 1) ini = Math.max(1, end - maxBotones + 1);
+
+        for (let n = ini; n <= end; n++) {
+            const b = document.createElement("button");
+            b.type = "button";
+            b.className = "page-btn" + (n === paginaActual ? " active" : "");
+            b.textContent = n;
+            b.addEventListener("click", function () {
+                paginaActual = n;
+                renderPaginacion();
+            });
+            numeros.appendChild(b);
+        }
+    }
+
+    function aplicarFiltros() {
+        filasFiltradas = obtenerFiltradas();
+        paginaActual = 1;
+        if (contador) contador.textContent = filasFiltradas.length;
+        renderPaginacion();
+        if (limpiarBusqueda) {
+            limpiarBusqueda.classList.toggle("visible", !!(buscador && buscador.value));
+        }
+    }
+
+    if (buscador) buscador.addEventListener("input", aplicarFiltros);
+
+    if (limpiarBusqueda) {
+        limpiarBusqueda.addEventListener("click", function () {
+            if (buscador) { buscador.value = ""; buscador.focus(); }
+            aplicarFiltros();
+        });
+    }
+
+    [filtroTipo, filtroArea, filtroDisponibilidad].forEach(function (s) {
+        if (s) s.addEventListener("change", aplicarFiltros);
+    });
+
+    if (resetFiltros) {
+        resetFiltros.addEventListener("click", function () {
+            if (buscador) buscador.value = "";
+            if (filtroTipo) filtroTipo.value = "";
+            if (filtroArea) filtroArea.value = "";
+            if (filtroDisponibilidad) filtroDisponibilidad.value = "";
+            filtroChip = "todos";
+            document.querySelectorAll(".chip").forEach(function (c) {
+                c.classList.toggle("active", c.dataset.filtro === "todos");
+            });
+            aplicarFiltros();
+        });
+    }
+
+    document.querySelectorAll(".chip").forEach(function (chip) {
+        chip.addEventListener("click", function () {
+            filtroChip = chip.dataset.filtro;
+            document.querySelectorAll(".chip").forEach(function (c) {
+                c.classList.toggle("active", c === chip);
+            });
+            aplicarFiltros();
+        });
+    });
+
+    const btnAnterior = document.getElementById("paginaAnterior");
+    if (btnAnterior) {
+        btnAnterior.addEventListener("click", function () {
+            if (paginaActual > 1) { paginaActual--; renderPaginacion(); }
+        });
+    }
+
+    const btnSiguiente = document.getElementById("paginaSiguiente");
+    if (btnSiguiente) {
+        btnSiguiente.addEventListener("click", function () {
+            const paginas = Math.ceil(filasFiltradas.length / registrosPorPagina);
+            if (paginaActual < paginas) { paginaActual++; renderPaginacion(); }
+        });
+    }
+
+    /* ===== MODAL DETALLE ===== */
+    const detalleDialog = document.getElementById("detalleDialog");
+
+    function abrirDetalle(boton) {
+        const d = boton.dataset;
+
+        poner("d_id", d.id);
+        poner("d_codigo", d.codigo);
+        poner("d_tipo", d.tipo);
+        poner("d_marca", d.marca);
+        poner("d_modelo", d.modelo);
+        poner("d_serial", d.serial);
+        poner("d_disponibilidad", d.disponibilidad);
+        poner("d_estado", d.estado);
+        poner("d_area", d.area);
+        poner("d_asignado", d.asignado);
+        poner("d_cantidad", d.cantidad);
+        poner("d_fecha_compra", d.fechaCompra);
+        poner("d_garantia", d.garantia);
+        poner("d_observaciones", d.observaciones);
+
+        /* Factura */
+        const facturaEl = document.getElementById("d_factura");
+        if (facturaEl) {
+            facturaEl.textContent = "";
+            if (d.facturaUrl) {
+                facturaEl.appendChild(crearEnlaceFactura(d.facturaUrl, "Ver factura"));
+            } else {
+                facturaEl.textContent = "—";
+            }
+        }
+
+        /* Ficha técnica */
+        const laptopCard = document.getElementById("laptopTechnicalCard");
+        if (laptopCard) laptopCard.style.display = esTipoLaptop(d.tipo) ? "block" : "none";
+
+        poner("d_procesador", d.procesador);
+        poner("d_ram", d.ram);
+        poner("d_disco", d.disco);
+        poner("d_hostname", d.hostname);
+        poner("d_ip", d.ip);
+        poner("d_mac", d.mac);
+        poner("d_so", d.so);
+
+        [
+            ["box_procesador", d.procesador],
+            ["box_ram", d.ram],
+            ["box_disco", d.disco],
+            ["box_hostname", d.hostname],
+            ["box_ip", d.ip],
+            ["box_mac", d.mac],
+            ["box_so", d.so]
+        ].forEach(function (item) {
+            const box = document.getElementById(item[0]);
+            if (box) box.style.display = item[1] ? "" : "none";
+        });
+
+        /* Adicionales */
+        const adSec = document.getElementById("adicionalesSection");
+        const adList = document.getElementById("d_adicionales");
+        const adicionales = parseAdicionales(d.adicionales);
+        if (adSec && adList) {
+            pintarAdicionales(adList, adicionales);
+            adSec.style.display = adicionales.length ? "" : "none";
+        }
+
+        const obsSection = document.getElementById("observacionesSection");
+        if (obsSection) obsSection.style.display = d.observaciones ? "" : "none";
+
+        const titulo = document.getElementById("detalleTitulo");
+        const subtitulo = document.getElementById("detalleSubtitulo");
+        if (titulo) titulo.textContent = d.codigo || "Detalle del activo";
+        if (subtitulo) {
+            subtitulo.textContent = [d.tipo, d.marca, d.modelo].filter(Boolean).join(" · ");
+        }
+
+        if (detalleDialog && typeof detalleDialog.showModal === "function") {
+            detalleDialog.showModal();
+        }
+    }
+
+    document.querySelectorAll("[data-ver]").forEach(function (b) {
+        b.addEventListener("click", function () { abrirDetalle(b); });
+    });
+
+    if (detalleDialog) {
+        detalleDialog.addEventListener("click", function (e) {
+            if (e.target === detalleDialog) detalleDialog.close();
+        });
+    }
+
+    const cerrarDetalle = document.getElementById("cerrarDetalle");
+    if (cerrarDetalle) {
+        cerrarDetalle.addEventListener("click", function () {
+            if (detalleDialog) detalleDialog.close();
+        });
+    }
+
+    /* ===== CREAR / EDITAR ===== */
+    const dlgActivo = document.getElementById("activoDialog");
+
+    if (dlgActivo) {
+        const form = document.getElementById("activoForm");
+        const titulo = document.getElementById("activoTitulo");
+        const guardar = document.getElementById("activoGuardar");
+        const ficha = document.getElementById("formLaptopSection");
+        const listaNuevos = document.getElementById("adicionalesNuevos");
+        const listaExistentes = document.getElementById("adicionalesExistentes");
+        const btnAgregar = document.getElementById("btnAgregarAdicional");
+        const facturaActual = document.getElementById("facturaActual");
+        const hintDisp = document.getElementById("hintDisponibilidad");
+
+        dlgActivo.addEventListener("click", function (e) {
+            if (e.target === dlgActivo) dlgActivo.close();
+        });
+        dlgActivo.querySelectorAll("[data-cerrar]").forEach(function (b) {
+            b.addEventListener("click", function () { dlgActivo.close(); });
+        });
+
+        function actualizarFichaLaptop() {
+            if (ficha) ficha.hidden = !esTipoLaptop(form.elements.tipo ? form.elements.tipo.value : "");
+        }
+
+        if (form.elements.tipo) form.elements.tipo.addEventListener("input", actualizarFichaLaptop);
+
+        /* Filas de adicionales nuevos */
+        function agregarFilaAdicional() {
+            const fila = document.createElement("div");
+            fila.className = "adicional-row";
+
+            const colTipo = document.createElement("div");
+            const lblTipo = document.createElement("label");
+            lblTipo.textContent = "Tipo";
+            const selTipo = document.createElement("select");
+            selTipo.name = "adicional_tipo";
+            selTipo.className = "form-control";
+            ["Cargador", "Mouse", "Teclado", "Maletín", "Memoria RAM", "Disco", "Otro"].forEach(function (t) {
+                const o = document.createElement("option");
+                o.value = t;
+                o.textContent = t;
+                selTipo.appendChild(o);
+            });
+            colTipo.appendChild(lblTipo);
+            colTipo.appendChild(selTipo);
+
+            const colDesc = document.createElement("div");
+            const lblDesc = document.createElement("label");
+            lblDesc.textContent = "Descripción";
+            const inDesc = document.createElement("input");
+            inDesc.name = "adicional_descripcion";
+            inDesc.className = "form-control";
+            inDesc.autocomplete = "off";
+            inDesc.placeholder = "Ej: Cargador 65 W";
+            colDesc.appendChild(lblDesc);
+            colDesc.appendChild(inDesc);
+
+            const colFile = document.createElement("div");
+            const lblFile = document.createElement("label");
+            lblFile.textContent = "Factura";
+            const inFile = document.createElement("input");
+            inFile.type = "file";
+            inFile.name = "adicional_factura";
+            inFile.className = "form-control";
+            inFile.accept = ".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png";
+            colFile.appendChild(lblFile);
+            colFile.appendChild(inFile);
+
+            const quitar = document.createElement("button");
+            quitar.type = "button";
+            quitar.className = "btn-quitar";
+            quitar.setAttribute("aria-label", "Quitar adicional");
+            quitar.textContent = "×";
+            quitar.addEventListener("click", function () { fila.remove(); });
+
+            fila.appendChild(colTipo);
+            fila.appendChild(colDesc);
+            fila.appendChild(colFile);
+            fila.appendChild(quitar);
+            listaNuevos.appendChild(fila);
+        }
+
+        if (btnAgregar) btnAgregar.addEventListener("click", agregarFilaAdicional);
+
+        function seleccionarPersona(nombre) {
+            const sel = form.elements.persona_id;
+            if (!sel) return;
+            sel.value = "";
+            if (!nombre) return;
+            Array.from(sel.options).forEach(function (o) {
+                if (o.dataset.nombre === nombre) sel.value = o.value;
+            });
+        }
+
+        function abrirActivo(modo, datos) {
+            form.reset();
+            datos = datos || {};
+
+            form.action = modo === "crear" ? form.dataset.crear : datos.action;
+            titulo.textContent = modo === "crear" ? "Nuevo activo" : "Editar activo";
+            guardar.textContent = modo === "crear" ? "Guardar activo" : "Guardar cambios";
+            guardar.disabled = false;
+
+            const setField = function (name, value) {
+                const f = form.elements[name];
+                if (f) f.value = value || "";
+            };
+
+            setField("codigo", datos.codigo);
+            setField("tipo", datos.tipo);
+            setField("marca", datos.marca);
+            setField("modelo", datos.modelo);
+            setField("serial", datos.serial);
+            setField("estado", datos.estado);
+            setField("cantidad", datos.cantidad);
+            setField("procesador", datos.procesador);
+            setField("ram", datos.ram);
+            setField("disco", datos.disco);
+            setField("hostname", datos.hostname);
+            setField("ip", datos.ip);
+            setField("mac", datos.mac);
+            setField("sistema_operativo", datos.so);
+            setField("fecha_compra", datos.fechaCompra);
+            setField("garantia", datos.garantia);
+            setField("observaciones", datos.observaciones || datos.obs);
+
+            /* Disponibilidad: si está asignado, no se edita a mano */
+            const dispSel = form.elements.disponibilidad;
+            const asignado = modo === "editar" && normalizar(datos.disponibilidad).includes("asignado");
+            if (dispSel) {
+                dispSel.value = asignado ? "Disponible" : (datos.disponibilidad || "Disponible");
+                if (!dispSel.value) dispSel.value = "Disponible";
+                dispSel.disabled = asignado;
+            }
+            if (hintDisp) hintDisp.hidden = !asignado;
+
+            /* Persona */
+            seleccionarPersona(modo === "editar" ? datos.asignado : "");
+
+            /* Factura actual */
+            if (facturaActual) {
+                facturaActual.textContent = "";
+                if (modo === "editar" && datos.facturaUrl) {
+                    facturaActual.appendChild(document.createTextNode("Factura actual: "));
+                    facturaActual.appendChild(crearEnlaceFactura(datos.facturaUrl, "ver"));
+                    facturaActual.hidden = false;
+                } else {
+                    facturaActual.hidden = true;
+                }
+            }
+
+            /* Adicionales */
+            listaNuevos.innerHTML = "";
+            listaExistentes.innerHTML = "";
+            if (modo === "editar") {
+                pintarAdicionales(listaExistentes, parseAdicionales(datos.adicionales));
+            }
+
+            actualizarFichaLaptop();
+
+            dlgActivo.showModal();
+            form.elements.codigo.focus();
+        }
+
+        const btnNuevo = document.getElementById("btnNuevo");
+        if (btnNuevo) btnNuevo.addEventListener("click", function () { abrirActivo("crear"); });
+
+        document.querySelectorAll("[data-editar]").forEach(function (b) {
+            b.addEventListener("click", function () { abrirActivo("editar", b.dataset); });
+        });
+
+        form.addEventListener("submit", function () {
+            /* Quita filas de adicionales vacías para no desalinear la lista */
+            listaNuevos.querySelectorAll(".adicional-row").forEach(function (fila) {
+                const desc = fila.querySelector('[name="adicional_descripcion"]');
+                if (desc && !desc.value.trim()) fila.remove();
+            });
+            guardar.disabled = true;
+            guardar.textContent = "Guardando…";
+        });
+    }
+
+    /* ===== MOTIVO / BAJA ===== */
+    const dlgMotivo = document.getElementById("motivoDialog");
+
+    if (dlgMotivo) {
+        const form = document.getElementById("motivoForm");
+        const titulo = document.getElementById("motivoTitulo");
+        const texto = document.getElementById("motivoTexto");
+        const ok = document.getElementById("motivoOk");
+        const campo = document.getElementById("f_motivo");
+        const label = document.getElementById("motivoLabel");
+
+        dlgMotivo.addEventListener("click", function (e) {
+            if (e.target === dlgMotivo) dlgMotivo.close();
+        });
+        dlgMotivo.querySelectorAll("[data-cerrar]").forEach(function (b) {
+            b.addEventListener("click", function () { dlgMotivo.close(); });
+        });
+
+        document.querySelectorAll("[data-motivo]").forEach(function (boton) {
+            boton.addEventListener("click", function () {
+                form.reset();
+                form.action = boton.dataset.action;
+                titulo.textContent = boton.dataset.title;
+                texto.textContent = boton.dataset.text;
+                ok.textContent = boton.dataset.ok;
+                ok.className = "btn " + (boton.dataset.class || "");
+                ok.disabled = false;
+
+                const obligatorio = !!boton.dataset.required;
+                campo.required = obligatorio;
+                label.textContent = obligatorio ? "Motivo *" : "Motivo (opcional)";
+
+                dlgMotivo.showModal();
+                campo.focus();
+            });
+        });
+
+        form.addEventListener("submit", function () { ok.disabled = true; });
+    }
+
+    /* ===== EXPORTAR CSV ===== */
+    function exportarCSV() {
+        if (!filasFiltradas.length) {
+            alert("No hay registros para exportar.");
+            return;
+        }
+
+        const datos = [[
+            "Código", "Tipo", "Marca", "Modelo", "Serial",
+            "Disponibilidad", "Estado físico", "Área", "Asignado a"
+        ]];
+
+        filasFiltradas.forEach(function (fila) {
+            const celdas = fila.querySelectorAll("td");
+            const out = [];
+            for (let i = 0; i < 9; i++) {
+                out.push(celdas[i] ? celdas[i].innerText.trim() : "");
+            }
+            datos.push(out);
+        });
+
+        const csv = datos.map(function (f) {
+            return f.map(function (v) {
+                return '"' + String(v).replace(/"/g, '""') + '"';
+            }).join(",");
+        }).join("\n");
+
+        const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "inventario_activos.csv";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+    }
+
+    const exportCSV = document.getElementById("exportCSV");
+    if (exportCSV) exportCSV.addEventListener("click", exportarCSV);
+
+    const exportPDF = document.getElementById("exportPDF");
+    if (exportPDF) exportPDF.addEventListener("click", function () { window.print(); });
+
+    /* ===== INICIO ===== */
+    actualizarEstadisticas();
+    aplicarFiltros();
+})();
+</script>
 {% endblock %}

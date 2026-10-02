@@ -5,20 +5,56 @@
 {% block extra_css %}
 <style>
     .page-header { margin-bottom: 24px; }
-    .page-header h1 { margin: 0; font-size: 24px; font-weight: 700; }
+    .page-header h1 { margin: 0; font-size: clamp(20px, 4vw, 24px); font-weight: 700; }
     .page-header p { margin: 4px 0 0; color: var(--text-light); }
 
+    .reportes { container-type: inline-size; container-name: rep; }
+
+    /* ---------- Resumen ---------- */
+    .resumen {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 14px;
+        margin-bottom: 26px;
+    }
+    .mini {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        padding: 16px 18px;
+        border-left: 4px solid var(--accent, var(--primary));
+    }
+    .mini b { font-size: 26px; font-weight: 700; letter-spacing: -.03em; line-height: 1.1; }
+    .mini span { color: var(--text-light); font-size: 13px; }
+
+    /* ---------- Tarjetas de reporte ---------- */
     .report-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
         gap: 18px;
     }
+    @container rep (min-width: 1000px) {
+        .report-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @container rep (max-width: 660px) {
+        .report-grid { grid-template-columns: 1fr; }
+    }
 
-    .report-card { display: flex; flex-direction: column; gap: 18px; }
+    .report-card {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin: 0;
+        transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .report-card:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(15,23,42,.10); }
+
+    .report-top { display: flex; align-items: flex-start; gap: 14px; }
 
     .report-icon {
         display: grid;
         place-items: center;
+        flex-shrink: 0;
         width: 46px;
         height: 46px;
         border-radius: 12px;
@@ -30,16 +66,49 @@
     }
 
     .report-card h3 { margin: 0; font-size: 16px; font-weight: 600; }
-    .report-card p { margin: 4px 0 0; color: var(--text-light); font-size: 13.5px; }
+    .report-card p { margin: 4px 0 0; color: var(--text-light); font-size: 13.5px; line-height: 1.4; }
 
-    .report-card .btn { margin-top: auto; align-self: flex-start; }
+    .report-meta {
+        align-self: flex-start;
+        padding: 4px 11px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--accent);
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--accent) 12%, transparent);
+    }
 
-    .r-excel   { --accent: var(--success); }
-    .r-pdf     { --accent: var(--danger); }
-    .r-history { --accent: var(--warning); }
+    .report-form { display: flex; flex-direction: column; gap: 14px; margin-top: auto; }
+
+    .filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; }
+    .filters label { display: block; margin-bottom: 4px; font-size: 12.5px; color: var(--text-light); }
+    .filters .form-control,
+    .filters .form-select { width: 100%; min-height: 40px; font-size: 14px; }
+
+    .form-select {
+        appearance: none;
+        padding-right: 34px;
+        background:
+            var(--surface)
+            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
+            no-repeat right 10px center;
+    }
+
+    .spacer-filters { min-height: 0; }
+
+    .report-form .btn { align-self: flex-start; }
+    @media (max-width: 768px) { .report-form .btn { width: 100%; align-self: stretch; text-align: center; } }
 
     .btn-warning { background: var(--warning); }
     .btn-warning:hover { background: #b45309; }
+
+    .r-excel   { --accent: var(--success); }
+    .r-people  { --accent: var(--primary); }
+    .r-ticket  { --accent: var(--danger); }
+    .r-pdf     { --accent: #0891b2; }
+    .r-history { --accent: var(--warning); }
+
+    .tip { margin-top: 22px; color: var(--text-light); font-size: 13px; }
 </style>
 {% endblock %}
 
@@ -48,37 +117,137 @@
 
 <div class="page-header">
     <h1>Reportes</h1>
-    <p>Exporta la información del sistema.</p>
+    <p>Exporta la información del sistema. Los Excel se descargan listos para filtrar y compartir.</p>
 </div>
 
-<div class="report-grid">
+<div class="reportes">
 
-    <div class="card report-card r-excel">
-        <div class="report-icon">XLS</div>
-        <div>
-            <h3>Exportar inventario</h3>
-            <p>Listado completo de activos en una hoja de Excel.</p>
-        </div>
-        <button type="button" class="btn btn-success">Descargar Excel</button>
+    <!-- RESUMEN -->
+    <div class="resumen">
+        <div class="card mini" style="--accent: var(--primary);"><b>{{ resumen.activos }}</b><span>Activos</span></div>
+        <div class="card mini" style="--accent: var(--success);"><b>{{ resumen.personas }}</b><span>Personas</span></div>
+        <div class="card mini" style="--accent: var(--danger);"><b>{{ resumen.tickets }}</b><span>Tickets</span></div>
+        <div class="card mini" style="--accent: #0891b2;"><b>{{ resumen.actas }}</b><span>Actas</span></div>
+        <div class="card mini" style="--accent: var(--warning);"><b>{{ resumen.historial }}</b><span>Movimientos</span></div>
     </div>
 
-    <div class="card report-card r-pdf">
-        <div class="report-icon">PDF</div>
-        <div>
-            <h3>Exportar actas</h3>
-            <p>Actas de entrega y devolución generadas.</p>
+    <div class="report-grid">
+
+        <!-- INVENTARIO -->
+        <div class="card report-card r-excel">
+            <div class="report-top">
+                <div class="report-icon">XLS</div>
+                <div>
+                    <h3>Inventario de activos</h3>
+                    <p>Código, tipo, marca, modelo, serial, estado y responsable.</p>
+                </div>
+            </div>
+            <span class="report-meta">{{ resumen.activos }} registros</span>
+
+            <form class="report-form" action="/reportes/inventario.xlsx" method="GET">
+                <div class="filters">
+                    <div>
+                        <label for="inv_estado">Estado</label>
+                        <select id="inv_estado" name="estado" class="form-select">
+                            <option value="todos">Todos</option>
+                            <option value="disponible">Disponibles</option>
+                            <option value="asignado">Asignados</option>
+                            <option value="repar">En reparación</option>
+                            <option value="baja">Dados de baja</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success">Descargar Excel</button>
+            </form>
         </div>
-        <button type="button" class="btn btn-danger">Descargar PDF</button>
+
+        <!-- PERSONAS -->
+        <div class="card report-card r-people">
+            <div class="report-top">
+                <div class="report-icon">XLS</div>
+                <div>
+                    <h3>Personas</h3>
+                    <p>Colaboradores con documento, correo, cargo, área y estado.</p>
+                </div>
+            </div>
+            <span class="report-meta">{{ resumen.personas }} registros</span>
+
+            <form class="report-form" action="/reportes/personas.xlsx" method="GET">
+                <button type="submit" class="btn">Descargar Excel</button>
+            </form>
+        </div>
+
+        <!-- TICKETS -->
+        <div class="card report-card r-ticket">
+            <div class="report-top">
+                <div class="report-icon">XLS</div>
+                <div>
+                    <h3>Tickets</h3>
+                    <p>Incidencias reportadas, su estado y la fecha de solución.</p>
+                </div>
+            </div>
+            <span class="report-meta">{{ resumen.tickets }} registros</span>
+
+            <form class="report-form" action="/reportes/tickets.xlsx" method="GET">
+                <div class="filters">
+                    <div>
+                        <label for="tk_estado">Estado</label>
+                        <select id="tk_estado" name="estado" class="form-select">
+                            <option value="todos">Todos</option>
+                            <option value="abiertos">Abiertos</option>
+                            <option value="solucionados">Solucionados</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-danger">Descargar Excel</button>
+            </form>
+        </div>
+
+        <!-- ACTAS -->
+        <div class="card report-card r-pdf">
+            <div class="report-top">
+                <div class="report-icon">PDF</div>
+                <div>
+                    <h3>Actas generadas</h3>
+                    <p>Todas las actas de entrega, devolución, cambio y paz y salvo en un ZIP.</p>
+                </div>
+            </div>
+            <span class="report-meta">{{ resumen.actas }} actas</span>
+
+            <form class="report-form" action="/reportes/actas.zip" method="GET">
+                <button type="submit" class="btn">Descargar ZIP</button>
+            </form>
+        </div>
+
+        <!-- HISTORIAL -->
+        <div class="card report-card r-history">
+            <div class="report-top">
+                <div class="report-icon">LOG</div>
+                <div>
+                    <h3>Historial de movimientos</h3>
+                    <p>Asignaciones, devoluciones y cambios registrados por equipo.</p>
+                </div>
+            </div>
+            <span class="report-meta">{{ resumen.historial }} movimientos</span>
+
+            <form class="report-form" action="/reportes/historial.xlsx" method="GET">
+                <div class="filters">
+                    <div>
+                        <label for="h_desde">Desde</label>
+                        <input id="h_desde" name="desde" type="date" class="form-control">
+                    </div>
+                    <div>
+                        <label for="h_hasta">Hasta</label>
+                        <input id="h_hasta" name="hasta" type="date" class="form-control">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-warning">Descargar Excel</button>
+            </form>
+        </div>
+
     </div>
 
-    <div class="card report-card r-history">
-        <div class="report-icon">LOG</div>
-        <div>
-            <h3>Historial</h3>
-            <p>Movimientos y cambios registrados por equipo.</p>
-        </div>
-        <button type="button" class="btn btn-warning">Descargar historial</button>
-    </div>
+    <p class="tip">Las fechas vacías descargan todo el historial.</p>
 
 </div>
 

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Permisos | Gestion de Activos TI{% endblock %}
+{% block title %}Permisos | Gestión de Activos TI{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -22,9 +22,7 @@
 
     .role-form {
         display: grid;
-        grid-template-columns: minmax(260px, 420px) auto;
-        gap: 12px;
-        align-items: center;
+        grid-template-columns: minmax(260px, 420px);
         margin-top: 18px;
     }
 
@@ -79,7 +77,20 @@
     .permission-table td:nth-child(2) { color: var(--text-light); }
 
     .permission-table th.check-cell,
-    .permission-table td.check-cell { width: 88px; text-align: center; }
+    .permission-table td.check-cell { width: 92px; text-align: center; }
+
+    .th-check {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        margin: 0;
+        font: inherit;
+        letter-spacing: inherit;
+        text-transform: inherit;
+        color: inherit;
+        cursor: pointer;
+    }
 
     .check-cell input {
         width: 20px;
@@ -91,18 +102,33 @@
 
     .table-responsive { border: 1px solid var(--border); border-radius: var(--radius); }
 
+    /* Barra de acciones fija abajo */
     .permission-actions {
+        position: sticky;
+        bottom: 16px;
+        z-index: 10;
         display: flex;
-        justify-content: flex-end;
+        align-items: center;
+        justify-content: space-between;
         flex-wrap: wrap;
-        gap: 10px;
+        gap: 12px;
         margin-top: 20px;
-        padding-top: 18px;
-        border-top: 1px solid var(--border);
+        padding: 12px 16px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        box-shadow: var(--shadow);
     }
 
-    .btn-secondary { background: #475569; }
-    .btn-secondary:hover { background: #334155; }
+    .dirty-note { display: none; color: var(--warning); font-size: 13.5px; font-weight: 600; }
+    .permission-actions.dirty .dirty-note { display: inline; }
+
+    .actions-group { display: flex; flex-wrap: wrap; gap: 10px; margin-left: auto; }
+
+    .hint { margin: 14px 0 0; color: var(--text-light); font-size: 12.5px; }
+
+    .btn-secondary { background: var(--text-light); }
+    .btn-secondary:hover { background: var(--text); }
 
     .empty-state { padding: 60px 24px; text-align: center; }
     .empty-icon {
@@ -122,9 +148,9 @@
     .empty-state p { margin: 6px 0 0; color: var(--text-light); }
 
     @media (max-width: 850px) {
-        .role-form { grid-template-columns: 1fr; }
-        .permission-actions { flex-direction: column; }
-        .permission-table { min-width: 720px; }
+        .permission-table { min-width: 780px; }
+        .actions-group { width: 100%; }
+        .actions-group .btn { flex: 1 1 auto; }
     }
 </style>
 {% endblock %}
@@ -145,10 +171,10 @@
 <div class="card role-card">
 
     <h2 class="card-title">1. Escoge el rol</h2>
-    <p class="card-sub">Administrador siempre tiene acceso total. Los demas roles son configurables.</p>
+    <p class="card-sub">Administrador siempre tiene acceso total. Los demás roles son configurables.</p>
 
-    <form method="GET" action="{{ url_for('administrar_permisos') }}" class="role-form">
-        <select name="rol_id" class="form-select" required>
+    <form method="GET" action="{{ url_for('administrar_permisos') }}" class="role-form" id="roleForm">
+        <select name="rol_id" class="form-select" id="roleSelect" aria-label="Rol" required>
             <option value="">Selecciona un rol</option>
             {% for rol in roles %}
                 <option value="{{ rol.id }}" {% if rol_id == rol.id %}selected{% endif %}>
@@ -156,8 +182,7 @@
                 </option>
             {% endfor %}
         </select>
-
-        <button type="submit" class="btn">Cargar permisos</button>
+        <noscript><button type="submit" class="btn" style="margin-top:12px">Cargar permisos</button></noscript>
     </form>
 
 </div>
@@ -188,13 +213,14 @@
                 {% if seleccionado.es_admin %}
                     El Administrador tiene acceso total y no puede restringirse.
                 {% else %}
-                    Marca exactamente las acciones autorizadas y guarda los cambios.
+                    Marca las acciones autorizadas y guarda los cambios.
                 {% endif %}
             </p>
         </div>
 
-        <form method="POST" action="{{ url_for('administrar_permisos') }}">
+        <form method="POST" action="{{ url_for('administrar_permisos') }}" id="permForm">
 
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="rol_id" value="{{ rol_id }}">
 
             <div class="table-responsive">
@@ -203,12 +229,21 @@
 
                     <thead>
                         <tr>
-                            <th>Modulo</th>
-                            <th>Descripcion</th>
-                            <th class="check-cell">Ver</th>
-                            <th class="check-cell">Crear</th>
-                            <th class="check-cell">Editar</th>
-                            <th class="check-cell">Eliminar</th>
+                            <th>Módulo</th>
+                            <th>Descripción</th>
+                            {% for accion, etiqueta in [('ver', 'Ver'), ('crear', 'Crear'), ('editar', 'Editar'), ('eliminar', 'Eliminar')] %}
+                                <th class="check-cell">
+                                    <label class="th-check">
+                                        <span>{{ etiqueta }}</span>
+                                        <input type="checkbox" data-col="{{ accion }}"
+                                               {% if seleccionado.es_admin %}checked disabled{% endif %}
+                                               aria-label="Marcar toda la columna {{ etiqueta }}">
+                                    </label>
+                                </th>
+                            {% endfor %}
+                            <th class="check-cell">
+                                <span class="th-check" style="cursor:default"><span>Todo</span></span>
+                            </th>
                         </tr>
                     </thead>
 
@@ -218,7 +253,7 @@
 
                             {% set permiso = permiso_por_modulo.get(modulo.id, {}) %}
 
-                            <tr>
+                            <tr data-modulo="{{ modulo.id }}" data-codigo="{{ modulo.codigo }}">
                                 <td><strong>{{ modulo.nombre }}</strong><small>{{ modulo.codigo }}</small></td>
                                 <td>{{ modulo.descripcion or '' }}</td>
 
@@ -227,15 +262,22 @@
                                         <input
                                             type="checkbox"
                                             name="modulo_{{ modulo.id }}_{{ accion }}"
+                                            aria-label="{{ accion|capitalize }} {{ modulo.nombre }}"
                                             {% if seleccionado.es_admin or permiso.get('puede_' ~ accion) %}checked{% endif %}
                                             {% if seleccionado.es_admin %}disabled{% endif %}>
                                     </td>
                                 {% endfor %}
+
+                                <td class="check-cell">
+                                    <input type="checkbox" data-row-all
+                                           aria-label="Todos los permisos de {{ modulo.nombre }}"
+                                           {% if seleccionado.es_admin %}checked disabled{% endif %}>
+                                </td>
                             </tr>
 
                         {% else %}
 
-                            <tr><td colspan="6">No hay modulos configurados.</td></tr>
+                            <tr><td colspan="7">No hay módulos configurados.</td></tr>
 
                         {% endfor %}
 
@@ -246,11 +288,18 @@
             </div>
 
             {% if not seleccionado.es_admin %}
-                <div class="permission-actions">
-                    <button type="button" id="viewOnly" class="btn btn-outline">Solo lectura</button>
-                    <button type="button" id="selectAll" class="btn btn-secondary">Marcar todos</button>
-                    <button type="button" id="clearAll" class="btn btn-outline">Limpiar todos</button>
-                    <button type="submit" class="btn btn-success">Guardar permisos</button>
+                <p class="hint">Al marcar Crear, Editar o Eliminar se marca Ver automáticamente; al quitar Ver se quitan las demás acciones del módulo.</p>
+
+                <div class="permission-actions" id="permBar">
+                    <span class="dirty-note">Tienes cambios sin guardar</span>
+                    <div class="actions-group">
+                        <button type="button" id="perfilOperador" class="btn btn-outline"
+                                title="Dashboard, Personas, Asignaciones, Devoluciones, Tickets, Actas e Inventario (crear/editar, sin eliminar)">Perfil Operador</button>
+                        <button type="button" id="viewOnly" class="btn btn-outline">Solo lectura</button>
+                        <button type="button" id="selectAll" class="btn btn-outline">Marcar todos</button>
+                        <button type="button" id="clearAll" class="btn btn-outline">Limpiar todos</button>
+                        <button type="submit" id="saveBtn" class="btn btn-success">Guardar permisos</button>
+                    </div>
                 </div>
             {% endif %}
 
@@ -263,7 +312,7 @@
     <div class="card empty-state">
         <div class="empty-icon">1</div>
         <h2>Selecciona un rol arriba</h2>
-        <p>Al cargarlo aparecera la matriz de permisos del rol.</p>
+        <p>Al cargarlo aparecerá la matriz de permisos del rol.</p>
     </div>
 
 {% endif %}
@@ -273,16 +322,142 @@
 
 {% block extra_js %}
 <script>
-    function checkboxes() {
-        return document.querySelectorAll('.permission-table input[type="checkbox"]:not(:disabled)');
-    }
+    (function () {
+        // Cambiar de rol carga la matriz al instante
+        const select = document.getElementById('roleSelect');
+        if (select) {
+            select.addEventListener('change', function () {
+                if (this.value) document.getElementById('roleForm').submit();
+            });
+        }
 
-    const selectAll = document.getElementById('selectAll');
-    const clearAll = document.getElementById('clearAll');
-    const viewOnly = document.getElementById('viewOnly');
+        const form = document.getElementById('permForm');
+        if (!form) return;
 
-    if (selectAll) { selectAll.addEventListener('click', () => checkboxes().forEach(c => c.checked = true)); }
-    if (clearAll) { clearAll.addEventListener('click', () => checkboxes().forEach(c => c.checked = false)); }
-    if (viewOnly) { viewOnly.addEventListener('click', () => checkboxes().forEach(c => c.checked = c.name.endsWith('_ver'))); }
+        const bar = document.getElementById('permBar');
+        const filas = Array.from(form.querySelectorAll('tbody tr[data-modulo]'));
+        let sucio = false;
+
+        // Perfil predefinido: acciones permitidas por codigo de modulo.
+        // Inventario sin "eliminar": el operador puede crear, editar e
+        // inhabilitar, pero no dar de baja ni reactivar.
+        const PERFIL_OPERADOR = {
+            dashboard:    ['ver'],
+            inventario:   ['ver', 'crear', 'editar'],
+            personas:     ['ver'],
+            asignaciones: ['ver', 'crear'],
+            devoluciones: ['ver', 'crear'],
+            tickets:      ['ver', 'crear', 'editar'],
+            actas:        ['ver', 'crear']
+        };
+
+        function celdas(tr) {
+            return Array.from(tr.querySelectorAll('input[name]:not(:disabled)'));
+        }
+
+        function todas() {
+            return Array.from(form.querySelectorAll('tbody input[name]:not(:disabled)'));
+        }
+
+        // Regla: cualquier accion marcada exige "Ver"; quitar "Ver" quita las demas
+        function dependencia(tr, origen) {
+            const ver = tr.querySelector('input[name$="_ver"]');
+            if (!ver || ver.disabled) return;
+            const otras = celdas(tr).filter(c => c !== ver);
+            if (origen === 'ver' && !ver.checked) {
+                otras.forEach(c => { c.checked = false; });
+            } else if (otras.some(c => c.checked)) {
+                ver.checked = true;
+            }
+        }
+
+        function sincronizar() {
+            filas.forEach(function (tr) {
+                const todo = tr.querySelector('[data-row-all]');
+                if (!todo || todo.disabled) return;
+                const cs = celdas(tr);
+                todo.checked = cs.length > 0 && cs.every(c => c.checked);
+                todo.indeterminate = !todo.checked && cs.some(c => c.checked);
+            });
+
+            form.querySelectorAll('[data-col]').forEach(function (h) {
+                if (h.disabled) return;
+                const cs = todas().filter(c => c.name.endsWith('_' + h.dataset.col));
+                h.checked = cs.length > 0 && cs.every(c => c.checked);
+                h.indeterminate = !h.checked && cs.some(c => c.checked);
+            });
+        }
+
+        function marcarCambios() {
+            sucio = true;
+            if (bar) bar.classList.add('dirty');
+        }
+
+        form.addEventListener('change', function (e) {
+            const el = e.target;
+            if (!el.matches('input[type="checkbox"]')) return;
+
+            if (el.hasAttribute('data-row-all')) {
+                const tr = el.closest('tr');
+                celdas(tr).forEach(c => { c.checked = el.checked; });
+            } else if (el.hasAttribute('data-col')) {
+                const accion = el.dataset.col;
+                filas.forEach(function (tr) {
+                    const c = tr.querySelector('input[name$="_' + accion + '"]');
+                    if (c && !c.disabled) {
+                        c.checked = el.checked;
+                        dependencia(tr, accion);
+                    }
+                });
+            } else if (el.name) {
+                const accion = el.name.split('_').pop();
+                dependencia(el.closest('tr'), accion);
+            }
+
+            sincronizar();
+            marcarCambios();
+        });
+
+        function aplicar(fn) {
+            todas().forEach(fn);
+            sincronizar();
+            marcarCambios();
+        }
+
+        function aplicarPerfil(perfil) {
+            filas.forEach(function (tr) {
+                const permitidas = perfil[tr.dataset.codigo] || [];
+                celdas(tr).forEach(function (c) {
+                    c.checked = permitidas.includes(c.name.split('_').pop());
+                });
+            });
+            sincronizar();
+            marcarCambios();
+        }
+
+        const selectAll = document.getElementById('selectAll');
+        const clearAll = document.getElementById('clearAll');
+        const viewOnly = document.getElementById('viewOnly');
+        const perfilOperador = document.getElementById('perfilOperador');
+
+        if (selectAll) selectAll.addEventListener('click', () => aplicar(c => { c.checked = true; }));
+        if (clearAll) clearAll.addEventListener('click', () => aplicar(c => { c.checked = false; }));
+        if (viewOnly) viewOnly.addEventListener('click', () => aplicar(c => { c.checked = c.name.endsWith('_ver'); }));
+        if (perfilOperador) perfilOperador.addEventListener('click', () => aplicarPerfil(PERFIL_OPERADOR));
+
+        form.addEventListener('submit', function () {
+            sucio = false;
+            const guardar = document.getElementById('saveBtn');
+            if (guardar) { guardar.disabled = true; guardar.textContent = 'Guardando…'; }
+        });
+
+        window.addEventListener('beforeunload', function (e) {
+            if (!sucio) return;
+            e.preventDefault();
+            e.returnValue = '';
+        });
+
+        sincronizar();
+    })();
 </script>
 {% endblock %}

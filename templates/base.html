@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Gestion de Activos TI{% endblock %}</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{% block title %}Activos TI{% endblock %} | Editorial Planeta</title>
+
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='Logo.png') }}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,6 +14,7 @@
 
     <style>
         :root {
+            color-scheme: light dark;
             --sidebar: 256px;
 
             --primary: #4f46e5;
@@ -27,6 +31,7 @@
 
             --side-bg: #0f172a;
             --side-text: #94a3b8;
+            --side-label: #64748b;
             --side-hover: rgba(255,255,255,.06);
 
             --success: #16a34a;
@@ -96,35 +101,50 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 22px 20px;
+            margin: 0 12px;
+            padding: 22px 8px 20px;
+            border-bottom: 1px solid rgba(255,255,255,.07);
+            text-decoration: none;
         }
 
         .brand-logo {
-            width: 38px;
-            height: 38px;
+            width: 44px;
+            height: 44px;
+            flex-shrink: 0;
             display: grid;
             place-items: center;
-            flex-shrink: 0;
-            color: #fff;
-            font-weight: 700;
-            font-size: 15px;
-            border-radius: 11px;
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            box-shadow: 0 6px 16px rgba(99,102,241,.4);
+            border-radius: 13px;
+            background: linear-gradient(145deg, #1316CF 0%, #8b5cf6 55%, #FE0682 100%);
+            box-shadow: 0 8px 20px rgba(23, 27, 217, 0.45), inset 0 1px 0 rgba(255,255,255,.3);
         }
+
+        .brand-logo svg { width: 30px; height: 30px; }
+
+        .brand-text { min-width: 0; }
 
         .brand h1 {
             margin: 0;
             color: #fff;
-            font-size: 15px;
-            font-weight: 600;
-            line-height: 1.2;
+            font-size: 16px;
+            font-weight: 700;
+            line-height: 1.15;
+            letter-spacing: -.02em;
+        }
+
+        .brand h1 span {
+            background: linear-gradient(90deg, #a5b4fc, #f0abfc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
         }
 
         .brand p {
-            margin: 2px 0 0;
-            color: var(--side-text);
-            font-size: 12px;
+            margin: 4px 0 0;
+            color: var(--side-label);
+            font-size: 10.5px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .14em;
         }
 
         .menu {
@@ -132,6 +152,16 @@
             flex-direction: column;
             gap: 2px;
             padding: 8px 12px 20px;
+        }
+
+        .menu-label {
+            margin: 18px 0 4px;
+            padding: 0 12px;
+            color: var(--side-label);
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .08em;
         }
 
         .menu-link {
@@ -394,6 +424,74 @@
             to   { opacity: 1; transform: none; }
         }
 
+        /* ---------- DIALOGO DE CONFIRMACION ---------- */
+        .confirm-dialog {
+            width: min(400px, calc(100% - 32px));
+            padding: 26px;
+            color: var(--text);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 30px 70px rgba(0,0,0,.45);
+        }
+
+        .confirm-dialog[open] { animation: popIn .18s ease; }
+
+        .confirm-dialog::backdrop {
+            background: rgba(2, 6, 23, .6);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+        }
+
+        .confirm-icon {
+            display: grid;
+            place-items: center;
+            width: 44px;
+            height: 44px;
+            margin-bottom: 14px;
+            color: var(--warning);
+            font-size: 20px;
+            font-weight: 700;
+            border-radius: 50%;
+            background: color-mix(in srgb, var(--warning) 16%, transparent);
+        }
+
+        .confirm-dialog.danger .confirm-icon {
+            color: var(--danger);
+            background: color-mix(in srgb, var(--danger) 14%, transparent);
+        }
+
+        .confirm-dialog h3 { margin: 0 0 6px; font-size: 17px; font-weight: 600; }
+        .confirm-dialog p { margin: 0; color: var(--text-light); font-size: 14px; }
+
+        .confirm-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 22px;
+        }
+
+        @keyframes popIn {
+            from { opacity: 0; transform: translateY(8px) scale(.97); }
+            to   { opacity: 1; transform: none; }
+        }
+
+        /* ---------- OVERLAY DEL MENU MOVIL ---------- */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 999;
+            background: rgba(2, 6, 23, .55);
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
+        }
+
+        @media (max-width: 900px) {
+            body.menu-open .sidebar-overlay { display: block; }
+            body.menu-open { overflow: hidden; }
+        }
+
         /* ---------- RESPONSIVE ---------- */
         @media (max-width: 900px) {
             .sidebar { transform: translateX(-100%); box-shadow: none; }
@@ -420,26 +518,49 @@
 
     <aside class="sidebar" id="sidebar">
 
-        <div class="brand">
-            <div class="brand-logo">TI</div>
-            <div>
-                <h1>Gestion de Activos TI</h1>
+        <a class="brand" href="{{ url_for('dashboard') }}">
+            <div class="brand-logo">
+                <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <circle cx="16" cy="16" r="8" fill="#fff"/>
+                    <circle cx="13.5" cy="13.5" r="2" fill="#c7d2fe" opacity=".7"/>
+                    <ellipse cx="16" cy="16" rx="14" ry="5" transform="rotate(-22 16 16)"
+                             stroke="#fff" stroke-width="1.8" stroke-opacity=".85"/>
+                    <circle cx="27" cy="9" r="1.8" fill="#fff"/>
+                </svg>
+            </div>
+            <div class="brand-text">
+                <h1>Activos <span>TI</span></h1>
                 <p>Editorial Planeta</p>
             </div>
-        </div>
+        </a>
 
         <nav class="menu">
 
+            {# ---------- Inicio ---------- #}
             {% if tiene_permiso('dashboard', 'ver') %}
                 <a class="menu-link {{ 'active' if request.endpoint == 'dashboard' }}" href="{{ url_for('dashboard') }}">Dashboard</a>
+            {% endif %}
+
+            {# ---------- Equipos ---------- #}
+            {% if tiene_permiso('inventario', 'ver') or tiene_permiso('recolector', 'ver') %}
+                <div class="menu-label">Equipos</div>
             {% endif %}
 
             {% if tiene_permiso('inventario', 'ver') %}
                 <a class="menu-link {{ 'active' if request.endpoint == 'inventario' }}" href="{{ url_for('inventario') }}">Inventario</a>
             {% endif %}
 
+            {% if tiene_permiso('recolector', 'ver') %}
+                <a class="menu-link {{ 'active' if request.blueprint == 'recolector' }}" href="{{ url_for('recolector.bandeja') }}">Equipos detectados</a>
+            {% endif %}
+
+            {# ---------- Gestion ---------- #}
+            {% if tiene_permiso('personas', 'ver') or tiene_permiso('asignaciones', 'ver') or tiene_permiso('devoluciones', 'ver') %}
+                <div class="menu-label">Gestión</div>
+            {% endif %}
+
             {% if tiene_permiso('personas', 'ver') %}
-                <a class="menu-link {{ 'active' if request.endpoint == 'personas' }}" href="{{ url_for('personas') }}">Personas</a>
+                <a class="menu-link {{ 'active' if request.endpoint in ('personas', 'persona_detalle') }}" href="{{ url_for('personas') }}">Personas</a>
             {% endif %}
 
             {% if tiene_permiso('asignaciones', 'ver') %}
@@ -448,6 +569,11 @@
 
             {% if tiene_permiso('devoluciones', 'ver') %}
                 <a class="menu-link {{ 'active' if request.endpoint == 'devoluciones' }}" href="{{ url_for('devoluciones') }}">Devoluciones</a>
+            {% endif %}
+
+            {# ---------- Soporte ---------- #}
+            {% if tiene_permiso('tickets', 'ver') or tiene_permiso('actas', 'ver') or tiene_permiso('reportes', 'ver') %}
+                <div class="menu-label">Soporte</div>
             {% endif %}
 
             {% if tiene_permiso('tickets', 'ver') %}
@@ -462,8 +588,13 @@
                 <a class="menu-link {{ 'active' if request.endpoint == 'reportes' }}" href="{{ url_for('reportes') }}">Reportes</a>
             {% endif %}
 
+            {# ---------- Administracion ---------- #}
+            {% if tiene_permiso('configuracion', 'ver') or (current_user.is_authenticated and current_user.es_admin) %}
+                <div class="menu-label">Administración</div>
+            {% endif %}
+
             {% if tiene_permiso('configuracion', 'ver') %}
-                <a class="menu-link {{ 'active' if request.endpoint == 'configuracion' }}" href="{{ url_for('configuracion') }}">Configuracion</a>
+                <a class="menu-link {{ 'active' if request.endpoint == 'configuracion' }}" href="{{ url_for('configuracion') }}">Configuración</a>
             {% endif %}
 
             {% if current_user.is_authenticated and current_user.es_admin %}
@@ -475,12 +606,14 @@
 
     </aside>
 
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
 
     <div class="main">
 
         <header class="topbar">
 
-            <button class="menu-toggle" id="menuToggle" type="button" aria-label="Abrir menu">&#9776;</button>
+            <button class="menu-toggle" id="menuToggle" type="button" aria-label="Abrir menu" aria-expanded="false">&#9776;</button>
 
             <input
                 id="busquedaGlobal"
@@ -499,7 +632,10 @@
                 <a
                     class="logout-button"
                     href="{{ url_for('logout') }}"
-                    onclick="return confirm('Deseas cerrar la sesion?');"
+                    data-confirm="Se cerrará tu sesión actual."
+                    data-confirm-title="¿Cerrar sesión?"
+                    data-confirm-ok="Cerrar sesión"
+                    data-confirm-danger="1"
                 >
                     Cerrar sesion
                 </a>
@@ -539,16 +675,146 @@
 
         const sidebar = document.getElementById("sidebar");
         const toggle = document.getElementById("menuToggle");
+        const overlay = document.getElementById("sidebarOverlay");
 
-        if (toggle && sidebar) {
+        function setMenu(open) {
+            sidebar.classList.toggle("open", open);
+            document.body.classList.toggle("menu-open", open);
+            toggle.setAttribute("aria-expanded", open);
+        }
+
+        if (toggle && sidebar && overlay) {
             toggle.addEventListener("click", function () {
-                sidebar.classList.toggle("open");
+                setMenu(!sidebar.classList.contains("open"));
             });
 
-            document.querySelector(".main").addEventListener("click", function () {
-                sidebar.classList.remove("open");
+            overlay.addEventListener("click", function () { setMenu(false); });
+
+            sidebar.querySelectorAll(".menu-link").forEach(function (a) {
+                a.addEventListener("click", function () { setMenu(false); });
+            });
+
+            document.addEventListener("keydown", function (e) {
+                if (e.key === "Escape") setMenu(false);
+            });
+
+            // Si se agranda la ventana con el menú abierto, lo resetea
+            window.matchMedia("(min-width: 901px)").addEventListener("change", function (e) {
+                if (e.matches) setMenu(false);
             });
         }
+    </script>
+
+    <script>
+        // CSRF automatico: agrega el token a todos los formularios POST y a los fetch.
+        (function () {
+            const meta = document.querySelector('meta[name="csrf-token"]');
+            const token = meta ? meta.content : "";
+            if (!token) return;
+
+            function proteger(form) {
+                const metodo = (form.getAttribute("method") || "get").toLowerCase();
+                if (metodo !== "post" || form.querySelector('input[name="csrf_token"]')) return;
+                const input = document.createElement("input");
+                input.type = "hidden";
+                input.name = "csrf_token";
+                input.value = token;
+                form.appendChild(input);
+            }
+
+            document.querySelectorAll("form").forEach(proteger);
+            document.addEventListener("submit", function (e) { proteger(e.target); }, true);
+
+            const fetchOriginal = window.fetch;
+            window.fetch = function (url, opciones) {
+                opciones = opciones || {};
+                const metodo = (opciones.method || "GET").toUpperCase();
+                if (!["GET", "HEAD", "OPTIONS"].includes(metodo)) {
+                    opciones.headers = new Headers(opciones.headers || {});
+                    if (!opciones.headers.has("X-CSRFToken")) {
+                        opciones.headers.set("X-CSRFToken", token);
+                    }
+                }
+                return fetchOriginal.call(this, url, opciones);
+            };
+        })();
+    </script>
+
+    <dialog class="confirm-dialog" id="confirmDialog" aria-labelledby="confirmTitle">
+        <div class="confirm-icon" aria-hidden="true">!</div>
+        <h3 id="confirmTitle">¿Estás seguro?</h3>
+        <p id="confirmMessage"></p>
+        <div class="confirm-actions">
+            <button type="button" class="btn btn-outline" id="confirmCancel">Cancelar</button>
+            <button type="button" class="btn" id="confirmOk">Aceptar</button>
+        </div>
+    </dialog>
+
+    <script>
+        // Confirmaciones con dialogo propio (reemplaza el confirm() nativo).
+        // Uso: data-confirm="Mensaje"  [data-confirm-title] [data-confirm-ok] [data-confirm-danger]
+        // Los onclick/onsubmit="return confirm('...')" existentes se convierten solos.
+        (function () {
+            const dlg = document.getElementById("confirmDialog");
+            if (!dlg || typeof dlg.showModal !== "function") return;
+
+            const titulo = document.getElementById("confirmTitle");
+            const mensaje = document.getElementById("confirmMessage");
+            const ok = document.getElementById("confirmOk");
+            const cancelar = document.getElementById("confirmCancel");
+            let pendiente = null;
+
+            document.querySelectorAll('[onclick*="confirm("], [onsubmit*="confirm("]').forEach(function (el) {
+                const attr = el.hasAttribute("onclick") ? "onclick" : "onsubmit";
+                const m = el.getAttribute(attr).match(/confirm\(\s*(['"])([\s\S]*?)\1\s*\)/);
+                if (!m) return;
+                el.dataset.confirm = m[2];
+                el.removeAttribute(attr);
+                if (/danger/.test(el.className)) el.dataset.confirmDanger = "1";
+            });
+
+            function abrir(el) {
+                pendiente = el;
+                titulo.textContent = el.dataset.confirmTitle || "¿Estás seguro?";
+                mensaje.textContent = el.dataset.confirm;
+                ok.textContent = el.dataset.confirmOk || "Aceptar";
+                const peligro = !!el.dataset.confirmDanger;
+                dlg.classList.toggle("danger", peligro);
+                ok.className = "btn" + (peligro ? " btn-danger" : "");
+                dlg.showModal();
+                cancelar.focus();
+            }
+
+            document.addEventListener("click", function (e) {
+                const el = e.target.closest("[data-confirm]:not(form)");
+                if (!el) return;
+                if (el.dataset.confirmado) { delete el.dataset.confirmado; return; }
+                e.preventDefault();
+                e.stopPropagation();
+                abrir(el);
+            }, true);
+
+            document.addEventListener("submit", function (e) {
+                const form = e.target;
+                if (!form.matches || !form.matches("form[data-confirm]")) return;
+                if (form.dataset.confirmado) { delete form.dataset.confirmado; return; }
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                abrir(form);
+            }, true);
+
+            ok.addEventListener("click", function () {
+                const el = pendiente;
+                dlg.close();
+                if (!el) return;
+                el.dataset.confirmado = "1";
+                if (el.tagName === "FORM") el.requestSubmit(); else el.click();
+            });
+
+            cancelar.addEventListener("click", function () { dlg.close(); });
+            dlg.addEventListener("click", function (e) { if (e.target === dlg) dlg.close(); });
+            dlg.addEventListener("close", function () { pendiente = null; });
+        })();
     </script>
 
     {% block extra_js %}{% endblock %}

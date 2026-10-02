@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% block title %}Equipos detectados{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <div class="page-head__text">
+        <h1>Equipos detectados</h1>
+        <p>Escaneos recibidos desde el recolector de Windows.</p>
+    </div>
+    <a class="btn" href="{{ url_for('recolector.descargar_script') }}">Descargar recolector</a>
+</div>
+
+<div class="card eq-card">
+
+    <div class="eq-head">
+        <h2 class="eq-head__title">Escaneos recientes</h2>
+        <span class="eq-pill">Total: {{ escaneos|length }}</span>
+    </div>
+
+    <div class="eq-scroll">
+        <table class="table eq-table">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Equipo</th>
+                    <th class="c-usuario">Usuario Windows</th>
+                    <th>Serial</th>
+                    <th>Marca / Modelo</th>
+                    <th class="c-ram">RAM</th>
+                    <th class="c-disco">Disco</th>
+                    <th>Estado</th>
+                    <th class="th-action">Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in escaneos %}
+                {% set est = (e.estado or '')|lower %}
+                {% if 'sin' in est or 'pend' in est or 'nuev' in est or 'detect' in est %}
+                    {% set clase = 'badge-warning' %}
+                {% elif 'vincul' in est or 'regist' in est or 'asign' in est or 'ok' in est %}
+                    {% set clase = 'badge-success' %}
+                {% else %}
+                    {% set clase = '' %}
+                {% endif %}
+                {% set marca = (e.marca or '')|string %}
+                {% set modelo = (e.modelo or '')|string %}
+                <tr>
+                    <td data-label="Fecha" class="cell-date">
+                        <time class="js-fecha" datetime="{{ e.fecha_escaneo or '' }}">{{ (e.fecha_escaneo|string)[:16]|replace('T', ' ') if e.fecha_escaneo else '' }}</time>
+                    </td>
+                    <td data-label="Equipo" class="cell-main"><strong>{{ e.hostname or '' }}</strong></td>
+                    <td data-label="Usuario Windows" class="c-usuario">{{ e.usuario_windows or '' }}</td>
+                    <td data-label="Serial" class="cell-mono">{{ e.bios_serial or '' }}</td>
+                    <td data-label="Marca / Modelo" class="cell-wrap">
+                        {%- if marca and modelo.lower().startswith(marca.lower()) %}{{ modelo }}{% else %}{{ marca }} {{ modelo }}{% endif -%}
+                    </td>
+                    <td data-label="RAM" class="c-ram">{% if e.ram_gb %}{{ e.ram_gb }} GB{% endif %}</td>
+                    <td data-label="Disco" class="c-disco">{% if e.disco_gb %}{{ e.disco_gb }} GB{% endif %}</td>
+                    <td data-label="Estado">
+                        {% if e.estado %}<span class="badge {{ clase }}">{{ e.estado|replace('_', ' ') }}</span>{% endif %}
+                    </td>
+                    <td data-label="Acción" class="cell-action">
+                        <a class="btn btn-sm" href="{{ url_for('recolector.detalle', escaneo_id=e.id) }}">Gestionar</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr class="empty-row"><td colspan="9">No hay equipos detectados.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ---------- Encabezado de pagina ---------- */
+.page-head{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:12px 16px;flex-wrap:wrap;margin-bottom:22px
+}
+.page-head__text{min-width:0;flex:1 1 260px}
+.page-head h1{margin:0;font-size:clamp(1.4rem,1.1rem + 1vw,2rem)}
+.page-head p{color:var(--text-light,#94a3b8);margin:4px 0 0}
+@media (max-width:768px){ .page-head .btn{width:100%;text-align:center} }
+
+/* ---------- Tarjeta: el ancho REAL de la tarjeta decide el diseño ---------- */
+.eq-card{padding:0;overflow:hidden;container-type:inline-size;container-name:eq}
+
+.eq-head{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:16px clamp(14px,2vw,22px);
+    border-bottom:1px solid var(--border,rgba(148,163,184,.22))
+}
+.eq-head__title{margin:0;font-size:1rem;font-weight:600}
+.eq-pill{
+    padding:5px 13px;color:var(--primary,#6366f1);
+    background:var(--primary-soft,rgba(99,102,241,.14));
+    border-radius:999px;font-size:13px;font-weight:600;white-space:nowrap
+}
+
+/* ---------- Tabla ---------- */
+.eq-scroll{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.eq-table{width:100%;border-collapse:collapse}
+.eq-table th,.eq-table td{
+    padding:13px 14px;text-align:left;vertical-align:middle;white-space:nowrap
+}
+.eq-table th{
+    font-size:.74rem;text-transform:uppercase;letter-spacing:.05em;
+    color:var(--text-light,#94a3b8)
+}
+.eq-table tbody tr{border-top:1px solid var(--border,rgba(148,163,184,.16))}
+.eq-table tbody tr:hover{background:var(--surface-2,rgba(148,163,184,.07))}
+.eq-table .cell-date{color:var(--text-light,#94a3b8);font-size:.9em}
+.eq-table .cell-mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.86em}
+.eq-table .cell-wrap{white-space:normal;min-width:140px;max-width:280px;line-height:1.35}
+.eq-table .th-action,.eq-table .cell-action{text-align:right}
+.eq-table .btn-sm{padding:7px 14px;font-size:12.5px;white-space:nowrap}
+.eq-table .empty-row td{padding:44px 16px;text-align:center;color:var(--text-light,#94a3b8)}
+
+/* Cabecera fija cuando la lista es larga (escritorio) */
+@media (min-width:900px){
+    .eq-scroll{max-height:calc(100vh - 330px);min-height:200px;overflow:auto}
+    .eq-table thead th{
+        position:sticky;top:0;z-index:2;
+        background:var(--surface,#0f172a);
+        box-shadow:0 1px 0 var(--border,rgba(148,163,184,.25))
+    }
+}
+
+/* ---------- Se oculta por prioridad segun el ancho de la tarjeta ---------- */
+@container eq (max-width:1350px){ .c-disco{display:none} }
+@container eq (max-width:1150px){
+    .c-usuario{display:none}
+    .eq-table th,.eq-table td{padding:12px 11px}
+}
+@container eq (max-width:900px){ .c-ram{display:none} }
+
+/* ---------- Tarjeta pequena: cada equipo es una ficha ---------- */
+@container eq (max-width:680px){
+    .c-disco,.c-usuario,.c-ram{display:flex}
+
+    .eq-scroll{overflow:visible;max-height:none;padding:12px}
+    .eq-table,.eq-table tbody,.eq-table tr,.eq-table td{display:block;width:100%}
+    .eq-table thead{
+        position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)
+    }
+    .eq-table tbody tr{
+        border:1px solid var(--border,rgba(148,163,184,.25));
+        border-radius:12px;padding:10px 14px;margin-bottom:12px
+    }
+    .eq-table tbody tr:hover{background:transparent}
+    .eq-table td{
+        display:flex;justify-content:space-between;align-items:flex-start;
+        gap:16px;padding:7px 0;border:0;
+        white-space:normal;text-align:right;word-break:break-word;max-width:none
+    }
+    .eq-table td::before{
+        content:attr(data-label);
+        flex:0 0 40%;text-align:left;
+        color:var(--text-light,#94a3b8);font-size:.78rem;
+        text-transform:uppercase;letter-spacing:.04em
+    }
+    .eq-table .cell-main{
+        font-size:1.05rem;padding-bottom:10px;margin-bottom:4px;
+        border-bottom:1px solid var(--border,rgba(148,163,184,.2))
+    }
+    .eq-table .cell-action{padding-top:12px}
+    .eq-table .cell-action::before{display:none}
+    .eq-table .cell-action .btn{width:100%;text-align:center;padding:10px 13px;font-size:14px}
+    .eq-table .empty-row{border:0;padding:0}
+    .eq-table .empty-row td{display:block;text-align:center}
+    .eq-table .empty-row td::before{display:none}
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* Muestra la fecha en la hora local del navegador (el servidor la guarda en UTC) */
+document.querySelectorAll("time.js-fecha").forEach((el) => {
+    const iso = el.getAttribute("datetime");
+    if (!iso) return;
+    const d = new Date(iso);
+    if (isNaN(d)) return;
+    el.textContent = d.toLocaleString("es-CO", {
+        day: "2-digit", month: "2-digit", year: "numeric",
+        hour: "numeric", minute: "2-digit"
+    });
+});
+</script>
+{% endblock %}

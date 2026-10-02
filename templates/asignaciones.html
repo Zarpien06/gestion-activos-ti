@@ -5,15 +5,49 @@
 {% block extra_css %}
 <style>
     .page-header { margin-bottom: 24px; }
-    .page-header h1 { margin: 0; font-size: 24px; font-weight: 700; }
+    .page-header h1 { margin: 0; font-size: clamp(20px, 4vw, 24px); font-weight: 700; }
     .page-header p { margin: 4px 0 0; color: var(--text-light); }
-
-    .form-card { max-width: 720px; }
 
     .card-title { margin: 0; font-size: 16px; font-weight: 600; }
     .card-sub { margin: 2px 0 0; color: var(--text-light); font-size: 13px; }
 
-    .form-body { display: flex; flex-direction: column; gap: 18px; margin-top: 20px; }
+    /* ---------- Contenedor: el ancho disponible decide si hay 1 o 2 columnas ---------- */
+    .asig { container-type: inline-size; container-name: asig; }
+
+    .asig-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 22px;
+        align-items: start;
+    }
+    @container asig (min-width: 900px) {
+        .asig-grid { grid-template-columns: minmax(0, 1.35fr) minmax(300px, 1fr); }
+        .panel { position: sticky; top: 16px; }
+    }
+    @container asig (min-width: 1500px) {
+        .asig-grid { gap: 28px; }
+    }
+
+    /* ---------- Formulario ---------- */
+    .form-body { display: flex; flex-direction: column; gap: 20px; margin-top: 20px; }
+
+    .label-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 6px;
+    }
+    .label-row label { margin: 0; }
+    .hint { color: var(--text-light); font-size: 12px; white-space: nowrap; }
+
+    .filtro {
+        width: 100%;
+        min-height: 38px;
+        margin-bottom: 8px;
+        padding: 7px 12px;
+        font-size: 13px;
+    }
 
     .form-select {
         min-height: 44px;
@@ -29,17 +63,76 @@
 
     .form-actions {
         display: flex;
-        justify-content: flex-end;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
         margin-top: 22px;
         padding-top: 18px;
         border-top: 1px solid var(--border);
     }
+    .form-actions .note { color: var(--text-light); font-size: 13px; }
+    .form-actions .btn[disabled] { opacity: .5; cursor: not-allowed; }
 
     .form-card .alert { margin: 20px 0 0; }
 
     @media (max-width: 768px) {
+        .form-actions { flex-direction: column-reverse; align-items: stretch; }
         .form-actions .btn { width: 100%; }
     }
+
+    /* ---------- Panel de resumen ---------- */
+    .panel { display: flex; flex-direction: column; gap: 14px; }
+
+    .kpi {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 16px 18px;
+    }
+    .kpi-num {
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: -.03em;
+        line-height: 1;
+        color: var(--success);
+    }
+    .kpi-num.zero { color: var(--danger); }
+    .kpi-text { color: var(--text-light); font-size: 13px; line-height: 1.35; }
+
+    .resumen-titulo {
+        margin: 0 0 12px;
+        color: var(--text-light);
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+    }
+
+    .ficha { display: flex; align-items: center; gap: 14px; min-height: 52px; }
+
+    .ficha-icono {
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--primary);
+        background: var(--primary-soft);
+    }
+    .ficha-icono.eq { border-radius: 10px; color: var(--success); background: color-mix(in srgb, var(--success) 14%, transparent); }
+
+    .ficha-main { min-width: 0; flex: 1; }
+    .ficha-nombre { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+    .ficha-sub { margin: 2px 0 0; color: var(--text-light); font-size: 13px; overflow-wrap: anywhere; }
+
+    .ficha.vacia .ficha-icono { color: var(--text-light); background: var(--surface-2, rgba(148,163,184,.12)); }
+    .ficha.vacia .ficha-nombre { color: var(--text-light); font-weight: 500; }
+
+    .flecha { align-self: center; color: var(--text-light); font-size: 18px; line-height: 1; }
 </style>
 {% endblock %}
 
@@ -51,59 +144,203 @@
     <p>Selecciona una persona y un activo disponible.</p>
 </div>
 
-<div class="card form-card">
+<div class="asig">
+<div class="asig-grid">
 
-    <h2 class="card-title">Nueva asignación</h2>
-    <p class="card-sub">Los campos con * son obligatorios.</p>
+    <!-- FORMULARIO -->
+    <div class="card form-card">
 
-    <form action="/asignaciones/crear" method="POST">
+        <h2 class="card-title">Nueva asignación</h2>
+        <p class="card-sub">Los campos con * son obligatorios.</p>
 
-        <div class="form-body">
+        <form action="/asignaciones/crear" method="POST" id="formAsignar">
 
-            <div>
-                <label for="persona_id">Persona *</label>
-                <select id="persona_id" name="persona_id" class="form-select" required>
-                    <option value="">Selecciona una persona</option>
-                    {% for persona in personas %}
-                        <option value="{{ persona.id }}">
-                            {{ persona.nombre }}{% if persona.area %} - {{ persona.area }}{% endif %}
-                        </option>
-                    {% endfor %}
-                </select>
+            <div class="form-body">
+
+                <div>
+                    <div class="label-row">
+                        <label for="persona_id">Persona *</label>
+                        <span class="hint">{{ personas|length }} activas</span>
+                    </div>
+                    <input type="search" id="filtroPersona" class="form-control filtro"
+                           placeholder="Filtrar personas por nombre o área" autocomplete="off"
+                           aria-label="Filtrar personas">
+                    <select id="persona_id" name="persona_id" class="form-select" required>
+                        <option value="">Selecciona una persona</option>
+                        {% for persona in personas %}
+                            <option value="{{ persona.id }}"
+                                    data-nombre="{{ persona.nombre or '' }}"
+                                    data-cargo="{{ persona.cargo or '' }}"
+                                    data-area="{{ persona.area or '' }}">
+                                {{ persona.nombre }}{% if persona.area %} - {{ persona.area }}{% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <div class="label-row">
+                        <label for="activo_id">Activo disponible *</label>
+                        <span class="hint">{{ activos|length }} disponibles</span>
+                    </div>
+                    <input type="search" id="filtroActivo" class="form-control filtro"
+                           placeholder="Filtrar por código, tipo, marca o modelo" autocomplete="off"
+                           aria-label="Filtrar activos">
+                    <select id="activo_id" name="activo_id" class="form-select" required>
+                        <option value="">Selecciona un activo</option>
+                        {% for activo in activos %}
+                            <option value="{{ activo.id }}"
+                                    data-codigo="{{ activo.codigo or '' }}"
+                                    data-tipo="{{ activo.tipo or '' }}"
+                                    data-marca="{{ activo.marca or '' }}"
+                                    data-modelo="{{ activo.modelo or '' }}"
+                                    data-serial="{{ activo.serial or '' }}">
+                                {{ [activo.codigo, activo.tipo, activo.marca, activo.modelo]|select|join(' - ') }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label for="observacion">Observaciones</label>
+                    <textarea id="observacion" name="observacion" class="form-control" rows="4"
+                              placeholder="Condiciones de entrega, accesorios o comentarios"></textarea>
+                </div>
+
             </div>
 
-            <div>
-                <label for="activo_id">Activo disponible *</label>
-                <select id="activo_id" name="activo_id" class="form-select" required>
-                    <option value="">Selecciona un activo</option>
-                    {% for activo in activos %}
-                        <option value="{{ activo.id }}">
-                            {{ activo.codigo }} - {{ activo.tipo or "Sin tipo" }} - {{ activo.marca or "Sin marca" }} - {{ activo.modelo or "Sin modelo" }}
-                        </option>
-                    {% endfor %}
-                </select>
+            <div class="form-actions">
+                <span class="note" id="nota">Selecciona persona y activo para continuar.</span>
+                <button type="submit" class="btn btn-success" id="btnAsignar" disabled>Asignar equipo</button>
             </div>
 
-            <div>
-                <label for="observacion">Observaciones</label>
-                <textarea id="observacion" name="observacion" class="form-control" rows="4"
-                          placeholder="Condiciones de entrega, accesorios o comentarios"></textarea>
+        </form>
+
+        {% if not activos %}
+            <div class="alert alert-warning">
+                No hay activos disponibles para asignación.
+            </div>
+        {% endif %}
+
+    </div>
+
+
+    <!-- RESUMEN EN VIVO -->
+    <aside class="panel" aria-label="Resumen de la asignación">
+
+        <div class="card kpi">
+            <span class="kpi-num {{ 'zero' if not activos }}">{{ activos|length }}</span>
+            <span class="kpi-text">activos disponibles<br>para asignar</span>
+        </div>
+
+        <div class="card">
+            <p class="resumen-titulo">Resumen de la asignación</p>
+
+            <div class="ficha vacia" id="fichaPersona">
+                <span class="ficha-icono" id="persIcono">?</span>
+                <div class="ficha-main">
+                    <p class="ficha-nombre" id="persNombre">Sin persona seleccionada</p>
+                    <p class="ficha-sub" id="persSub">Elige quién recibirá el equipo</p>
+                </div>
             </div>
 
+            <div class="flecha" aria-hidden="true" style="margin:10px 0 10px 14px;">&#8595;</div>
+
+            <div class="ficha vacia" id="fichaActivo">
+                <span class="ficha-icono eq" id="actIcono">&#9636;</span>
+                <div class="ficha-main">
+                    <p class="ficha-nombre" id="actNombre">Sin activo seleccionado</p>
+                    <p class="ficha-sub" id="actSub">Elige el equipo a entregar</p>
+                </div>
+            </div>
         </div>
 
-        <div class="form-actions">
-            <button type="submit" class="btn btn-success">Asignar equipo</button>
-        </div>
-
-    </form>
-
-    {% if not activos %}
-        <div class="alert alert-warning">
-            No hay activos disponibles para asignación.
-        </div>
-    {% endif %}
+    </aside>
 
 </div>
+</div>
 
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+(function () {
+    const selP = document.getElementById("persona_id");
+    const selA = document.getElementById("activo_id");
+    const btn = document.getElementById("btnAsignar");
+    const nota = document.getElementById("nota");
+    const form = document.getElementById("formAsignar");
+
+    const norm = (t) => (t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+    /* Filtro de texto para los selects largos */
+    function filtrar(input, select) {
+        input.addEventListener("input", () => {
+            const q = norm(input.value.trim());
+            Array.from(select.options).forEach((o, i) => {
+                if (i === 0) return;
+                const ok = !q || norm(o.textContent).includes(q) || o.selected;
+                o.hidden = !ok;
+                o.disabled = !ok;
+            });
+        });
+    }
+    filtrar(document.getElementById("filtroPersona"), selP);
+    filtrar(document.getElementById("filtroActivo"), selA);
+
+    function ficha(id, vacia) {
+        document.getElementById(id).classList.toggle("vacia", vacia);
+    }
+
+    function actualizar() {
+        const p = selP.selectedOptions[0];
+        const a = selA.selectedOptions[0];
+        const tienePersona = !!selP.value;
+        const tieneActivo = !!selA.value;
+
+        ficha("fichaPersona", !tienePersona);
+        if (tienePersona) {
+            const nombre = p.dataset.nombre || "";
+            document.getElementById("persIcono").textContent = (nombre[0] || "?").toUpperCase();
+            document.getElementById("persNombre").textContent = nombre;
+            document.getElementById("persSub").textContent =
+                [p.dataset.cargo, p.dataset.area].filter(Boolean).join(" · ") || "Sin cargo ni área registrados";
+        } else {
+            document.getElementById("persIcono").textContent = "?";
+            document.getElementById("persNombre").textContent = "Sin persona seleccionada";
+            document.getElementById("persSub").textContent = "Elige quién recibirá el equipo";
+        }
+
+        ficha("fichaActivo", !tieneActivo);
+        if (tieneActivo) {
+            const d = a.dataset;
+            document.getElementById("actNombre").textContent =
+                [d.codigo, d.tipo].filter(Boolean).join(" · ");
+            document.getElementById("actSub").textContent =
+                [[d.marca, d.modelo].filter(Boolean).join(" "), d.serial ? "S/N " + d.serial : ""]
+                    .filter(Boolean).join(" · ") || "Sin detalles registrados";
+        } else {
+            document.getElementById("actNombre").textContent = "Sin activo seleccionado";
+            document.getElementById("actSub").textContent = "Elige el equipo a entregar";
+        }
+
+        const listo = tienePersona && tieneActivo;
+        btn.disabled = !listo;
+        nota.textContent = listo
+            ? "Todo listo para asignar."
+            : "Selecciona persona y activo para continuar.";
+    }
+
+    selP.addEventListener("change", actualizar);
+    selA.addEventListener("change", actualizar);
+    actualizar();
+
+    /* Evita dobles envios */
+    form.addEventListener("submit", () => {
+        btn.disabled = true;
+        btn.textContent = "Asignando...";
+    });
+})();
+</script>
 {% endblock %}
