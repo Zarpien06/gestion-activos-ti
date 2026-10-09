@@ -2,19 +2,41 @@
 {% block title %}Equipos detectados{% endblock %}
 
 {% block content %}
+{% set ver_todos = request.args.get('ver') == 'todos' %}
+{% set lista = escaneos if ver_todos else escaneos|rejectattr('activo_id')|list %}
+
 <div class="page-head">
     <div class="page-head__text">
         <h1>Equipos detectados</h1>
-        <p>Escaneos recibidos desde el recolector de Windows.</p>
+        <p>Archivos generados por el recolector de Windows.</p>
     </div>
     <a class="btn" href="{{ url_for('recolector.descargar_script') }}">Descargar recolector</a>
 </div>
 
+{% if tiene_permiso('recolector', 'crear') %}
+<div class="card eq-upload">
+    <form method="POST" action="{{ url_for('recolector.subir_archivos') }}" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div>
+            <h2 class="eq-head__title">Subir archivos del recolector</h2>
+            <p class="eq-upload__hint">Selecciona uno o varios archivos <code>NOMBRE-DEL-EQUIPO.json</code>.</p>
+        </div>
+        <input type="file" name="archivos" accept=".json,application/json" multiple required class="form-control">
+        <button type="submit" class="btn btn-success">Subir y procesar</button>
+    </form>
+</div>
+{% endif %}
+
 <div class="card eq-card">
 
     <div class="eq-head">
-        <h2 class="eq-head__title">Escaneos recientes</h2>
-        <span class="eq-pill">Total: {{ escaneos|length }}</span>
+        <h2 class="eq-head__title">{{ 'Todos los escaneos' if ver_todos else 'Equipos por vincular' }}</h2>
+        <input type="search" id="buscar" class="form-control eq-search"
+               placeholder="Buscar equipo, usuario o serial…">
+        <a class="link-btn" href="?ver={{ '' if ver_todos else 'todos' }}">
+            {{ 'Ocultar vinculados' if ver_todos else 'Ver vinculados' }}
+        </a>
+        <span class="eq-pill">{{ 'Total' if ver_todos else 'Pendientes' }}: {{ lista|length }}</span>
     </div>
 
     <div class="eq-scroll">
@@ -33,7 +55,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for e in escaneos %}
+                {% for e in lista %}
                 {% set est = (e.estado or '')|lower %}
                 {% if 'sin' in est or 'pend' in est or 'nuev' in est or 'detect' in est %}
                     {% set clase = 'badge-warning' %}
@@ -64,7 +86,7 @@
                     </td>
                 </tr>
                 {% else %}
-                <tr class="empty-row"><td colspan="9">No hay equipos detectados.</td></tr>
+                <tr class="empty-row"><td colspan="9">{{ 'No hay equipos detectados.' if ver_todos else 'No hay equipos pendientes por vincular.' }}</td></tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -84,20 +106,31 @@
 .page-head p{color:var(--text-light,#94a3b8);margin:4px 0 0}
 @media (max-width:768px){ .page-head .btn{width:100%;text-align:center} }
 
+/* ---------- Subir archivos ---------- */
+.eq-upload{margin-bottom:22px;padding:18px clamp(14px,2vw,22px)}
+.eq-upload form{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.eq-upload form>div{flex:1 1 260px}
+.eq-upload__hint{margin:4px 0 0;color:var(--text-light,#94a3b8);font-size:13px}
+.eq-upload input[type=file]{flex:2 1 260px}
+@media (max-width:768px){.eq-upload .btn{width:100%}}
+
 /* ---------- Tarjeta: el ancho REAL de la tarjeta decide el diseño ---------- */
 .eq-card{padding:0;overflow:hidden;container-type:inline-size;container-name:eq}
 
 .eq-head{
-    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
     padding:16px clamp(14px,2vw,22px);
     border-bottom:1px solid var(--border,rgba(148,163,184,.22))
 }
 .eq-head__title{margin:0;font-size:1rem;font-weight:600}
+.eq-search{flex:1 1 200px;max-width:320px}
 .eq-pill{
     padding:5px 13px;color:var(--primary,#6366f1);
     background:var(--primary-soft,rgba(99,102,241,.14));
     border-radius:999px;font-size:13px;font-weight:600;white-space:nowrap
 }
+.link-btn{padding:0;border:0;background:none;color:var(--primary,#6366f1);font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;white-space:nowrap}
+.link-btn:hover{text-decoration:underline}
 
 /* ---------- Tabla ---------- */
 .eq-scroll{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
@@ -111,6 +144,7 @@
 }
 .eq-table tbody tr{border-top:1px solid var(--border,rgba(148,163,184,.16))}
 .eq-table tbody tr:hover{background:var(--surface-2,rgba(148,163,184,.07))}
+.eq-table tbody tr[hidden]{display:none}
 .eq-table .cell-date{color:var(--text-light,#94a3b8);font-size:.9em}
 .eq-table .cell-mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.86em}
 .eq-table .cell-wrap{white-space:normal;min-width:140px;max-width:280px;line-height:1.35}
@@ -186,6 +220,14 @@ document.querySelectorAll("time.js-fecha").forEach((el) => {
     el.textContent = d.toLocaleString("es-CO", {
         day: "2-digit", month: "2-digit", year: "numeric",
         hour: "numeric", minute: "2-digit"
+    });
+});
+
+/* Buscador: filtra por equipo, usuario, serial, marca, etc. */
+document.getElementById("buscar").addEventListener("input", (ev) => {
+    const q = ev.target.value.toLowerCase().trim();
+    document.querySelectorAll(".eq-table tbody tr:not(.empty-row)").forEach((tr) => {
+        tr.hidden = !tr.textContent.toLowerCase().includes(q);
     });
 });
 </script>

@@ -3,23 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <meta name="csrf-token" content="{{ csrf_token() }}">
+
     <title>{% block title %}Activos TI{% endblock %} | Editorial Planeta</title>
 
-    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='Logo.png') }}">
+    <link
+        rel="icon"
+        type="image/png"
+        href="{{ url_for('static', filename='img/Logo.png') }}"
+    >
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+    >
 
     <style>
         :root {
             color-scheme: light dark;
+
             --sidebar: 256px;
 
-            --primary: #4f46e5;
-            --primary-hover: #4338ca;
-            --primary-soft: #eef2ff;
+            --primary: #005DAB;
+            --primary-hover: #004A89;
+            --primary-soft: #E6F0F9;
 
             --bg: #f6f7fb;
             --surface: #ffffff;
@@ -29,10 +39,11 @@
             --text: #111827;
             --text-light: #6b7280;
 
-            --side-bg: #0f172a;
-            --side-text: #94a3b8;
-            --side-label: #64748b;
+            --side-bg: #0A1A2F;
+            --side-text: #9DB0C7;
+            --side-label: #6B819C;
             --side-hover: rgba(255,255,255,.06);
+            --side-accent: #35B6E8;
 
             --success: #16a34a;
             --danger: #dc2626;
@@ -41,59 +52,101 @@
 
             --radius: 10px;
             --radius-lg: 14px;
+
             --shadow-sm: 0 1px 2px rgba(16,24,40,.05);
             --shadow: 0 4px 16px rgba(16,24,40,.06);
+
             --transition: .18s ease;
         }
 
         @media (prefers-color-scheme: dark) {
             :root {
-                --primary: #818cf8;
-                --primary-hover: #a5b4fc;
-                --primary-soft: rgba(129,140,248,.14);
-                --bg: #0b1120;
-                --surface: #131c31;
-                --surface-2: #1a2440;
-                --border: #243050;
+                --primary: #3FA9E8;
+                --primary-hover: #6BBDEF;
+                --primary-soft: rgba(0,157,220,.16);
+
+                --bg: #0A1522;
+                --surface: #101E30;
+                --surface-2: #16263B;
+                --border: #223650;
+
                 --text: #e5e9f2;
                 --text-light: #93a0b8;
-                --side-bg: #0a0f1f;
+
+                --side-bg: #07121F;
+
                 --shadow-sm: none;
                 --shadow: 0 4px 16px rgba(0,0,0,.35);
             }
         }
 
-        * { box-sizing: border-box; }
-        html { scroll-behavior: smooth; }
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
 
         body {
             margin: 0;
             min-height: 100vh;
+
             background: var(--bg);
             color: var(--text);
+
             font-family: "Inter", "Segoe UI", system-ui, sans-serif;
             font-size: 14px;
             line-height: 1.5;
+
             -webkit-font-smoothing: antialiased;
         }
 
-        button, input, select, textarea { font-family: inherit; }
-        a { color: var(--primary); transition: var(--transition); }
-        h1, h2, h3 { letter-spacing: -.02em; }
-        ::selection { background: var(--primary); color: #fff; }
+        button,
+        input,
+        select,
+        textarea {
+            font-family: inherit;
+        }
 
-        /* ---------- SIDEBAR ---------- */
+        a {
+            color: var(--primary);
+            transition: var(--transition);
+        }
+
+        h1,
+        h2,
+        h3 {
+            letter-spacing: -.02em;
+        }
+
+        ::selection {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        /* =========================================================
+           SIDEBAR
+        ========================================================= */
+
         .sidebar {
             position: fixed;
             inset: 0 auto 0 0;
+
             width: var(--sidebar);
+
             background: var(--side-bg);
+
             overflow-y: auto;
+
             z-index: 1000;
+
             display: flex;
             flex-direction: column;
+
             scrollbar-width: thin;
             scrollbar-color: #334155 transparent;
+
             transition: transform .25s ease;
         }
 
@@ -101,48 +154,84 @@
             display: flex;
             align-items: center;
             gap: 12px;
+
             margin: 0 12px;
             padding: 22px 8px 20px;
+
             border-bottom: 1px solid rgba(255,255,255,.07);
+
             text-decoration: none;
         }
 
         .brand-logo {
-            width: 44px;
-            height: 44px;
+            width: 46px;
+            height: 46px;
+
+            padding: 3px;
+
             flex-shrink: 0;
+
             display: grid;
             place-items: center;
-            border-radius: 13px;
-            background: linear-gradient(145deg, #1316CF 0%, #8b5cf6 55%, #FE0682 100%);
-            box-shadow: 0 8px 20px rgba(23, 27, 217, 0.45), inset 0 1px 0 rgba(255,255,255,.3);
+
+            border-radius: 50%;
+
+            background: #fff;
+
+            box-shadow:
+                0 0 0 3px rgba(255,255,255,.10),
+                0 6px 16px rgba(0,0,0,.4);
+
+            overflow: hidden;
         }
 
-        .brand-logo svg { width: 30px; height: 30px; }
+        .brand-logo img {
+            width: 100%;
+            height: 100%;
 
-        .brand-text { min-width: 0; }
+            object-fit: contain;
+            display: block;
+
+            border-radius: 50%;
+        }
+
+        .brand-text {
+            min-width: 0;
+        }
 
         .brand h1 {
             margin: 0;
+
             color: #fff;
+
             font-size: 16px;
             font-weight: 700;
             line-height: 1.15;
+
             letter-spacing: -.02em;
         }
 
         .brand h1 span {
-            background: linear-gradient(90deg, #a5b4fc, #f0abfc);
+            background: linear-gradient(
+                90deg,
+                #35B6E8,
+                #8ED3F2
+            );
+
             -webkit-background-clip: text;
             background-clip: text;
+
             color: transparent;
         }
 
         .brand p {
             margin: 4px 0 0;
+
             color: var(--side-label);
+
             font-size: 10.5px;
             font-weight: 600;
+
             text-transform: uppercase;
             letter-spacing: .14em;
         }
@@ -150,16 +239,21 @@
         .menu {
             display: flex;
             flex-direction: column;
+
             gap: 2px;
+
             padding: 8px 12px 20px;
         }
 
         .menu-label {
             margin: 18px 0 4px;
             padding: 0 12px;
+
             color: var(--side-label);
+
             font-size: 11px;
             font-weight: 600;
+
             text-transform: uppercase;
             letter-spacing: .08em;
         }
@@ -167,21 +261,32 @@
         .menu-link {
             display: flex;
             align-items: center;
+
             gap: 10px;
+
             padding: 10px 12px;
+
             color: var(--side-text);
+
             text-decoration: none;
+
             font-weight: 500;
+
             border-radius: 8px;
         }
 
         .menu-link::before {
             content: "";
+
             width: 6px;
             height: 6px;
+
             border-radius: 50%;
+
             background: currentColor;
+
             opacity: .35;
+
             transition: var(--transition);
         }
 
@@ -192,85 +297,161 @@
 
         .menu-link.active {
             color: #fff;
-            background: rgba(99,102,241,.22);
+
+            background: rgba(0,157,220,.16);
+
+            box-shadow:
+                inset 3px 0 0 var(--side-accent);
         }
 
         .menu-link.active::before {
-            background: #a5b4fc;
+            background: var(--side-accent);
+
             opacity: 1;
-            box-shadow: 0 0 8px #818cf8;
+
+            box-shadow:
+                0 0 8px var(--side-accent);
         }
 
-        /* ---------- LAYOUT ---------- */
-        .main { margin-left: var(--sidebar); min-height: 100vh; }
+        /* =========================================================
+           LAYOUT
+        ========================================================= */
+
+        .main {
+            margin-left: var(--sidebar);
+            min-height: 100vh;
+        }
 
         .topbar {
             position: sticky;
             top: 0;
+
             z-index: 900;
+
             display: flex;
             align-items: center;
             justify-content: space-between;
+
             gap: 16px;
+
             padding: 14px 28px;
-            background: color-mix(in srgb, var(--surface) 82%, transparent);
+
+            background:
+                color-mix(
+                    in srgb,
+                    var(--surface) 82%,
+                    transparent
+                );
+
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
+
             border-bottom: 1px solid var(--border);
         }
 
         .menu-toggle {
             display: none;
+
             padding: 8px 12px;
+
             color: var(--text);
             background: var(--surface);
+
             border: 1px solid var(--border);
             border-radius: 8px;
+
             cursor: pointer;
+
             font-size: 16px;
             line-height: 1;
         }
 
         .search {
             width: min(480px, 100%);
+
             padding: 10px 14px 10px 38px;
+
             color: var(--text);
+
             background:
                 var(--surface-2)
                 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E")
                 no-repeat 12px center;
+
             border: 1px solid var(--border);
             border-radius: 999px;
+
             outline: none;
+
             font-size: 14px;
+
             transition: var(--transition);
         }
 
-        .search::placeholder { color: var(--text-light); }
+        .search::placeholder {
+            color: var(--text-light);
+        }
 
         .search:focus {
             border-color: var(--primary);
-            box-shadow: 0 0 0 4px var(--primary-soft);
+
+            box-shadow:
+                0 0 0 4px var(--primary-soft);
         }
 
-        .user-menu { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
-        .user-information { display: flex; flex-direction: column; text-align: right; line-height: 1.25; }
-        .user-information strong { font-size: 14px; font-weight: 600; }
-        .user-information small { color: var(--text-light); font-size: 12px; }
+        .user-menu {
+            display: flex;
+            align-items: center;
+
+            gap: 14px;
+
+            flex-shrink: 0;
+        }
+
+        .user-information {
+            display: flex;
+            flex-direction: column;
+
+            text-align: right;
+
+            line-height: 1.25;
+        }
+
+        .user-information strong {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .user-information small {
+            color: var(--text-light);
+            font-size: 12px;
+        }
 
         .logout-button {
             padding: 8px 14px;
+
             color: var(--danger);
+
             text-decoration: none;
+
             font-size: 13px;
             font-weight: 600;
+
             background: transparent;
-            border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent);
+
+            border: 1px solid
+                color-mix(
+                    in srgb,
+                    var(--danger) 35%,
+                    transparent
+                );
+
             border-radius: 8px;
         }
 
         .logout-button:hover {
             color: #fff;
+
             background: var(--danger);
             border-color: var(--danger);
         }
@@ -278,167 +459,419 @@
         .content {
             width: 100%;
             max-width: 1600px;
+
             margin: 0 auto;
+
             padding: 28px;
         }
 
-        /* ---------- CARDS ---------- */
+        /* =========================================================
+           CARDS
+        ========================================================= */
+
         .card {
             padding: 22px;
+
             background: var(--surface);
+
             border: 1px solid var(--border);
             border-radius: var(--radius-lg);
+
             box-shadow: var(--shadow-sm);
-            transition: box-shadow var(--transition), transform var(--transition);
+
+            transition:
+                box-shadow var(--transition),
+                transform var(--transition);
         }
 
-        .card:hover { box-shadow: var(--shadow); }
+        .card:hover {
+            box-shadow: var(--shadow);
+        }
 
-        /* ---------- TABLAS ---------- */
+        /* =========================================================
+           TABLAS
+        ========================================================= */
+
         .table-responsive {
             width: 100%;
+
             overflow-x: auto;
+
             border: 1px solid var(--border);
             border-radius: var(--radius);
         }
 
-        .table { width: 100%; border-collapse: collapse; background: var(--surface); }
+        .table {
+            width: 100%;
 
-        .table th, .table td {
+            border-collapse: collapse;
+
+            background: var(--surface);
+        }
+
+        .table th,
+        .table td {
             padding: 12px 16px;
+
             text-align: left;
             vertical-align: middle;
+
             border-bottom: 1px solid var(--border);
         }
 
         .table th {
             position: sticky;
             top: 0;
+
             color: var(--text-light);
             background: var(--surface-2);
+
             font-size: 11.5px;
             font-weight: 600;
+
             text-transform: uppercase;
             letter-spacing: .06em;
+
             white-space: nowrap;
         }
 
-        .table td { font-size: 13.5px; }
-        .table tbody tr { transition: background var(--transition); }
-        .table tbody tr:hover { background: var(--primary-soft); }
-        .table tbody tr:last-child td { border-bottom: 0; }
+        .table td {
+            font-size: 13.5px;
+        }
 
-        /* ---------- FORMULARIOS ---------- */
-        label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 500; }
+        .table tbody tr {
+            transition: background var(--transition);
+        }
 
-        .form-control, .form-select {
+        .table tbody tr:hover {
+            background: var(--primary-soft);
+        }
+
+        .table tbody tr:last-child td {
+            border-bottom: 0;
+        }
+
+        /* =========================================================
+           FORMULARIOS
+        ========================================================= */
+
+        label {
+            display: block;
+
+            margin-bottom: 6px;
+
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .form-control,
+        .form-select {
             width: 100%;
+
             padding: 10px 12px;
+
             color: var(--text);
             background: var(--surface);
+
             border: 1px solid var(--border);
             border-radius: 8px;
+
             outline: none;
+
             font-size: 14px;
+
             transition: var(--transition);
         }
 
-        .form-control:hover, .form-select:hover { border-color: #9ca3af; }
-
-        .form-control:focus, .form-select:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 4px var(--primary-soft);
+        .form-control:hover,
+        .form-select:hover {
+            border-color: #9ca3af;
         }
 
-        .form-control::placeholder { color: var(--text-light); }
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--primary);
 
-        /* ---------- BOTONES ---------- */
+            box-shadow:
+                0 0 0 4px var(--primary-soft);
+        }
+
+        .form-control::placeholder {
+            color: var(--text-light);
+        }
+
+        /* =========================================================
+           BOTONES
+        ========================================================= */
+
         .btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
+
             gap: 8px;
+
             padding: 10px 16px;
+
             color: #fff;
+
             text-decoration: none;
+
             background: var(--primary);
+
             border: 1px solid transparent;
             border-radius: 8px;
+
             cursor: pointer;
+
             font-size: 13.5px;
             font-weight: 600;
+
             box-shadow: var(--shadow-sm);
+
             transition: var(--transition);
         }
 
-        .btn:hover { color: #fff; background: var(--primary-hover); transform: translateY(-1px); box-shadow: var(--shadow); }
-        .btn:active { transform: none; }
-        .btn:focus-visible { outline: 3px solid var(--primary-soft); outline-offset: 2px; }
+        .btn:hover {
+            color: #fff;
 
-        .btn-success { background: var(--success); }
-        .btn-success:hover { background: #15803d; }
-        .btn-danger { background: var(--danger); }
-        .btn-danger:hover { background: #b91c1c; }
+            background: var(--primary-hover);
+
+            transform: translateY(-1px);
+
+            box-shadow: var(--shadow);
+        }
+
+        .btn:active {
+            transform: none;
+        }
+
+        .btn:focus-visible {
+            outline: 3px solid var(--primary-soft);
+            outline-offset: 2px;
+        }
+
+        .btn-success {
+            background: var(--success);
+        }
+
+        .btn-success:hover {
+            background: #15803d;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
 
         .btn-outline {
             color: var(--text);
+
             background: var(--surface);
+
             border-color: var(--border);
         }
-        .btn-outline:hover { color: var(--text); background: var(--surface-2); }
 
-        /* ---------- BADGES (nuevos, opcionales) ---------- */
+        .btn-outline:hover {
+            color: var(--text);
+
+            background: var(--surface-2);
+        }
+
+        /* =========================================================
+           BADGES
+        ========================================================= */
+
         .badge {
             display: inline-flex;
             align-items: center;
+
             padding: 2px 10px;
+
             font-size: 12px;
             font-weight: 600;
+
             border-radius: 999px;
+
             background: var(--surface-2);
             color: var(--text-light);
         }
-        .badge-success { color: var(--success); background: color-mix(in srgb, var(--success) 14%, transparent); }
-        .badge-danger  { color: var(--danger);  background: color-mix(in srgb, var(--danger) 14%, transparent); }
-        .badge-warning { color: var(--warning); background: color-mix(in srgb, var(--warning) 16%, transparent); }
-        .badge-info    { color: var(--info);    background: color-mix(in srgb, var(--info) 14%, transparent); }
 
-        /* ---------- ALERTAS ---------- */
+        .badge-success {
+            color: var(--success);
+
+            background:
+                color-mix(
+                    in srgb,
+                    var(--success) 14%,
+                    transparent
+                );
+        }
+
+        .badge-danger {
+            color: var(--danger);
+
+            background:
+                color-mix(
+                    in srgb,
+                    var(--danger) 14%,
+                    transparent
+                );
+        }
+
+        .badge-warning {
+            color: var(--warning);
+
+            background:
+                color-mix(
+                    in srgb,
+                    var(--warning) 16%,
+                    transparent
+                );
+        }
+
+        .badge-info {
+            color: var(--info);
+
+            background:
+                color-mix(
+                    in srgb,
+                    var(--info) 14%,
+                    transparent
+                );
+        }
+
+        /* =========================================================
+           ALERTAS
+        ========================================================= */
+
         .alert {
             margin-bottom: 18px;
+
             padding: 12px 16px;
+
             border-radius: var(--radius);
+
             border: 1px solid;
+
             font-size: 13.5px;
             font-weight: 500;
+
             animation: slideIn .3s ease;
         }
 
-        .alert-danger  { color: var(--danger);  background: color-mix(in srgb, var(--danger) 10%, var(--surface));  border-color: color-mix(in srgb, var(--danger) 30%, transparent); }
-        .alert-warning { color: var(--warning); background: color-mix(in srgb, var(--warning) 10%, var(--surface)); border-color: color-mix(in srgb, var(--warning) 30%, transparent); }
-        .alert-success { color: var(--success); background: color-mix(in srgb, var(--success) 10%, var(--surface)); border-color: color-mix(in srgb, var(--success) 30%, transparent); }
-        .alert-info    { color: var(--info);    background: color-mix(in srgb, var(--info) 10%, var(--surface));    border-color: color-mix(in srgb, var(--info) 30%, transparent); }
+        .alert-danger {
+            color: var(--danger);
 
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(-6px); }
-            to   { opacity: 1; transform: none; }
+            background:
+                color-mix(
+                    in srgb,
+                    var(--danger) 10%,
+                    var(--surface)
+                );
+
+            border-color:
+                color-mix(
+                    in srgb,
+                    var(--danger) 30%,
+                    transparent
+                );
         }
 
-        /* ---------- DIALOGO DE CONFIRMACION ---------- */
+        .alert-warning {
+            color: var(--warning);
+
+            background:
+                color-mix(
+                    in srgb,
+                    var(--warning) 10%,
+                    var(--surface)
+                );
+
+            border-color:
+                color-mix(
+                    in srgb,
+                    var(--warning) 30%,
+                    transparent
+                );
+        }
+
+        .alert-success {
+            color: var(--success);
+
+            background:
+                color-mix(
+                    in srgb,
+                    var(--success) 10%,
+                    var(--surface)
+                );
+
+            border-color:
+                color-mix(
+                    in srgb,
+                    var(--success) 30%,
+                    transparent
+                );
+        }
+
+        .alert-info {
+            color: var(--info);
+
+            background:
+                color-mix(
+                    in srgb,
+                    var(--info) 10%,
+                    var(--surface)
+                );
+
+            border-color:
+                color-mix(
+                    in srgb,
+                    var(--info) 30%,
+                    transparent
+                );
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-6px);
+            }
+
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        /* =========================================================
+           DIALOGO DE CONFIRMACION
+        ========================================================= */
+
         .confirm-dialog {
             width: min(400px, calc(100% - 32px));
+
             padding: 26px;
+
             color: var(--text);
             background: var(--surface);
+
             border: 1px solid var(--border);
             border-radius: var(--radius-lg);
+
             box-shadow: 0 30px 70px rgba(0,0,0,.45);
         }
 
-        .confirm-dialog[open] { animation: popIn .18s ease; }
+        .confirm-dialog[open] {
+            animation: popIn .18s ease;
+        }
 
         .confirm-dialog::backdrop {
             background: rgba(2, 6, 23, .6);
+
             backdrop-filter: blur(3px);
             -webkit-backdrop-filter: blur(3px);
         }
@@ -446,68 +879,157 @@
         .confirm-icon {
             display: grid;
             place-items: center;
+
             width: 44px;
             height: 44px;
+
             margin-bottom: 14px;
+
             color: var(--warning);
+
             font-size: 20px;
             font-weight: 700;
+
             border-radius: 50%;
-            background: color-mix(in srgb, var(--warning) 16%, transparent);
+
+            background:
+                color-mix(
+                    in srgb,
+                    var(--warning) 16%,
+                    transparent
+                );
         }
 
         .confirm-dialog.danger .confirm-icon {
             color: var(--danger);
-            background: color-mix(in srgb, var(--danger) 14%, transparent);
+
+            background:
+                color-mix(
+                    in srgb,
+                    var(--danger) 14%,
+                    transparent
+                );
         }
 
-        .confirm-dialog h3 { margin: 0 0 6px; font-size: 17px; font-weight: 600; }
-        .confirm-dialog p { margin: 0; color: var(--text-light); font-size: 14px; }
+        .confirm-dialog h3 {
+            margin: 0 0 6px;
+
+            font-size: 17px;
+            font-weight: 600;
+        }
+
+        .confirm-dialog p {
+            margin: 0;
+
+            color: var(--text-light);
+
+            font-size: 14px;
+        }
 
         .confirm-actions {
             display: flex;
             justify-content: flex-end;
+
             gap: 10px;
+
             margin-top: 22px;
         }
 
         @keyframes popIn {
-            from { opacity: 0; transform: translateY(8px) scale(.97); }
-            to   { opacity: 1; transform: none; }
+            from {
+                opacity: 0;
+                transform: translateY(8px) scale(.97);
+            }
+
+            to {
+                opacity: 1;
+                transform: none;
+            }
         }
 
-        /* ---------- OVERLAY DEL MENU MOVIL ---------- */
+        /* =========================================================
+           OVERLAY MENU MOVIL
+        ========================================================= */
+
         .sidebar-overlay {
             display: none;
+
             position: fixed;
             inset: 0;
+
             z-index: 999;
+
             background: rgba(2, 6, 23, .55);
+
             backdrop-filter: blur(2px);
             -webkit-backdrop-filter: blur(2px);
         }
 
         @media (max-width: 900px) {
-            body.menu-open .sidebar-overlay { display: block; }
-            body.menu-open { overflow: hidden; }
+            body.menu-open .sidebar-overlay {
+                display: block;
+            }
+
+            body.menu-open {
+                overflow: hidden;
+            }
         }
 
-        /* ---------- RESPONSIVE ---------- */
+        /* =========================================================
+           RESPONSIVE
+        ========================================================= */
+
         @media (max-width: 900px) {
-            .sidebar { transform: translateX(-100%); box-shadow: none; }
-            .sidebar.open { transform: none; box-shadow: 0 0 40px rgba(0,0,0,.4); }
-            .main { margin-left: 0; }
-            .menu-toggle { display: inline-block; }
-            .topbar { padding: 12px 16px; }
-            .content { padding: 18px 16px; }
-            .user-information { display: none; }
+            .sidebar {
+                transform: translateX(-100%);
+                box-shadow: none;
+            }
+
+            .sidebar.open {
+                transform: none;
+
+                box-shadow:
+                    0 0 40px rgba(0,0,0,.4);
+            }
+
+            .main {
+                margin-left: 0;
+            }
+
+            .menu-toggle {
+                display: inline-block;
+            }
+
+            .topbar {
+                padding: 12px 16px;
+            }
+
+            .content {
+                padding: 18px 16px;
+            }
+
+            .user-information {
+                display: none;
+            }
         }
 
         @media (max-width: 520px) {
-            .search { min-width: 0; }
-            .logout-button { padding: 8px 10px; }
-            .card { padding: 16px; }
-            .table th, .table td { padding: 10px 12px; }
+            .search {
+                min-width: 0;
+            }
+
+            .logout-button {
+                padding: 8px 10px;
+            }
+
+            .card {
+                padding: 16px;
+            }
+
+            .table th,
+            .table td {
+                padding: 10px 12px;
+            }
         }
     </style>
 
@@ -516,104 +1038,280 @@
 
 <body>
 
+    <!-- =========================================================
+         SIDEBAR
+    ========================================================= -->
+
     <aside class="sidebar" id="sidebar">
 
         <a class="brand" href="{{ url_for('dashboard') }}">
+
             <div class="brand-logo">
-                <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <circle cx="16" cy="16" r="8" fill="#fff"/>
-                    <circle cx="13.5" cy="13.5" r="2" fill="#c7d2fe" opacity=".7"/>
-                    <ellipse cx="16" cy="16" rx="14" ry="5" transform="rotate(-22 16 16)"
-                             stroke="#fff" stroke-width="1.8" stroke-opacity=".85"/>
-                    <circle cx="27" cy="9" r="1.8" fill="#fff"/>
-                </svg>
+                <img
+                    src="{{ url_for('static', filename='img/Logo.png') }}"
+                    alt="Editorial Planeta"
+                >
             </div>
+
             <div class="brand-text">
-                <h1>Activos <span>TI</span></h1>
+                <h1>
+                    Activos <span>TI</span>
+                </h1>
+
                 <p>Editorial Planeta</p>
             </div>
+
         </a>
 
         <nav class="menu">
 
-            {# ---------- Inicio ---------- #}
+            <!-- Inicio -->
+
             {% if tiene_permiso('dashboard', 'ver') %}
-                <a class="menu-link {{ 'active' if request.endpoint == 'dashboard' }}" href="{{ url_for('dashboard') }}">Dashboard</a>
+
+                <a
+                    class="menu-link {{ 'active' if request.endpoint == 'dashboard' }}"
+                    href="{{ url_for('dashboard') }}"
+                >
+                    Dashboard
+                </a>
+
             {% endif %}
 
-            {# ---------- Equipos ---------- #}
-            {% if tiene_permiso('inventario', 'ver') or tiene_permiso('recolector', 'ver') %}
-                <div class="menu-label">Equipos</div>
+
+            <!-- Equipos -->
+
+            {% if tiene_permiso('inventario', 'ver')
+                  or tiene_permiso('software', 'ver')
+                  or tiene_permiso('contratos', 'ver')
+                  or tiene_permiso('recolector', 'ver') %}
+
+                <div class="menu-label">
+                    Equipos
+                </div>
+
             {% endif %}
+
 
             {% if tiene_permiso('inventario', 'ver') %}
-                <a class="menu-link {{ 'active' if request.endpoint == 'inventario' }}" href="{{ url_for('inventario') }}">Inventario</a>
+
+                <a
+                    class="menu-link {{ 'active' if request.endpoint == 'inventario' }}"
+                    href="{{ url_for('inventario') }}"
+                >
+                    Inventario
+                </a>
+
             {% endif %}
+
+
+            {% if tiene_permiso('software', 'ver') %}
+
+                <a
+                    class="menu-link {{ 'active' if request.blueprint == 'software' }}"
+                    href="{{ url_for('software.software_page') }}"
+                >
+                    Software y licencias
+                </a>
+
+            {% endif %}
+
+
+            {% if tiene_permiso('contratos', 'ver') %}
+
+                <a
+                    class="menu-link {{ 'active' if request.blueprint == 'contratos' }}"
+                    href="{{ url_for('contratos.contratos_page') }}"
+                >
+                    Contratos y mantenimiento
+                </a>
+
+            {% endif %}
+
 
             {% if tiene_permiso('recolector', 'ver') %}
-                <a class="menu-link {{ 'active' if request.blueprint == 'recolector' }}" href="{{ url_for('recolector.bandeja') }}">Equipos detectados</a>
+
+                <a
+                    class="menu-link {{ 'active' if request.blueprint == 'recolector' }}"
+                    href="{{ url_for('recolector.bandeja') }}"
+                >
+                    Equipos detectados
+                </a>
+
             {% endif %}
 
-            {# ---------- Gestion ---------- #}
-            {% if tiene_permiso('personas', 'ver') or tiene_permiso('asignaciones', 'ver') or tiene_permiso('devoluciones', 'ver') %}
-                <div class="menu-label">Gestión</div>
+
+            <!-- Gestión -->
+
+            {% if tiene_permiso('personas', 'ver')
+                  or tiene_permiso('asignaciones', 'ver')
+                  or tiene_permiso('devoluciones', 'ver') %}
+
+                <div class="menu-label">
+                    Gestión
+                </div>
+
             {% endif %}
+
 
             {% if tiene_permiso('personas', 'ver') %}
-                <a class="menu-link {{ 'active' if request.endpoint in ('personas', 'persona_detalle') }}" href="{{ url_for('personas') }}">Personas</a>
+
+                <a
+                    class="menu-link {{ 'active' if request.endpoint in ('personas', 'persona_detalle') }}"
+                    href="{{ url_for('personas') }}"
+                >
+                    Personas
+                </a>
+
             {% endif %}
+
 
             {% if tiene_permiso('asignaciones', 'ver') %}
-                <a class="menu-link {{ 'active' if request.endpoint == 'asignaciones' }}" href="{{ url_for('asignaciones') }}">Asignaciones</a>
+
+                <a
+                    class="menu-link {{ 'active' if request.endpoint == 'asignaciones' }}"
+                    href="{{ url_for('asignaciones') }}"
+                >
+                    Asignaciones
+                </a>
+
             {% endif %}
+
 
             {% if tiene_permiso('devoluciones', 'ver') %}
-                <a class="menu-link {{ 'active' if request.endpoint == 'devoluciones' }}" href="{{ url_for('devoluciones') }}">Devoluciones</a>
+
+                <a
+                    class="menu-link {{ 'active' if request.endpoint == 'devoluciones' }}"
+                    href="{{ url_for('devoluciones') }}"
+                >
+                    Devoluciones
+                </a>
+
             {% endif %}
 
-            {# ---------- Soporte ---------- #}
-            {% if tiene_permiso('tickets', 'ver') or tiene_permiso('actas', 'ver') or tiene_permiso('reportes', 'ver') %}
-                <div class="menu-label">Soporte</div>
+
+            <!-- Soporte -->
+
+            {% if tiene_permiso('tickets', 'ver')
+                  or tiene_permiso('actas', 'ver')
+                  or tiene_permiso('reportes', 'ver') %}
+
+                <div class="menu-label">
+                    Soporte
+                </div>
+
             {% endif %}
+
 
             {% if tiene_permiso('tickets', 'ver') %}
-                <a class="menu-link {{ 'active' if request.endpoint == 'tickets' }}" href="{{ url_for('tickets') }}">Tickets</a>
+
+                <a
+                    class="menu-link {{ 'active' if request.endpoint == 'tickets' }}"
+                    href="{{ url_for('tickets') }}"
+                >
+                    Tickets
+                </a>
+
             {% endif %}
+
 
             {% if tiene_permiso('actas', 'ver') %}
-                <a class="menu-link {{ 'active' if request.endpoint == 'actas' }}" href="{{ url_for('actas') }}">Actas</a>
+
+                <a
+                    class="menu-link {{ 'active' if request.endpoint == 'actas' }}"
+                    href="{{ url_for('actas') }}"
+                >
+                    Actas
+                </a>
+
             {% endif %}
+
 
             {% if tiene_permiso('reportes', 'ver') %}
-                <a class="menu-link {{ 'active' if request.endpoint == 'reportes' }}" href="{{ url_for('reportes') }}">Reportes</a>
+
+                <a
+                    class="menu-link {{ 'active' if request.endpoint == 'reportes' }}"
+                    href="{{ url_for('reportes') }}"
+                >
+                    Reportes
+                </a>
+
             {% endif %}
 
-            {# ---------- Administracion ---------- #}
-            {% if tiene_permiso('configuracion', 'ver') or (current_user.is_authenticated and current_user.es_admin) %}
-                <div class="menu-label">Administración</div>
+
+            <!-- Administración -->
+
+            {% if tiene_permiso('configuracion', 'ver')
+                  or (current_user.is_authenticated and current_user.es_admin) %}
+
+                <div class="menu-label">
+                    Administración
+                </div>
+
             {% endif %}
+
 
             {% if tiene_permiso('configuracion', 'ver') %}
-                <a class="menu-link {{ 'active' if request.endpoint == 'configuracion' }}" href="{{ url_for('configuracion') }}">Configuración</a>
+
+                <a
+                    class="menu-link {{ 'active' if request.endpoint == 'configuracion' }}"
+                    href="{{ url_for('configuracion') }}"
+                >
+                    Configuración
+                </a>
+
             {% endif %}
 
+
             {% if current_user.is_authenticated and current_user.es_admin %}
-                <a class="menu-link {{ 'active' if request.endpoint == 'usuarios' }}" href="{{ url_for('usuarios') }}">Usuarios</a>
-                <a class="menu-link {{ 'active' if request.endpoint == 'administrar_permisos' }}" href="{{ url_for('administrar_permisos') }}">Permisos</a>
+
+                <a
+                    class="menu-link {{ 'active' if request.endpoint == 'usuarios' }}"
+                    href="{{ url_for('usuarios') }}"
+                >
+                    Usuarios
+                </a>
+
+                <a
+                    class="menu-link {{ 'active' if request.endpoint == 'administrar_permisos' }}"
+                    href="{{ url_for('administrar_permisos') }}"
+                >
+                    Permisos
+                </a>
+
             {% endif %}
 
         </nav>
 
     </aside>
 
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
+    <div
+        class="sidebar-overlay"
+        id="sidebarOverlay"
+    ></div>
+
+
+    <!-- =========================================================
+         MAIN
+    ========================================================= -->
 
     <div class="main">
 
+        <!-- TOPBAR -->
+
         <header class="topbar">
 
-            <button class="menu-toggle" id="menuToggle" type="button" aria-label="Abrir menu" aria-expanded="false">&#9776;</button>
+            <button
+                class="menu-toggle"
+                id="menuToggle"
+                type="button"
+                aria-label="Abrir menu"
+                aria-expanded="false"
+            >
+                &#9776;
+            </button>
+
 
             <input
                 id="busquedaGlobal"
@@ -622,12 +1320,21 @@
                 placeholder="Buscar en la pagina actual"
             >
 
+
             <div class="user-menu">
 
                 <div class="user-information">
-                    <strong>{{ current_user.nombre }}</strong>
-                    <small>{{ current_user.rol_nombre }}</small>
+
+                    <strong>
+                        {{ current_user.nombre }}
+                    </strong>
+
+                    <small>
+                        {{ current_user.rol_nombre }}
+                    </small>
+
                 </div>
+
 
                 <a
                     class="logout-button"
@@ -637,7 +1344,7 @@
                     data-confirm-ok="Cerrar sesión"
                     data-confirm-danger="1"
                 >
-                    Cerrar sesion
+                    Cerrar sesión
                 </a>
 
             </div>
@@ -645,13 +1352,22 @@
         </header>
 
 
+        <!-- CONTENT -->
+
         <main class="content">
 
             {% with mensajes = get_flashed_messages(with_categories=true) %}
+
                 {% for categoria, mensaje in mensajes %}
-                    <div class="alert alert-{{ categoria }}">{{ mensaje }}</div>
+
+                    <div class="alert alert-{{ categoria }}">
+                        {{ mensaje }}
+                    </div>
+
                 {% endfor %}
+
             {% endwith %}
+
 
             {% block content %}{% endblock %}
 
@@ -660,162 +1376,611 @@
     </div>
 
 
+    <!-- =========================================================
+         BUSQUEDA + MENU MOVIL
+    ========================================================= -->
+
     <script>
         const search = document.getElementById("busquedaGlobal");
 
         if (search) {
-            search.addEventListener("input", function () {
-                const text = this.value.toLowerCase().trim();
 
-                document.querySelectorAll("tbody tr").forEach(function (row) {
-                    row.style.display = row.innerText.toLowerCase().includes(text) ? "" : "none";
-                });
+            search.addEventListener("input", function () {
+
+                const text = this.value
+                    .toLowerCase()
+                    .trim();
+
+                document
+                    .querySelectorAll("tbody tr")
+                    .forEach(function (row) {
+
+                        row.style.display =
+                            row.innerText
+                                .toLowerCase()
+                                .includes(text)
+                                ? ""
+                                : "none";
+
+                    });
+
             });
+
         }
 
-        const sidebar = document.getElementById("sidebar");
-        const toggle = document.getElementById("menuToggle");
-        const overlay = document.getElementById("sidebarOverlay");
+
+        const sidebar =
+            document.getElementById("sidebar");
+
+        const toggle =
+            document.getElementById("menuToggle");
+
+        const overlay =
+            document.getElementById("sidebarOverlay");
+
 
         function setMenu(open) {
-            sidebar.classList.toggle("open", open);
-            document.body.classList.toggle("menu-open", open);
-            toggle.setAttribute("aria-expanded", open);
+
+            sidebar.classList.toggle(
+                "open",
+                open
+            );
+
+            document.body.classList.toggle(
+                "menu-open",
+                open
+            );
+
+            toggle.setAttribute(
+                "aria-expanded",
+                open
+            );
+
         }
 
+
         if (toggle && sidebar && overlay) {
-            toggle.addEventListener("click", function () {
-                setMenu(!sidebar.classList.contains("open"));
-            });
 
-            overlay.addEventListener("click", function () { setMenu(false); });
+            toggle.addEventListener(
+                "click",
+                function () {
 
-            sidebar.querySelectorAll(".menu-link").forEach(function (a) {
-                a.addEventListener("click", function () { setMenu(false); });
-            });
+                    setMenu(
+                        !sidebar.classList.contains("open")
+                    );
 
-            document.addEventListener("keydown", function (e) {
-                if (e.key === "Escape") setMenu(false);
-            });
+                }
+            );
 
-            // Si se agranda la ventana con el menú abierto, lo resetea
-            window.matchMedia("(min-width: 901px)").addEventListener("change", function (e) {
-                if (e.matches) setMenu(false);
-            });
+
+            overlay.addEventListener(
+                "click",
+                function () {
+
+                    setMenu(false);
+
+                }
+            );
+
+
+            sidebar
+                .querySelectorAll(".menu-link")
+                .forEach(function (a) {
+
+                    a.addEventListener(
+                        "click",
+                        function () {
+
+                            setMenu(false);
+
+                        }
+                    );
+
+                });
+
+
+            document.addEventListener(
+                "keydown",
+                function (e) {
+
+                    if (e.key === "Escape") {
+                        setMenu(false);
+                    }
+
+                }
+            );
+
+
+            window
+                .matchMedia("(min-width: 901px)")
+                .addEventListener(
+                    "change",
+                    function (e) {
+
+                        if (e.matches) {
+                            setMenu(false);
+                        }
+
+                    }
+                );
+
         }
     </script>
 
+
+    <!-- =========================================================
+         CSRF AUTOMATICO
+    ========================================================= -->
+
     <script>
-        // CSRF automatico: agrega el token a todos los formularios POST y a los fetch.
         (function () {
-            const meta = document.querySelector('meta[name="csrf-token"]');
-            const token = meta ? meta.content : "";
+
+            const meta =
+                document.querySelector(
+                    'meta[name="csrf-token"]'
+                );
+
+            const token =
+                meta ? meta.content : "";
+
             if (!token) return;
 
+
             function proteger(form) {
-                const metodo = (form.getAttribute("method") || "get").toLowerCase();
-                if (metodo !== "post" || form.querySelector('input[name="csrf_token"]')) return;
-                const input = document.createElement("input");
+
+                const metodo =
+                    (
+                        form.getAttribute("method")
+                        || "get"
+                    ).toLowerCase();
+
+
+                if (
+                    metodo !== "post"
+                    || form.querySelector(
+                        'input[name="csrf_token"]'
+                    )
+                ) {
+                    return;
+                }
+
+
+                const input =
+                    document.createElement("input");
+
                 input.type = "hidden";
                 input.name = "csrf_token";
                 input.value = token;
+
                 form.appendChild(input);
+
             }
 
-            document.querySelectorAll("form").forEach(proteger);
-            document.addEventListener("submit", function (e) { proteger(e.target); }, true);
 
-            const fetchOriginal = window.fetch;
-            window.fetch = function (url, opciones) {
-                opciones = opciones || {};
-                const metodo = (opciones.method || "GET").toUpperCase();
-                if (!["GET", "HEAD", "OPTIONS"].includes(metodo)) {
-                    opciones.headers = new Headers(opciones.headers || {});
-                    if (!opciones.headers.has("X-CSRFToken")) {
-                        opciones.headers.set("X-CSRFToken", token);
+            document
+                .querySelectorAll("form")
+                .forEach(proteger);
+
+
+            document.addEventListener(
+                "submit",
+                function (e) {
+
+                    proteger(e.target);
+
+                },
+                true
+            );
+
+
+            const fetchOriginal =
+                window.fetch;
+
+
+            window.fetch =
+                function (url, opciones) {
+
+                    opciones =
+                        opciones || {};
+
+
+                    const metodo =
+                        (
+                            opciones.method
+                            || "GET"
+                        ).toUpperCase();
+
+
+                    if (
+                        ![
+                            "GET",
+                            "HEAD",
+                            "OPTIONS"
+                        ].includes(metodo)
+                    ) {
+
+                        opciones.headers =
+                            new Headers(
+                                opciones.headers || {}
+                            );
+
+
+                        if (
+                            !opciones.headers.has(
+                                "X-CSRFToken"
+                            )
+                        ) {
+
+                            opciones.headers.set(
+                                "X-CSRFToken",
+                                token
+                            );
+
+                        }
+
                     }
-                }
-                return fetchOriginal.call(this, url, opciones);
-            };
+
+
+                    return fetchOriginal.call(
+                        this,
+                        url,
+                        opciones
+                    );
+
+                };
+
         })();
     </script>
 
-    <dialog class="confirm-dialog" id="confirmDialog" aria-labelledby="confirmTitle">
-        <div class="confirm-icon" aria-hidden="true">!</div>
-        <h3 id="confirmTitle">¿Estás seguro?</h3>
-        <p id="confirmMessage"></p>
-        <div class="confirm-actions">
-            <button type="button" class="btn btn-outline" id="confirmCancel">Cancelar</button>
-            <button type="button" class="btn" id="confirmOk">Aceptar</button>
+
+    <!-- =========================================================
+         DIALOGO DE CONFIRMACION
+    ========================================================= -->
+
+    <dialog
+        class="confirm-dialog"
+        id="confirmDialog"
+        aria-labelledby="confirmTitle"
+    >
+
+        <div
+            class="confirm-icon"
+            aria-hidden="true"
+        >
+            !
         </div>
+
+
+        <h3 id="confirmTitle">
+            ¿Estás seguro?
+        </h3>
+
+
+        <p id="confirmMessage"></p>
+
+
+        <div class="confirm-actions">
+
+            <button
+                type="button"
+                class="btn btn-outline"
+                id="confirmCancel"
+            >
+                Cancelar
+            </button>
+
+
+            <button
+                type="button"
+                class="btn"
+                id="confirmOk"
+            >
+                Aceptar
+            </button>
+
+        </div>
+
     </dialog>
 
+
+    <!-- =========================================================
+         CONFIRMACIONES
+    ========================================================= -->
+
     <script>
-        // Confirmaciones con dialogo propio (reemplaza el confirm() nativo).
-        // Uso: data-confirm="Mensaje"  [data-confirm-title] [data-confirm-ok] [data-confirm-danger]
-        // Los onclick/onsubmit="return confirm('...')" existentes se convierten solos.
         (function () {
-            const dlg = document.getElementById("confirmDialog");
-            if (!dlg || typeof dlg.showModal !== "function") return;
 
-            const titulo = document.getElementById("confirmTitle");
-            const mensaje = document.getElementById("confirmMessage");
-            const ok = document.getElementById("confirmOk");
-            const cancelar = document.getElementById("confirmCancel");
-            let pendiente = null;
+            const dlg =
+                document.getElementById(
+                    "confirmDialog"
+                );
 
-            document.querySelectorAll('[onclick*="confirm("], [onsubmit*="confirm("]').forEach(function (el) {
-                const attr = el.hasAttribute("onclick") ? "onclick" : "onsubmit";
-                const m = el.getAttribute(attr).match(/confirm\(\s*(['"])([\s\S]*?)\1\s*\)/);
-                if (!m) return;
-                el.dataset.confirm = m[2];
-                el.removeAttribute(attr);
-                if (/danger/.test(el.className)) el.dataset.confirmDanger = "1";
-            });
-
-            function abrir(el) {
-                pendiente = el;
-                titulo.textContent = el.dataset.confirmTitle || "¿Estás seguro?";
-                mensaje.textContent = el.dataset.confirm;
-                ok.textContent = el.dataset.confirmOk || "Aceptar";
-                const peligro = !!el.dataset.confirmDanger;
-                dlg.classList.toggle("danger", peligro);
-                ok.className = "btn" + (peligro ? " btn-danger" : "");
-                dlg.showModal();
-                cancelar.focus();
+            if (
+                !dlg
+                || typeof dlg.showModal !== "function"
+            ) {
+                return;
             }
 
-            document.addEventListener("click", function (e) {
-                const el = e.target.closest("[data-confirm]:not(form)");
-                if (!el) return;
-                if (el.dataset.confirmado) { delete el.dataset.confirmado; return; }
-                e.preventDefault();
-                e.stopPropagation();
-                abrir(el);
-            }, true);
 
-            document.addEventListener("submit", function (e) {
-                const form = e.target;
-                if (!form.matches || !form.matches("form[data-confirm]")) return;
-                if (form.dataset.confirmado) { delete form.dataset.confirmado; return; }
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                abrir(form);
-            }, true);
+            const titulo =
+                document.getElementById(
+                    "confirmTitle"
+                );
 
-            ok.addEventListener("click", function () {
-                const el = pendiente;
-                dlg.close();
-                if (!el) return;
-                el.dataset.confirmado = "1";
-                if (el.tagName === "FORM") el.requestSubmit(); else el.click();
-            });
+            const mensaje =
+                document.getElementById(
+                    "confirmMessage"
+                );
 
-            cancelar.addEventListener("click", function () { dlg.close(); });
-            dlg.addEventListener("click", function (e) { if (e.target === dlg) dlg.close(); });
-            dlg.addEventListener("close", function () { pendiente = null; });
+            const ok =
+                document.getElementById(
+                    "confirmOk"
+                );
+
+            const cancelar =
+                document.getElementById(
+                    "confirmCancel"
+                );
+
+
+            let pendiente = null;
+
+
+            /*
+             * Convierte automáticamente:
+             *
+             * onclick="return confirm('...')"
+             *
+             * y
+             *
+             * onsubmit="return confirm('...')"
+             *
+             * a data-confirm.
+             */
+
+            document
+                .querySelectorAll(
+                    '[onclick*="confirm("], [onsubmit*="confirm("]'
+                )
+                .forEach(function (el) {
+
+                    const attr =
+                        el.hasAttribute("onclick")
+                            ? "onclick"
+                            : "onsubmit";
+
+
+                    const valor =
+                        el.getAttribute(attr);
+
+
+                    if (!valor) return;
+
+
+                    const m =
+                        valor.match(
+                            /confirm\s*\(\s*(['"])([\s\S]*?)\1\s*\)/
+                        );
+
+
+                    if (!m) return;
+
+
+                    el.dataset.confirm = m[2];
+
+                    el.removeAttribute(attr);
+
+
+                    if (
+                        /danger/.test(
+                            el.className
+                        )
+                    ) {
+                        el.dataset.confirmDanger = "1";
+                    }
+
+                });
+
+
+            function abrir(el) {
+
+                pendiente = el;
+
+
+                titulo.textContent =
+                    el.dataset.confirmTitle
+                    || "¿Estás seguro?";
+
+
+                mensaje.textContent =
+                    el.dataset.confirm;
+
+
+                ok.textContent =
+                    el.dataset.confirmOk
+                    || "Aceptar";
+
+
+                const peligro =
+                    !!el.dataset.confirmDanger;
+
+
+                dlg.classList.toggle(
+                    "danger",
+                    peligro
+                );
+
+
+                ok.className =
+                    "btn"
+                    + (
+                        peligro
+                            ? " btn-danger"
+                            : ""
+                    );
+
+
+                dlg.showModal();
+
+
+                cancelar.focus();
+
+            }
+
+
+            document.addEventListener(
+                "click",
+                function (e) {
+
+                    const el =
+                        e.target.closest(
+                            '[data-confirm]:not(form)'
+                        );
+
+
+                    if (!el) return;
+
+
+                    if (el.dataset.confirmado) {
+
+                        delete el.dataset.confirmado;
+
+                        return;
+
+                    }
+
+
+                    e.preventDefault();
+                    e.stopPropagation();
+
+
+                    abrir(el);
+
+                },
+                true
+            );
+
+
+            document.addEventListener(
+                "submit",
+                function (e) {
+
+                    const form =
+                        e.target;
+
+
+                    if (
+                        !form.matches
+                        || !form.matches(
+                            "form[data-confirm]"
+                        )
+                    ) {
+                        return;
+                    }
+
+
+                    if (
+                        form.dataset.confirmado
+                    ) {
+
+                        delete form.dataset.confirmado;
+
+                        return;
+
+                    }
+
+
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+
+
+                    abrir(form);
+
+                },
+                true
+            );
+
+
+            ok.addEventListener(
+                "click",
+                function () {
+
+                    const el =
+                        pendiente;
+
+
+                    dlg.close();
+
+
+                    if (!el) return;
+
+
+                    el.dataset.confirmado = "1";
+
+
+                    if (
+                        el.tagName === "FORM"
+                    ) {
+
+                        el.requestSubmit();
+
+                    } else {
+
+                        el.click();
+
+                    }
+
+                }
+            );
+
+
+            cancelar.addEventListener(
+                "click",
+                function () {
+
+                    dlg.close();
+
+                }
+            );
+
+
+            dlg.addEventListener(
+                "click",
+                function (e) {
+
+                    if (e.target === dlg) {
+                        dlg.close();
+                    }
+
+                }
+            );
+
+
+            dlg.addEventListener(
+                "close",
+                function () {
+
+                    pendiente = null;
+
+                }
+            );
+
         })();
     </script>
+
+
+    <!-- =========================================================
+         SOFTWARE ACTIVO
+    ========================================================= -->
+
+    <script src="{{ url_for('static', filename='software_activo.js') }}"></script>
+    <script src="{{ url_for('static', filename='contratos_activo.js') }}"></script>
+
+
+    <!-- =========================================================
+         JAVASCRIPT ESPECIFICO DE CADA PAGINA
+    ========================================================= -->
 
     {% block extra_js %}{% endblock %}
 

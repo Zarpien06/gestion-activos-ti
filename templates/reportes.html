@@ -10,103 +10,130 @@
 
     .reportes { container-type: inline-size; container-name: rep; }
 
+    .section-title { margin: 28px 0 12px; font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-light); }
+
+    /* ---------- Alertas ---------- */
+    .alertas { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; margin-bottom: 18px; }
+    .alerta {
+        display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+        text-decoration: none; color: var(--text);
+        background: var(--surface); border: 1px solid var(--border);
+        border-left: 4px solid var(--accent, var(--warning)); border-radius: 10px;
+    }
+    .alerta:hover { background: var(--surface-2); }
+    .alerta b { font-size: 22px; font-weight: 700; color: var(--accent, var(--warning)); min-width: 34px; }
+    .alerta span { font-size: 13px; line-height: 1.3; }
+    .alerta.alta  { --accent: var(--danger); }
+    .alerta.media { --accent: var(--warning); }
+    .alerta.baja  { --accent: var(--info); }
+
     /* ---------- Resumen ---------- */
-    .resumen {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 14px;
-        margin-bottom: 26px;
-    }
+    .resumen { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+    .grupo { padding: 16px 18px 18px; margin: 0; }
+    .grupo-titulo { margin: 0 0 12px; font-size: 12px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--text-light); }
+    .grupo-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
     .mini {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-        padding: 16px 18px;
-        border-left: 4px solid var(--accent, var(--primary));
+        display: flex; flex-direction: column; gap: 2px; min-width: 0;
+        padding: 12px 14px; border-radius: 10px;
+        background: var(--surface-2); border-left: 3px solid var(--accent, var(--primary));
     }
-    .mini b { font-size: 26px; font-weight: 700; letter-spacing: -.03em; line-height: 1.1; }
-    .mini span { color: var(--text-light); font-size: 13px; }
+    .mini b { font-size: 24px; font-weight: 700; letter-spacing: -.03em; line-height: 1.15; overflow-wrap: anywhere; }
+    .mini b.money { font-size: 17px; letter-spacing: -.01em; }
+    .mini span { color: var(--text-light); font-size: 12.5px; line-height: 1.3; }
+    .mini small { color: var(--danger); font-size: 11.5px; font-weight: 600; }
 
-    /* ---------- Tarjetas de reporte ---------- */
-    .report-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 18px;
-    }
-    @container rep (min-width: 1000px) {
-        .report-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    }
-    @container rep (max-width: 660px) {
-        .report-grid { grid-template-columns: 1fr; }
-    }
+    /* ---------- Gráficas de barras ---------- */
+    .dist { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+    .barras { display: flex; flex-direction: column; gap: 8px; }
+    .barra { display: grid; grid-template-columns: minmax(80px, 140px) 1fr auto; align-items: center; gap: 10px; font-size: 12.5px; }
+    .barra .nombre { color: var(--text-light); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .barra .pista { height: 10px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+    .barra .relleno { height: 100%; border-radius: 999px; background: var(--accent, var(--primary)); }
+    .barra .valor { font-weight: 600; min-width: 28px; text-align: right; }
 
-    .report-card {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-        margin: 0;
-        transition: transform .15s ease, box-shadow .15s ease;
-    }
-    .report-card:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(15,23,42,.10); }
+    /* ---------- Buscador ---------- */
+    .buscador-reporte { max-width: 420px; margin-bottom: 8px; }
 
+    /* ---------- Tarjetas ---------- */
+    .report-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 18px; }
+    @container rep (min-width: 1100px) { .report-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @container rep (max-width: 400px) { .report-grid { grid-template-columns: 1fr; } }
+
+    .report-card { display: flex; flex-direction: column; gap: 16px; margin: 0; }
     .report-top { display: flex; align-items: flex-start; gap: 14px; }
-
     .report-icon {
-        display: grid;
-        place-items: center;
-        flex-shrink: 0;
-        width: 46px;
-        height: 46px;
-        border-radius: 12px;
-        font-size: 12px;
-        font-weight: 700;
-        letter-spacing: .04em;
-        color: var(--accent);
-        background: color-mix(in srgb, var(--accent) 14%, transparent);
+        display: grid; place-items: center; flex-shrink: 0; width: 46px; height: 46px;
+        border-radius: 12px; font-size: 12px; font-weight: 700; letter-spacing: .04em;
+        color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent);
     }
-
     .report-card h3 { margin: 0; font-size: 16px; font-weight: 600; }
     .report-card p { margin: 4px 0 0; color: var(--text-light); font-size: 13.5px; line-height: 1.4; }
 
     .report-meta {
-        align-self: flex-start;
-        padding: 4px 11px;
-        font-size: 12px;
-        font-weight: 600;
-        color: var(--accent);
-        border-radius: 999px;
+        align-self: flex-start; padding: 4px 11px; font-size: 12px; font-weight: 600;
+        color: var(--accent); border-radius: 999px;
         background: color-mix(in srgb, var(--accent) 12%, transparent);
     }
 
     .report-form { display: flex; flex-direction: column; gap: 14px; margin-top: auto; }
-
-    .filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; }
+    .filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
     .filters label { display: block; margin-bottom: 4px; font-size: 12.5px; color: var(--text-light); }
-    .filters .form-control,
-    .filters .form-select { width: 100%; min-height: 40px; font-size: 14px; }
+    .filters .form-control, .filters .form-select { width: 100%; min-height: 40px; font-size: 14px; }
+    .filters .wide { grid-column: 1 / -1; }
 
     .form-select {
-        appearance: none;
-        padding-right: 34px;
-        background:
-            var(--surface)
+        appearance: none; padding-right: 34px;
+        background: var(--surface)
             url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
             no-repeat right 10px center;
     }
 
-    .spacer-filters { min-height: 0; }
+    /* ---------- Atajos de fecha ---------- */
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: -4px; }
+    .chips button {
+        padding: 4px 10px; font-size: 12px; font-weight: 600; cursor: pointer;
+        color: var(--text-light); background: var(--surface-2);
+        border: 1px solid var(--border); border-radius: 999px;
+    }
+    .chips button:hover { color: var(--accent); border-color: var(--accent); }
 
-    .report-form .btn { align-self: flex-start; }
-    @media (max-width: 768px) { .report-form .btn { width: 100%; align-self: stretch; text-align: center; } }
+    /* ---------- Más filtros ---------- */
+    .mas-filtros { grid-column: 1 / -1; }
+    .mas-filtros summary {
+        cursor: pointer; font-size: 13px; font-weight: 600; color: var(--accent);
+        padding: 4px 0; list-style: none;
+    }
+    .mas-filtros summary::-webkit-details-marker { display: none; }
+    .mas-filtros summary::before { content: "▸ "; }
+    .mas-filtros[open] summary::before { content: "▾ "; }
+    .mas-filtros .filters { margin-top: 10px; }
+    .mas-filtros .n {
+        margin-left: 6px; padding: 1px 7px; border-radius: 999px;
+        color: #fff; background: var(--accent); font-size: 11px;
+    }
 
+    .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding-top: 12px; border-top: 1px solid var(--border); }
+    .actions .count { margin-left: auto; color: var(--text-light); font-size: 13px; font-weight: 600; }
+    .btn-ghost { background: transparent; color: var(--text-light); border: 1px solid var(--border); }
     .btn-warning { background: var(--warning); }
     .btn-warning:hover { background: #b45309; }
+    .btn[disabled] { opacity: .45; cursor: not-allowed; }
+    @media (max-width: 768px) { .actions .btn { flex: 1 1 auto; text-align: center; } }
 
     .r-excel   { --accent: var(--success); }
     .r-people  { --accent: var(--primary); }
     .r-ticket  { --accent: var(--danger); }
+    .r-move    { --accent: #7c3aed; }
     .r-pdf     { --accent: #0891b2; }
     .r-history { --accent: var(--warning); }
+    .r-fin     { --accent: var(--success); }
+    .r-con     { --accent: #0891b2; }
+    .r-lic     { --accent: #7c3aed; }
+    .r-aud     { --accent: var(--text-light); }
+    .r-gar     { --accent: var(--warning); }
+    .r-ven     { --accent: var(--danger); }
+    .r-tco     { --accent: var(--primary); }
+    .r-all     { --accent: var(--primary); grid-column: 1 / -1; }
 
     .tip { margin-top: 22px; color: var(--text-light); font-size: 13px; }
 </style>
@@ -115,21 +142,183 @@
 
 {% block content %}
 
+{# ---------- Campos reutilizables ---------- #}
+{% macro sel(id, name, label, opciones, todas="Todos") %}
+<div>
+    <label for="{{ id }}">{{ label }}</label>
+    <select id="{{ id }}" name="{{ name }}" class="form-select">
+        <option value="">{{ todas }}</option>
+        {% for o in opciones %}
+            {% if o is string %}
+                <option value="{{ o }}">{{ o }}</option>
+            {% else %}
+                <option value="{{ o[0] }}">{{ o[1] }}</option>
+            {% endif %}
+        {% endfor %}
+    </select>
+</div>
+{% endmacro %}
+
+{% macro fecha(id, name, label) %}
+<div>
+    <label for="{{ id }}">{{ label }}</label>
+    <input id="{{ id }}" name="{{ name }}" type="date" class="form-control">
+</div>
+{% endmacro %}
+
+{% macro buscar(id, label, ph) %}
+<div class="wide">
+    <label for="{{ id }}">{{ label }}</label>
+    <input id="{{ id }}" name="q" type="search" class="form-control" placeholder="{{ ph }}" autocomplete="off">
+</div>
+{% endmacro %}
+
+{% macro numero(id, name, label) %}
+<div>
+    <label for="{{ id }}">{{ label }}</label>
+    <input id="{{ id }}" name="{{ name }}" type="number" min="0" step="any" class="form-control">
+</div>
+{% endmacro %}
+
+{% macro barras(titulo, datos, color) %}
+{% if datos %}
+<section class="card grupo" style="--accent: {{ color }};">
+    <h2 class="grupo-titulo">{{ titulo }}</h2>
+    {% set tope = datos|map(attribute=1)|max or 1 %}
+    <div class="barras">
+        {% for nombre, valor in datos %}
+        <div class="barra">
+            <span class="nombre" title="{{ nombre }}">{{ nombre }}</span>
+            <span class="pista"><span class="relleno" style="display:block; width: {{ (valor / tope * 100)|round(1) }}%;"></span></span>
+            <span class="valor">{{ valor }}</span>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+{% endmacro %}
+
 <div class="page-header">
     <h1>Reportes</h1>
-    <p>Exporta la información del sistema. Los Excel se descargan listos para filtrar y compartir.</p>
+    <p>Filtra por lo que necesites y descarga Excel con hoja de resumen y gráficas listas para estadísticas.</p>
 </div>
+
+<input id="buscar-reporte" type="search" class="form-control buscador-reporte"
+       placeholder="¿Qué reporte buscas? (tickets, garantía, licencias, contratos...)" autocomplete="off">
 
 <div class="reportes">
 
+    <!-- REQUIERE ATENCION -->
+    {% set alertas_activas = (alertas or [])|selectattr('n')|list %}
+    {% if alertas_activas %}
+    <h2 class="section-title">Requiere atención</h2>
+    <div class="alertas">
+        {% for a in alertas_activas %}
+        <a class="alerta {{ a.nivel or 'media' }}" href="{{ a.href or '#' }}">
+            <b>{{ a.n }}</b><span>{{ a.texto }}</span>
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+
     <!-- RESUMEN -->
     <div class="resumen">
-        <div class="card mini" style="--accent: var(--primary);"><b>{{ resumen.activos }}</b><span>Activos</span></div>
-        <div class="card mini" style="--accent: var(--success);"><b>{{ resumen.personas }}</b><span>Personas</span></div>
-        <div class="card mini" style="--accent: var(--danger);"><b>{{ resumen.tickets }}</b><span>Tickets</span></div>
-        <div class="card mini" style="--accent: #0891b2;"><b>{{ resumen.actas }}</b><span>Actas</span></div>
-        <div class="card mini" style="--accent: var(--warning);"><b>{{ resumen.historial }}</b><span>Movimientos</span></div>
+
+        <section class="card grupo">
+            <h2 class="grupo-titulo">Inventario</h2>
+            <div class="grupo-grid">
+                <div class="mini" style="--accent: var(--primary);"><b>{{ resumen.activos }}</b><span>Activos</span></div>
+                <div class="mini" style="--accent: var(--success);"><b>{{ resumen.disponibles }}</b><span>Disponibles</span></div>
+                <div class="mini" style="--accent: #7c3aed;"><b>{{ resumen.asignados }}</b><span>Asignados</span></div>
+                <div class="mini" style="--accent: var(--warning);"><b>{{ resumen.reparacion }}</b><span>En reparación</span></div>
+            </div>
+        </section>
+
+        <section class="card grupo">
+            <h2 class="grupo-titulo">Operación</h2>
+            <div class="grupo-grid">
+                <div class="mini" style="--accent: var(--success);"><b>{{ resumen.personas }}</b><span>Personas</span></div>
+                <div class="mini" style="--accent: var(--danger);"><b>{{ resumen.tickets_abiertos }}</b><span>Tickets abiertos</span></div>
+                <div class="mini" style="--accent: #0891b2;"><b>{{ resumen.actas }}</b><span>Actas generadas</span></div>
+                <div class="mini" style="--accent: #7c3aed;"><b>{{ resumen.movimientos }}</b><span>Movimientos</span></div>
+            </div>
+        </section>
+
+        {% if lic %}
+        <section class="card grupo">
+            <h2 class="grupo-titulo">Software y licencias</h2>
+            <div class="grupo-grid">
+                <div class="mini" style="--accent: #7c3aed;"><b>{{ lic.total }}</b><span>Licencias registradas</span></div>
+                <div class="mini" style="--accent: var(--danger);">
+                    <b>{{ lic.vencidas }}</b><span>Vencidas</span>
+                    {% if lic.por_vencer %}<small>{{ lic.por_vencer }} vencen en 90 días</small>{% endif %}
+                </div>
+                <div class="mini" style="--accent: var(--info);"><b>{{ lic.en_uso }} / {{ lic.cantidad }}</b><span>Cupos en uso</span></div>
+                <div class="mini" style="--accent: var(--warning);"><b class="money">{{ lic.costo_txt }}</b><span>Costo de licencias</span></div>
+            </div>
+        </section>
+        {% endif %}
+
+        {% if con %}
+        <section class="card grupo">
+            <h2 class="grupo-titulo">Contratos y mantenimiento</h2>
+            <div class="grupo-grid">
+                <div class="mini" style="--accent: #0891b2;"><b>{{ con.vigentes }}</b><span>Contratos vigentes</span></div>
+                <div class="mini" style="--accent: var(--warning);"><b>{{ con.por_vencer }}</b><span>Por vencer (30 días)</span></div>
+                <div class="mini" style="--accent: var(--danger);"><b>{{ con.vencidos }}</b><span>Vencidos</span></div>
+                <div class="mini" style="--accent: var(--success);"><b class="money">{{ con.costo_txt }}</b><span>Costo anual de contratos</span></div>
+            </div>
+        </section>
+        {% endif %}
+
+        {% if fin %}
+        <section class="card grupo">
+            <h2 class="grupo-titulo">Financiero</h2>
+            <div class="grupo-grid">
+                <div class="mini" style="--accent: var(--success);"><b class="money">{{ fin.compra_txt }}</b><span>Inversión total</span></div>
+                <div class="mini" style="--accent: var(--primary);"><b class="money">{{ fin.actual_txt }}</b><span>Valor actual en libros</span></div>
+                {% if fin.depreciacion_txt %}
+                <div class="mini" style="--accent: var(--text-light);"><b class="money">{{ fin.depreciacion_txt }}</b><span>Depreciación acumulada</span></div>
+                {% endif %}
+                {% if fin.gasto_anio_txt %}
+                <div class="mini" style="--accent: #7c3aed;"><b class="money">{{ fin.gasto_anio_txt }}</b><span>Compras del año</span></div>
+                {% endif %}
+                <div class="mini" style="--accent: var(--warning);">
+                    <b>{{ resumen.garantias }}</b><span>Garantías por vencer o vencidas</span>
+                    {% if fin.garantias_vencidas %}<small>{{ fin.garantias_vencidas }} ya vencidas</small>{% endif %}
+                </div>
+                <div class="mini" style="--accent: var(--danger);"><b>{{ fin.sin_precio }}</b><span>Equipos sin precio registrado</span></div>
+            </div>
+        </section>
+        {% endif %}
+
+        {% if tco %}
+        <section class="card grupo">
+            <h2 class="grupo-titulo">Costo total de TI (anual)</h2>
+            <div class="grupo-grid">
+                <div class="mini" style="--accent: var(--primary);"><b class="money">{{ tco.equipos_txt }}</b><span>Equipos (compras del año)</span></div>
+                <div class="mini" style="--accent: #7c3aed;"><b class="money">{{ tco.licencias_txt }}</b><span>Licencias</span></div>
+                <div class="mini" style="--accent: #0891b2;"><b class="money">{{ tco.contratos_txt }}</b><span>Contratos</span></div>
+                <div class="mini" style="--accent: var(--success);"><b class="money">{{ tco.total_txt }}</b><span>Total</span></div>
+            </div>
+        </section>
+        {% endif %}
+
     </div>
+
+    <!-- DISTRIBUCIONES -->
+    {% if dist %}
+    <h2 class="section-title">Distribución</h2>
+    <div class="dist">
+        {{ barras('Equipos por tipo', dist.por_tipo, 'var(--primary)') }}
+        {{ barras('Equipos por área', dist.por_area, '#7c3aed') }}
+        {{ barras('Compras por año', dist.gasto_anio, 'var(--success)') }}
+        {{ barras('Licencias por vencer (mes)', dist.lic_vencimientos, 'var(--warning)') }}
+        {{ barras('Contratos por vencer (mes)', dist.con_vencimientos, '#0891b2') }}
+    </div>
+    {% endif %}
+
+    <h2 class="section-title">Informes con filtros</h2>
 
     <div class="report-grid">
 
@@ -139,25 +328,29 @@
                 <div class="report-icon">XLS</div>
                 <div>
                     <h3>Inventario de activos</h3>
-                    <p>Código, tipo, marca, modelo, serial, estado y responsable.</p>
+                    <p>Equipos con responsable, área, garantía y especificaciones. Incluye resumen por tipo, marca, área y garantía.</p>
                 </div>
             </div>
-            <span class="report-meta">{{ resumen.activos }} registros</span>
+            <span class="report-meta">{{ resumen.activos }} registros en total</span>
 
-            <form class="report-form" action="/reportes/inventario.xlsx" method="GET">
+            <form class="report-form" action="/reportes/inventario.xlsx" method="GET" data-contar="inventario" data-total="{{ resumen.activos }}">
                 <div class="filters">
-                    <div>
-                        <label for="inv_estado">Estado</label>
-                        <select id="inv_estado" name="estado" class="form-select">
-                            <option value="todos">Todos</option>
-                            <option value="disponible">Disponibles</option>
-                            <option value="asignado">Asignados</option>
-                            <option value="repar">En reparación</option>
-                            <option value="baja">Dados de baja</option>
-                        </select>
-                    </div>
+                    {{ sel('inv_estado', 'estado', 'Disponibilidad', [('disponible','Disponibles'),('asignado','Asignados'),('repar','En reparación'),('baja','Dados de baja'),('inhabilit','Inhabilitados')]) }}
+                    {{ sel('inv_tipo', 'tipo', 'Tipo de equipo', opc.tipos) }}
+                    {{ sel('inv_area', 'area', 'Área', opc.areas) }}
+                    {{ sel('inv_marca', 'marca', 'Marca', opc.marcas) }}
+                    {{ sel('inv_persona', 'persona', 'Asignado a', opc.personas) }}
+                    {{ sel('inv_fisico', 'fisico', 'Estado físico', opc.fisicos) }}
+                    {{ sel('inv_gar', 'garantia', 'Garantía', [('vigente','Vigente'),('por_vencer','Por vencer'),('vencida','Vencida'),('sin_dato','Sin dato')]) }}
+                    {{ fecha('inv_cd', 'compra_desde', 'Compra desde') }}
+                    {{ fecha('inv_ch', 'compra_hasta', 'Compra hasta') }}
+                    {{ buscar('inv_q', 'Buscar', 'Código, serial, hostname, IP, MAC...') }}
                 </div>
-                <button type="submit" class="btn btn-success">Descargar Excel</button>
+                <div class="actions">
+                    <button type="submit" class="btn btn-success">Descargar Excel</button>
+                    <button type="reset" class="btn btn-ghost">Limpiar</button>
+                    <span class="count" data-conteo></span>
+                </div>
             </form>
         </div>
 
@@ -167,13 +360,24 @@
                 <div class="report-icon">XLS</div>
                 <div>
                     <h3>Personas</h3>
-                    <p>Colaboradores con documento, correo, cargo, área y estado.</p>
+                    <p>Colaboradores con equipos asignados y motivo de retiro. Resumen por área, cargo y estado.</p>
                 </div>
             </div>
-            <span class="report-meta">{{ resumen.personas }} registros</span>
+            <span class="report-meta">{{ resumen.personas }} registros en total</span>
 
-            <form class="report-form" action="/reportes/personas.xlsx" method="GET">
-                <button type="submit" class="btn">Descargar Excel</button>
+            <form class="report-form" action="/reportes/personas.xlsx" method="GET" data-contar="personas" data-total="{{ resumen.personas }}">
+                <div class="filters">
+                    {{ sel('per_estado', 'estado', 'Estado', [('activos','Activas'),('inactivos','Inactivas')]) }}
+                    {{ sel('per_area', 'area', 'Área', opc.areas) }}
+                    {{ sel('per_cargo', 'cargo', 'Cargo', opc.cargos) }}
+                    {{ sel('per_eq', 'equipos', 'Equipos', [('con','Con equipos'),('sin','Sin equipos')]) }}
+                    {{ buscar('per_q', 'Buscar', 'Nombre, documento o correo...') }}
+                </div>
+                <div class="actions">
+                    <button type="submit" class="btn">Descargar Excel</button>
+                    <button type="reset" class="btn btn-ghost">Limpiar</button>
+                    <span class="count" data-conteo></span>
+                </div>
             </form>
         </div>
 
@@ -183,23 +387,82 @@
                 <div class="report-icon">XLS</div>
                 <div>
                     <h3>Tickets</h3>
-                    <p>Incidencias reportadas, su estado y la fecha de solución.</p>
+                    <p>Incidencias con equipo, responsable, área y días de atención. Resumen con tiempo promedio de solución.</p>
                 </div>
             </div>
-            <span class="report-meta">{{ resumen.tickets }} registros</span>
+            <span class="report-meta">{{ resumen.tickets }} registros en total</span>
 
-            <form class="report-form" action="/reportes/tickets.xlsx" method="GET">
+            <form class="report-form" action="/reportes/tickets.xlsx" method="GET" data-contar="tickets" data-total="{{ resumen.tickets }}">
                 <div class="filters">
-                    <div>
-                        <label for="tk_estado">Estado</label>
-                        <select id="tk_estado" name="estado" class="form-select">
-                            <option value="todos">Todos</option>
-                            <option value="abiertos">Abiertos</option>
-                            <option value="solucionados">Solucionados</option>
-                        </select>
-                    </div>
+                    {{ sel('tk_estado', 'estado', 'Estado', [('abiertos','Todos los abiertos'),('solucionados','Solucionados'),('pendiente','Pendiente'),('en proceso','En proceso'),('esperando repuesto','Esperando repuesto')]) }}
+                    {{ sel('tk_area', 'area', 'Área', opc.areas) }}
+                    {{ sel('tk_tipo', 'tipo', 'Tipo de equipo', opc.tipos) }}
+                    {{ sel('tk_persona', 'persona', 'Persona', opc.personas) }}
+                    {{ fecha('tk_d', 'desde', 'Creado desde') }}
+                    {{ fecha('tk_h', 'hasta', 'Creado hasta') }}
+                    {{ fecha('tk_sd', 'sol_desde', 'Solucionado desde') }}
+                    {{ fecha('tk_sh', 'sol_hasta', 'Solucionado hasta') }}
+                    {{ buscar('tk_q', 'Buscar', 'Título, descripción o código de equipo...') }}
                 </div>
-                <button type="submit" class="btn btn-danger">Descargar Excel</button>
+                <div class="actions">
+                    <button type="submit" class="btn btn-danger">Descargar Excel</button>
+                    <button type="reset" class="btn btn-ghost">Limpiar</button>
+                    <span class="count" data-conteo></span>
+                </div>
+            </form>
+        </div>
+
+        <!-- MOVIMIENTOS POR PERSONA -->
+        <div class="card report-card r-move">
+            <div class="report-top">
+                <div class="report-icon">XLS</div>
+                <div>
+                    <h3>Movimientos por persona</h3>
+                    <p>Asignaciones y devoluciones con la persona y su área. Resumen por acción, área y mes.</p>
+                </div>
+            </div>
+            <span class="report-meta">{{ resumen.movimientos }} registros en total</span>
+
+            <form class="report-form" action="/reportes/movimientos.xlsx" method="GET" data-contar="movimientos" data-total="{{ resumen.movimientos }}">
+                <div class="filters">
+                    {{ sel('mv_area', 'area', 'Área', opc.areas) }}
+                    {{ sel('mv_persona', 'persona', 'Persona', opc.personas) }}
+                    {{ sel('mv_accion', 'accion', 'Acción', [('asign','Asignación'),('devol','Devolución')]) }}
+                    {{ fecha('mv_d', 'desde', 'Desde') }}
+                    {{ fecha('mv_h', 'hasta', 'Hasta') }}
+                    {{ buscar('mv_q', 'Buscar', 'Código de equipo u observación...') }}
+                </div>
+                <div class="actions">
+                    <button type="submit" class="btn">Descargar Excel</button>
+                    <button type="reset" class="btn btn-ghost">Limpiar</button>
+                    <span class="count" data-conteo></span>
+                </div>
+            </form>
+        </div>
+
+        <!-- HISTORIAL -->
+        <div class="card report-card r-history">
+            <div class="report-top">
+                <div class="report-icon">LOG</div>
+                <div>
+                    <h3>Historial de eventos</h3>
+                    <p>Todo lo registrado por equipo. Resumen por acción, tipo de equipo y mes.</p>
+                </div>
+            </div>
+            <span class="report-meta">{{ resumen.historial }} registros en total</span>
+
+            <form class="report-form" action="/reportes/historial.xlsx" method="GET" data-contar="historial" data-total="{{ resumen.historial }}">
+                <div class="filters">
+                    {{ sel('h_accion', 'accion', 'Acción', opc.acciones_historial) }}
+                    {{ fecha('h_desde', 'desde', 'Desde') }}
+                    {{ fecha('h_hasta', 'hasta', 'Hasta') }}
+                    {{ buscar('h_q', 'Buscar', 'Código de equipo o detalle...') }}
+                </div>
+                <div class="actions">
+                    <button type="submit" class="btn btn-warning">Descargar Excel</button>
+                    <button type="reset" class="btn btn-ghost">Limpiar</button>
+                    <span class="count" data-conteo></span>
+                </div>
             </form>
         </div>
 
@@ -209,46 +472,403 @@
                 <div class="report-icon">PDF</div>
                 <div>
                     <h3>Actas generadas</h3>
-                    <p>Todas las actas de entrega, devolución, cambio y paz y salvo en un ZIP.</p>
+                    <p>Listado en Excel con estadísticas, o todos los PDF de las actas filtradas en un ZIP.</p>
                 </div>
             </div>
-            <span class="report-meta">{{ resumen.actas }} actas</span>
+            <span class="report-meta">{{ resumen.actas }} actas en total</span>
 
-            <form class="report-form" action="/reportes/actas.zip" method="GET">
-                <button type="submit" class="btn">Descargar ZIP</button>
+            <form class="report-form" action="/reportes/actas.xlsx" method="GET" data-contar="actas" data-total="{{ resumen.actas }}">
+                <div class="filters">
+                    {{ sel('ac_tipo', 'tipo', 'Tipo de acta', ['Entrega','Devolucion','Cambio','Paz y salvo']) }}
+                    {{ sel('ac_area', 'area', 'Área', opc.areas) }}
+                    {{ sel('ac_persona', 'persona', 'Persona', opc.personas) }}
+                    {{ fecha('ac_d', 'desde', 'Desde') }}
+                    {{ fecha('ac_h', 'hasta', 'Hasta') }}
+                </div>
+                <div class="actions">
+                    <button type="submit" class="btn">Descargar Excel</button>
+                    <button type="submit" class="btn btn-ghost" formaction="/reportes/actas.zip">Descargar ZIP</button>
+                    <button type="reset" class="btn btn-ghost">Limpiar</button>
+                    <span class="count" data-conteo></span>
+                </div>
             </form>
         </div>
 
-        <!-- HISTORIAL -->
-        <div class="card report-card r-history">
+        <!-- GARANTIAS (NUEVO) -->
+        <div class="card report-card r-gar">
             <div class="report-top">
-                <div class="report-icon">LOG</div>
+                <div class="report-icon">GAR</div>
                 <div>
-                    <h3>Historial de movimientos</h3>
-                    <p>Asignaciones, devoluciones y cambios registrados por equipo.</p>
+                    <h3>Garantías</h3>
+                    <p>Equipos con garantía vigente, por vencer o vencida, con proveedor, fecha de fin y días restantes.</p>
                 </div>
             </div>
-            <span class="report-meta">{{ resumen.historial }} movimientos</span>
+            <span class="report-meta">{{ resumen.garantias }} por vencer o vencidas</span>
 
-            <form class="report-form" action="/reportes/historial.xlsx" method="GET">
+            <form class="report-form" action="/reportes/garantias.xlsx" method="GET" data-contar="garantias" data-total="{{ resumen.garantias }}">
                 <div class="filters">
-                    <div>
-                        <label for="h_desde">Desde</label>
-                        <input id="h_desde" name="desde" type="date" class="form-control">
-                    </div>
-                    <div>
-                        <label for="h_hasta">Hasta</label>
-                        <input id="h_hasta" name="hasta" type="date" class="form-control">
-                    </div>
+                    {{ sel('ga_estado', 'estado', 'Estado de garantía', [('vencida','Vencidas'),('por_vencer','Por vencer (90 días)'),('vigente','Vigentes'),('sin_dato','Sin dato')]) }}
+                    {{ sel('ga_tipo', 'tipo', 'Tipo de equipo', opc.tipos) }}
+                    {{ sel('ga_prov', 'proveedor', 'Proveedor', opc.proveedores) }}
+                    {{ fecha('ga_vd', 'vence_desde', 'Vence desde') }}
+                    {{ fecha('ga_vh', 'vence_hasta', 'Vence hasta') }}
+                    {{ buscar('ga_q', 'Buscar', 'Código, serial o factura...') }}
                 </div>
-                <button type="submit" class="btn btn-warning">Descargar Excel</button>
+                <div class="actions">
+                    <button type="submit" class="btn btn-warning">Descargar Excel</button>
+                    <button type="reset" class="btn btn-ghost">Limpiar</button>
+                    <span class="count" data-conteo></span>
+                </div>
+            </form>
+        </div>
+
+        <!-- FINANCIERO -->
+        <div class="card report-card r-fin">
+            <div class="report-top">
+                <div class="report-icon">$</div>
+                <div>
+                    <h3>Financiero de activos</h3>
+                    <p>Precio, valor actual, depreciación, proveedor, centro de costo, sede y garantía. Incluye hoja de gasto por proveedor y año.</p>
+                </div>
+            </div>
+            <span class="report-meta">{{ resumen.activos }} registros en total</span>
+
+            <form class="report-form" action="/reportes/financiero.xlsx" method="GET" data-contar="financiero" data-total="{{ resumen.activos }}">
+                <div class="filters">
+                    {{ sel('fi_prov', 'proveedor', 'Proveedor', opc.proveedores) }}
+                    {{ sel('fi_tipo', 'tipo', 'Tipo de equipo', opc.tipos) }}
+                    {{ sel('fi_area', 'area', 'Área', opc.areas) }}
+                    {{ sel('fi_moneda', 'moneda', 'Moneda', ['COP','USD','EUR']) }}
+                    {{ sel('fi_centro', 'centro', 'Centro de costo', opc.centros) }}
+                    {{ sel('fi_sede', 'sede', 'Sede', opc.sedes) }}
+                    {{ sel('fi_estado', 'estado', 'Disponibilidad', [('disponible','Disponibles'),('asignado','Asignados'),('repar','En reparación'),('baja','Dados de baja')]) }}
+                    {{ sel('fi_gar', 'garantia', 'Garantía', [('vigente','Vigente'),('por_vencer','Por vencer'),('vencida','Vencida'),('sin_garantia','Sin garantía')]) }}
+                    {{ fecha('fi_cd', 'compra_desde', 'Compra desde') }}
+                    {{ fecha('fi_ch', 'compra_hasta', 'Compra hasta') }}
+                    {{ numero('fi_pmin', 'precio_min', 'Precio mínimo') }}
+                    {{ numero('fi_pmax', 'precio_max', 'Precio máximo') }}
+                    {{ buscar('fi_q', 'Buscar', 'Código, serial, factura, orden de compra...') }}
+                </div>
+                <div class="actions">
+                    <button type="submit" class="btn btn-success">Descargar Excel</button>
+                    <button type="reset" class="btn btn-ghost">Limpiar</button>
+                    <span class="count" data-conteo></span>
+                </div>
+            </form>
+        </div>
+
+        <!-- CONTRATOS -->
+        <div class="card report-card r-con">
+            <div class="report-top">
+                <div class="report-icon">CTR</div>
+                <div>
+                    <h3>Contratos y mantenimiento</h3>
+                    <p>Mantenimiento, leasing y soporte con vigencia, costo y días para vencer. Resumen por estado, proveedor y mes de vencimiento.</p>
+                </div>
+            </div>
+            <span class="report-meta">{{ resumen.contratos }} registros en total</span>
+
+            <form class="report-form" action="/reportes/contratos.xlsx" method="GET" data-contar="contratos" data-total="{{ resumen.contratos }}">
+                <div class="filters">
+                    {{ sel('ct_estado', 'estado', 'Estado', [('vencido','Vencidos'),('por_vencer','Por vencer'),('vigente','Vigentes'),('sin_fecha','Sin fecha de fin'),('inactivo','Inactivos')]) }}
+                    {{ sel('ct_tipo', 'tipo', 'Tipo', opc.tipos_contrato) }}
+                    {{ sel('ct_prov', 'proveedor', 'Proveedor', opc.proveedores_contrato) }}
+                    {{ fecha('ct_vd', 'vence_desde', 'Vence desde') }}
+                    {{ fecha('ct_vh', 'vence_hasta', 'Vence hasta') }}
+                    {{ numero('ct_cmin', 'costo_min', 'Costo mínimo') }}
+                    {{ numero('ct_cmax', 'costo_max', 'Costo máximo') }}
+                    {{ buscar('ct_q', 'Buscar', 'Proveedor, número o notas...') }}
+                </div>
+                <div class="actions">
+                    <button type="submit" class="btn">Descargar Excel</button>
+                    <button type="reset" class="btn btn-ghost">Limpiar</button>
+                    <span class="count" data-conteo></span>
+                </div>
+            </form>
+        </div>
+
+        <!-- LICENCIAS -->
+        <div class="card report-card r-lic">
+            <div class="report-top">
+                <div class="report-icon">LIC</div>
+                <div>
+                    <h3>Software y licencias</h3>
+                    <p>Licencias con cantidad, uso, cupos libres, vencimiento y costo. La clave no se exporta.</p>
+                </div>
+            </div>
+            <span class="report-meta">{{ resumen.licencias }} registros en total</span>
+
+            <form class="report-form" action="/reportes/licencias.xlsx" method="GET" data-contar="licencias" data-total="{{ resumen.licencias }}">
+                <div class="filters">
+                    {{ sel('li_estado', 'estado', 'Vencimiento', [('vencida','Vencidas'),('por_vencer','En 90 días o menos'),('vigente','Vigentes'),('sin_vencimiento','Sin vencimiento')]) }}
+                    {{ sel('li_tipo', 'tipo', 'Tipo de licencia', [('perpetua','Perpetua'),('suscripcion','Suscripción'),('oem','OEM'),('volumen','Volumen'),('open_source','Open Source')]) }}
+                    {{ sel('li_uso', 'uso', 'Uso de cupos', [('sobreuso','Sobreuso (más instalaciones que cupos)'),('completo','Cupos completos'),('libres','Con cupos libres'),('sin_uso','Sin uso')]) }}
+                    {{ sel('li_prov', 'proveedor', 'Proveedor', opc.proveedores_licencia) }}
+                    {{ fecha('li_vd', 'vence_desde', 'Vence desde') }}
+                    {{ fecha('li_vh', 'vence_hasta', 'Vence hasta') }}
+                    {{ buscar('li_q', 'Buscar', 'Software, fabricante o proveedor...') }}
+                </div>
+                <div class="actions">
+                    <button type="submit" class="btn">Descargar Excel</button>
+                    <button type="reset" class="btn btn-ghost">Limpiar</button>
+                    <span class="count" data-conteo></span>
+                </div>
+            </form>
+        </div>
+
+        <!-- VENCIMIENTOS (NUEVO) -->
+        <div class="card report-card r-ven">
+            <div class="report-top">
+                <div class="report-icon">VEN</div>
+                <div>
+                    <h3>Vencimientos próximos</h3>
+                    <p>Garantías, contratos y licencias en una sola lista ordenada por fecha, para planear renovaciones y presupuesto.</p>
+                </div>
+            </div>
+            <span class="report-meta">{{ resumen.vencimientos or 0 }} próximos a vencer</span>
+
+            <form class="report-form" action="/reportes/vencimientos.xlsx" method="GET" data-contar="vencimientos" data-total="{{ resumen.vencimientos or 0 }}">
+                <div class="filters">
+                    {{ sel('ve_origen', 'origen', 'Origen', [('garantia','Garantías'),('contrato','Contratos'),('licencia','Licencias')], 'Todos los orígenes') }}
+                    {{ sel('ve_estado', 'estado', 'Estado', [('vencido','Ya vencidos'),('proximo','Próximos a vencer')]) }}
+                    {{ fecha('ve_vd', 'vence_desde', 'Vence desde') }}
+                    {{ fecha('ve_vh', 'vence_hasta', 'Vence hasta') }}
+                    {{ buscar('ve_q', 'Buscar', 'Equipo, contrato o software...') }}
+                </div>
+                <div class="actions">
+                    <button type="submit" class="btn btn-danger">Descargar Excel</button>
+                    <button type="reset" class="btn btn-ghost">Limpiar</button>
+                    <span class="count" data-conteo></span>
+                </div>
+            </form>
+        </div>
+
+        <!-- COSTO TOTAL TI (NUEVO) -->
+        <div class="card report-card r-tco">
+            <div class="report-top">
+                <div class="report-icon">TCO</div>
+                <div>
+                    <h3>Costo total de TI</h3>
+                    <p>Equipos, licencias y contratos sumados por área, proveedor y año. Sirve para presupuesto y comparar gasto.</p>
+                </div>
+            </div>
+
+            <form class="report-form" action="/reportes/costos.xlsx" method="GET">
+                <div class="filters">
+                    {{ sel('co2_anio', 'anio', 'Año', opc.anios or []) }}
+                    {{ sel('co2_area', 'area', 'Área', opc.areas) }}
+                    {{ sel('co2_prov', 'proveedor', 'Proveedor', opc.proveedores) }}
+                    {{ sel('co2_moneda', 'moneda', 'Moneda', ['COP','USD','EUR']) }}
+                </div>
+                <div class="actions">
+                    <button type="submit" class="btn">Descargar Excel</button>
+                    <button type="reset" class="btn btn-ghost">Limpiar</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- AUDITORIA -->
+        <div class="card report-card r-aud">
+            <div class="report-top">
+                <div class="report-icon">AUD</div>
+                <div>
+                    <h3>Auditoría de cambios</h3>
+                    <p>Quién cambió qué en cada activo (precio, proveedor, garantía, estado...), con valor anterior y nuevo.</p>
+                </div>
+            </div>
+            <span class="report-meta">{{ resumen.auditoria }} registros en total</span>
+
+            <form class="report-form" action="/reportes/auditoria.xlsx" method="GET" data-contar="auditoria" data-total="{{ resumen.auditoria }}">
+                <div class="filters">
+                    {{ sel('au_usr', 'usuario', 'Usuario', opc.usuarios_auditoria) }}
+                    {{ sel('au_campo', 'campo', 'Campo modificado', opc.campos_auditoria) }}
+                    {{ fecha('au_d', 'desde', 'Desde') }}
+                    {{ fecha('au_h', 'hasta', 'Hasta') }}
+                    {{ buscar('au_q', 'Buscar', 'Código de equipo o valor...') }}
+                </div>
+                <div class="actions">
+                    <button type="submit" class="btn">Descargar Excel</button>
+                    <button type="reset" class="btn btn-ghost">Limpiar</button>
+                    <span class="count" data-conteo></span>
+                </div>
+            </form>
+        </div>
+
+        <!-- CONSOLIDADO -->
+        <div class="card report-card r-all">
+            <div class="report-top">
+                <div class="report-icon">ALL</div>
+                <div>
+                    <h3>Informe consolidado</h3>
+                    <p>Un solo Excel con inventario, personas, tickets, movimientos, historial, actas, financiero, licencias y contratos, más una hoja de resumen con gráficas. El rango de fechas aplica a tickets, movimientos, historial y actas (financiero, licencias y contratos van completos).</p>
+                </div>
+            </div>
+
+            <form class="report-form" action="/reportes/consolidado.xlsx" method="GET">
+                <div class="filters">
+                    {{ fecha('co_d', 'desde', 'Desde') }}
+                    {{ fecha('co_h', 'hasta', 'Hasta') }}
+                </div>
+                <div class="actions">
+                    <button type="submit" class="btn btn-success">Descargar consolidado</button>
+                </div>
             </form>
         </div>
 
     </div>
 
-    <p class="tip">Las fechas vacías descargan todo el historial.</p>
+    <p class="tip">Sin filtros se descarga todo. Cada Excel trae la hoja «Resumen» con tablas y gráficas, y la hoja de datos con filtros de columna y encabezado fijo.</p>
 
 </div>
 
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+    (function () {
+        const PERSONAS = {{ opc.personas|tojson }};
+        const POR_AREA = {{ opc.personas_por_area|tojson }};
+
+        // ---------- Buscador de reportes ----------
+        const buscadorRep = document.getElementById('buscar-reporte');
+        buscadorRep.addEventListener('input', () => {
+            const t = buscadorRep.value.trim().toLowerCase();
+            document.querySelectorAll('.report-card').forEach(c => {
+                c.style.display = !t || c.textContent.toLowerCase().includes(t) ? '' : 'none';
+            });
+        });
+
+        // ---------- Atajos de fecha ----------
+        const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        const dias = n => { const d = new Date(); d.setDate(d.getDate() + n); return d; };
+        const hoy = () => new Date();
+        const ymd = (a, m, d) => new Date(a, m, d);
+        const N = hoy();
+
+        const PASADO = [
+            ['Hoy',        () => [hoy(), hoy()]],
+            ['7 días',     () => [dias(-7), hoy()]],
+            ['30 días',    () => [dias(-30), hoy()]],
+            ['Este mes',   () => [ymd(N.getFullYear(), N.getMonth(), 1), hoy()]],
+            ['Mes pasado', () => [ymd(N.getFullYear(), N.getMonth() - 1, 1), ymd(N.getFullYear(), N.getMonth(), 0)]],
+            ['Este año',   () => [ymd(N.getFullYear(), 0, 1), hoy()]],
+        ];
+        const FUTURO = [
+            ['Próx. 30 días', () => [hoy(), dias(30)]],
+            ['Próx. 90 días', () => [hoy(), dias(90)]],
+            ['Este año',      () => [hoy(), ymd(N.getFullYear(), 11, 31)]],
+        ];
+
+        document.querySelectorAll('form.report-form').forEach(form => {
+            // Chips de fecha
+            form.querySelectorAll('input[type="date"][name$="desde"]').forEach(desde => {
+                const hasta = form.querySelector('[name="' + desde.name.replace(/desde$/, 'hasta') + '"]');
+                if (!hasta) return;
+                const futuro = desde.name.startsWith('vence');
+                const caja = document.createElement('div');
+                caja.className = 'chips wide';
+                (futuro ? FUTURO : PASADO).forEach(([texto, rango]) => {
+                    const b = document.createElement('button');
+                    b.type = 'button';
+                    b.textContent = texto;
+                    b.addEventListener('click', () => {
+                        const [a, z] = rango();
+                        desde.value = iso(a);
+                        hasta.value = iso(z);
+                        form.dispatchEvent(new Event('input', { bubbles: true }));
+                    });
+                    caja.append(b);
+                });
+                hasta.parentElement.after(caja);
+            });
+
+            // "Más filtros": solo se ven los 3 primeros desplegables
+            const grid = form.querySelector('.filters');
+            const sobran = [...grid.children].filter(el =>
+                !el.classList.contains('wide') && el.querySelector('select, input[type="number"]')
+            ).slice(3);
+            if (!sobran.length) return;
+
+            const det = document.createElement('details');
+            det.className = 'mas-filtros';
+            const sum = document.createElement('summary');
+            sum.innerHTML = 'Más filtros <span class="n" hidden></span>';
+            const interno = document.createElement('div');
+            interno.className = 'filters';
+            sobran.forEach(el => interno.append(el));
+            det.append(sum, interno);
+            grid.append(det);
+
+            const badge = sum.querySelector('.n');
+            const actualizar = () => {
+                const n = [...interno.querySelectorAll('select, input')].filter(i => i.value).length;
+                badge.textContent = n;
+                badge.hidden = !n;
+                if (n) det.open = true;
+            };
+            form.addEventListener('input', actualizar);
+            form.addEventListener('change', actualizar);
+            form.addEventListener('reset', () => setTimeout(actualizar, 0));
+        });
+
+        // ---------- Al elegir un área, la lista de personas se acota ----------
+        document.querySelectorAll('form.report-form').forEach(form => {
+            const area = form.querySelector('select[name="area"]');
+            const persona = form.querySelector('select[name="persona"]');
+            if (!area || !persona) return;
+
+            area.addEventListener('change', () => {
+                const lista = area.value ? (POR_AREA[area.value] || []) : PERSONAS;
+                const actual = persona.value;
+                persona.replaceChildren(new Option('Todos', ''));
+                lista.forEach(n => persona.append(new Option(n, n)));
+                persona.value = lista.includes(actual) ? actual : '';
+            });
+        });
+
+        // ---------- Cantidad de registros antes de descargar ----------
+        document.querySelectorAll('form[data-contar]').forEach(form => {
+            const salida = form.querySelector('[data-conteo]');
+            const base = form.dataset.total;
+            let temporizador, ultima = 0;
+
+            const mostrar = n => {
+                salida.textContent = n + ' registros con estos filtros';
+                form.querySelectorAll('button[type="submit"]').forEach(b => { b.disabled = Number(n) === 0; });
+            };
+            if (base !== undefined) mostrar(base);
+
+            async function contar() {
+                const turno = ++ultima;
+                const params = new URLSearchParams(new FormData(form));
+                salida.textContent = 'Contando...';
+                try {
+                    const r = await fetch('/reportes/contar/' + form.dataset.contar + '?' + params, {
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    if (!r.ok) throw new Error();
+                    const d = await r.json();
+                    if (turno === ultima) mostrar(d.total);
+                } catch (e) {
+                    if (turno === ultima) {
+                        salida.textContent = '';
+                        form.querySelectorAll('button[type="submit"]').forEach(b => { b.disabled = false; });
+                    }
+                }
+            }
+
+            const programar = () => { clearTimeout(temporizador); temporizador = setTimeout(contar, 350); };
+            form.addEventListener('input', programar);
+            form.addEventListener('change', programar);
+            form.addEventListener('reset', () => {
+                setTimeout(() => {
+                    const area = form.querySelector('select[name="area"]');
+                    if (area) area.dispatchEvent(new Event('change'));
+                    contar();
+                }, 0);
+            });
+        });
+    })();
+</script>
 {% endblock %}

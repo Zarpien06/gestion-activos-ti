@@ -31,6 +31,19 @@
 .stat-baja .stat-icon{color:#dc2626;background:rgba(220,38,38,.10)}
 .stat-baja::after{background:#dc2626}
 
+/* ===== FINANCE DASHBOARD ===== */
+.finance-dashboard{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:-6px 0 20px}
+.finance-dashboard .stat-number{font-size:19px;line-height:1.2}
+.stat-money .stat-icon{color:#0f766e;background:rgba(15,118,110,.10)}
+.stat-money::after{background:#0f766e}
+
+@media (max-width:1150px){
+    .finance-dashboard{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:600px){
+    .finance-dashboard{grid-template-columns:1fr}
+}
+
 /* ===== TOOLBAR ===== */
 .inventory-toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:16px;margin-bottom:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg)}
 .search-box{position:relative;flex:1 1 280px;min-width:240px}
@@ -61,7 +74,11 @@
 .type-sidebar-sub{margin:0 0 15px;color:var(--text-light);font-size:12px}
 .type-list{display:flex;flex-direction:column;gap:8px}
 .type-item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;background:var(--surface-2);transition:.15s ease}
+.type-item{cursor:pointer;user-select:none;border:1px solid transparent}
 .type-item:hover{background:var(--primary-soft)}
+.type-item:focus-visible{outline:2px solid var(--primary);outline-offset:1px}
+.type-item.active{background:var(--primary-soft);border-color:var(--primary)}
+.type-item.active .type-name{color:var(--primary);font-weight:700}
 .type-name{font-size:12.5px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .type-count{min-width:27px;text-align:center;padding:3px 7px;border-radius:999px;background:var(--surface);border:1px solid var(--border);font-size:11px;font-weight:700}
 
@@ -134,6 +151,13 @@ tr.fila-apagada td:not(.cell-action){opacity:.55}
 .adicional-item small{color:var(--text-light)}
 .adicional-item a{color:var(--primary);font-weight:650;text-decoration:none;white-space:nowrap}
 
+/* ===== SOFTWARE EN EL MODAL ===== */
+#sw-activo h4{margin:0 0 8px;font-size:14px;font-weight:600}
+#sw-activo select{padding:8px 10px;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:13px}
+#sw-activo table{width:100%;border-collapse:collapse;font-size:13px}
+#sw-activo td{padding:8px 10px;border-bottom:1px solid var(--border)}
+#sw-activo tr:last-child td{border-bottom:0}
+
 /* ===== FORM DIALOGS ===== */
 .form-dialog{width:min(820px,calc(100% - 32px));max-height:90vh;overflow-y:auto;padding:26px;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:0 30px 70px rgba(0,0,0,.45)}
 .form-dialog[open]{animation:popIn .18s ease}
@@ -156,10 +180,10 @@ tr.fila-apagada td:not(.cell-action){opacity:.55}
 .form-hint a{color:var(--primary);font-weight:650}
 .dlg-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px;padding-top:18px;border-top:1px solid var(--border)}
 
-/* Adicionales (formulario) */
+/* ===== ADICIONALES ===== */
 .sub-block{margin-top:18px;padding-top:16px;border-top:1px dashed rgba(37,99,235,.25)}
 .sub-block h5{margin:0 0 4px;font-size:13px;font-weight:750}
-.adicional-row{display:grid;grid-template-columns:150px minmax(0,1fr) minmax(0,1fr) auto;gap:10px;align-items:end;margin-bottom:10px}
+.adicional-row{display:grid;grid-template-columns:130px minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) auto;gap:10px;align-items:end;margin-bottom:10px}
 .adicional-row input[type=file]{font-size:12px}
 .btn-quitar{height:38px;padding:0 12px;border:1px solid var(--border);border-radius:9px;background:var(--surface);color:var(--danger);cursor:pointer;font-weight:700}
 .btn-quitar:hover{background:color-mix(in srgb,var(--danger) 10%,transparent)}
@@ -173,6 +197,7 @@ tr.fila-apagada td:not(.cell-action){opacity:.55}
   .type-sidebar{order:-1}
   .type-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
 }
+
 @media (max-width:800px){
   .inventory-dashboard{grid-template-columns:repeat(2,minmax(0,1fr))}
   .inventory-toolbar{align-items:stretch}
@@ -183,6 +208,7 @@ tr.fila-apagada td:not(.cell-action){opacity:.55}
   .adicional-row{grid-template-columns:1fr 1fr}
   .btn-quitar{grid-column:1/-1}
 }
+
 @media (max-width:600px){
   .inventory-dashboard,.dlg-grid,.detail-grid,.type-list{grid-template-columns:1fr}
   .detail-item.full{grid-column:auto}
@@ -192,6 +218,33 @@ tr.fila-apagada td:not(.cell-action){opacity:.55}
   .adicional-row{grid-template-columns:1fr}
 }
 
+/* ===== DOCUMENTOS E HISTORIAL DE CAMBIOS (FASE 2) ===== */
+
+/* --- Documentos --- */
+.doc-list{list-style:none;margin:0 0 14px;padding:0;display:flex;flex-direction:column;gap:8px}
+.doc-item{display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;font-size:13px;transition:border-color .15s ease}
+.doc-item:hover{border-color:var(--primary)}
+.doc-item .doc-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--primary);font-weight:650;text-decoration:none}
+.doc-item .doc-name:hover{text-decoration:underline}
+.doc-item .doc-meta{color:var(--text-light);font-size:12px;white-space:nowrap}
+.doc-item .doc-tipo{font-size:11px;font-weight:700;text-transform:capitalize;padding:3px 10px;border-radius:999px;color:var(--primary);background:var(--primary-soft)}
+.doc-del{padding:5px 10px;border:0;border-radius:7px;background:color-mix(in srgb,var(--danger) 10%,transparent);color:var(--danger);cursor:pointer;font-size:12px;font-weight:650;transition:.15s ease}
+.doc-del:hover{color:#fff;background:var(--danger)}
+.doc-upload{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px;background:var(--surface-2);border:1px dashed var(--border);border-radius:10px}
+.doc-empty{color:var(--text-light);font-size:13px;margin:0 0 10px}
+li.doc-empty{list-style:none}
+
+/* --- Historial de cambios --- */
+.cambios-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px;background:var(--surface)}
+.cambios-tabla{width:100%;min-width:560px;border-collapse:collapse;font-size:12.5px;color:var(--text)}
+.cambios-tabla th{padding:9px 12px;text-align:left;white-space:nowrap;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-light);background:var(--surface-2);border-bottom:1px solid var(--border)}
+.cambios-tabla td{padding:9px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--border)}
+.cambios-tabla tbody tr:last-child td{border-bottom:0}
+.cambios-tabla tbody tr:hover{background:var(--primary-soft)}
+.cambios-tabla td:first-child{white-space:nowrap;color:var(--text-light)}
+.cambio-antes{color:var(--danger);text-decoration:line-through;opacity:.85}
+.cambio-despues{color:var(--success);font-weight:600}
+
 /* ===== PRINT ===== */
 @media print{
   body{background:#fff!important}
@@ -199,6 +252,7 @@ tr.fila-apagada td:not(.cell-action){opacity:.55}
   .inventory-layout{display:block}
   .card{box-shadow:none!important;border:0!important}
   .inventory-dashboard{grid-template-columns:repeat(5,1fr)}
+  .finance-dashboard{grid-template-columns:repeat(4,1fr)}
   .stat-card{box-shadow:none}
   .table{font-size:10px}
   .table th,.table td{padding:5px!important}
@@ -218,9 +272,13 @@ tr.fila-apagada td:not(.cell-action){opacity:.55}
 {% set tipos = activos | map(attribute='tipo') | select | unique | sort | list %}
 {% set marcas = activos | map(attribute='marca') | select | unique | sort | list %}
 {% set areas = activos | map(attribute='area') | select | unique | sort | list %}
+{% set proveedores = activos | map(attribute='proveedor') | select | unique | sort | list %}
+{% set sedes = activos | map(attribute='sede') | select | unique | sort | list %}
+{% set centros = activos | map(attribute='centro_costo') | select | unique | sort | list %}
+
 
 {# ===== ATRIBUTOS COMUNES DE LOS BOTONES VER / EDITAR ===== #}
-{% macro datos_activo(activo, adicionales) %}
+{% macro datos_activo(activo, adicionales, fin) %}
 data-id="{{ activo.id }}"
 data-codigo="{{ activo.codigo or '' }}"
 data-tipo="{{ activo.tipo or '' }}"
@@ -240,8 +298,25 @@ data-hostname="{{ activo.hostname or '' }}"
 data-ip="{{ activo.ip or '' }}"
 data-mac="{{ activo.mac or '' }}"
 data-so="{{ activo.sistema_operativo or '' }}"
+data-proveedor="{{ activo.proveedor or '' }}"
 data-fecha-compra="{{ activo.fecha_compra or '' }}"
-data-garantia="{{ activo.garantia or '' }}"
+data-precio-compra="{{ ('%.2f'|format(activo.precio_compra|float)) if activo.precio_compra is not none else '' }}"
+data-moneda="{{ activo.moneda or 'COP' }}"
+data-nro-factura="{{ activo.nro_factura or '' }}"
+data-nro-orden="{{ activo.nro_orden or '' }}"
+data-centro-costo="{{ activo.centro_costo or '' }}"
+data-sede="{{ activo.sede or '' }}"
+data-fecha-puesta-uso="{{ activo.fecha_puesta_uso or '' }}"
+data-vida-util-meses="{{ activo.vida_util_meses if activo.vida_util_meses is not none else '' }}"
+data-valor-residual="{{ ('%.2f'|format(activo.valor_residual|float)) if activo.valor_residual else '' }}"
+data-garantia-inicio="{{ activo.garantia_inicio or '' }}"
+data-garantia-meses="{{ activo.garantia_meses if activo.garantia_meses is not none else '' }}"
+data-garantia-fin="{{ activo.garantia_fin or '' }}"
+data-valor-actual="{{ fin.get('valor_actual') if fin.get('valor_actual') is not none else '' }}"
+data-vida-efectiva="{{ fin.get('vida_util_meses') if fin.get('vida_util_meses') is not none else '' }}"
+data-meses-uso="{{ fin.get('meses_uso') if fin.get('meses_uso') is not none else '' }}"
+data-estado-garantia="{{ fin.get('estado_garantia') or '' }}"
+data-dias-garantia="{{ fin.get('dias_garantia') if fin.get('dias_garantia') is not none else '' }}"
 data-factura-url="{{ url_for('ver_factura', ruta=activo.factura_ruta) if activo.factura_ruta else '' }}"
 data-adicionales='{{ adicionales.get(activo.id, [])|tojson }}'
 {%- endmacro %}
@@ -253,8 +328,12 @@ data-adicionales='{{ adicionales.get(activo.id, [])|tojson }}'
         <h2>Inventario de Activos TI</h2>
         <p>Administración y control de equipos registrados</p>
     </div>
+
     <div class="header-right">
-        <span class="count-pill"><span id="contador">{{ activos|length }}</span> activos</span>
+        <span class="count-pill">
+            <span id="contador">{{ activos|length }}</span> activos
+        </span>
+
         {% if puede_crear %}
             <button type="button" class="btn" id="btnNuevo">+ Nuevo activo</button>
         {% endif %}
@@ -264,60 +343,135 @@ data-adicionales='{{ adicionales.get(activo.id, [])|tojson }}'
 
 {# ===== DASHBOARD ===== #}
 <div class="inventory-dashboard">
+
     <div class="stat-card stat-total">
         <div class="stat-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="16" rx="2"/>
+                <path d="M8 8h8M8 12h8M8 16h5"/>
+            </svg>
         </div>
         <span class="stat-number" id="statTotal">{{ activos|length }}</span>
         <span class="stat-label">Activos totales</span>
     </div>
+
     <div class="stat-card stat-assigned">
         <div class="stat-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21a8 8 0 0 0-16 0"/>
+                <circle cx="12" cy="7" r="4"/>
+            </svg>
         </div>
         <span class="stat-number" id="statAsignados">0</span>
         <span class="stat-label">Asignados</span>
     </div>
+
     <div class="stat-card stat-available">
         <div class="stat-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 6L9 17l-5-5"/>
+            </svg>
         </div>
         <span class="stat-number" id="statDisponibles">0</span>
         <span class="stat-label">Disponibles</span>
     </div>
+
     <div class="stat-card stat-repair">
         <div class="stat-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.4L2.5 17a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 3.4a2 2 0 0 0-3.4 0z"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 9v4"/>
+                <path d="M12 17h.01"/>
+                <path d="M10.3 3.4L2.5 17a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 3.4a2 2 0 0 0-3.4 0z"/>
+            </svg>
         </div>
         <span class="stat-number" id="statReparacion">0</span>
         <span class="stat-label">En reparación</span>
     </div>
+
     <div class="stat-card stat-baja">
         <div class="stat-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 6h18"/>
+                <path d="M8 6V4h8v2"/>
+                <path d="M19 6l-1 14H6L5 6"/>
+            </svg>
         </div>
         <span class="stat-number" id="statBaja">0</span>
         <span class="stat-label">Dados de baja</span>
     </div>
+
 </div>
+
+
+{# ===== DASHBOARD FINANCIERO ===== #}
+{% if resumen %}
+<div class="finance-dashboard">
+
+    <div class="stat-card stat-money">
+        <span class="stat-number">{{ resumen.compra_txt }}</span>
+        <span class="stat-label">Total de compras</span>
+    </div>
+
+    <div class="stat-card stat-money">
+        <span class="stat-number">{{ resumen.actual_txt }}</span>
+        <span class="stat-label">Valor actual (depreciado)</span>
+    </div>
+
+    <div class="stat-card stat-repair">
+        <span class="stat-number">{{ resumen.garantias_por_vencer }}</span>
+        <span class="stat-label">Garantías por vencer (90 días)</span>
+    </div>
+
+    <div class="stat-card stat-baja">
+        <span class="stat-number">{{ resumen.garantias_vencidas }}</span>
+        <span class="stat-label">Garantías vencidas</span>
+    </div>
+
+</div>
+{% endif %}
 
 
 {# ===== BUSCADOR Y FILTROS ===== #}
 <div class="inventory-toolbar">
+
     <div class="search-box">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
-        <input type="search" id="buscador" placeholder="Buscar código, serial, marca, modelo, área, usuario, tipo..." autocomplete="off">
-        <button type="button" class="search-clear" id="limpiarBusqueda" aria-label="Limpiar búsqueda">×</button>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="7"/>
+            <path d="m20 20-4-4"/>
+        </svg>
+
+        <input
+            type="search"
+            id="buscador"
+            placeholder="Buscar código, serial, marca, modelo, área, usuario, proveedor, tipo..."
+            autocomplete="off">
+
+        <button
+            type="button"
+            class="search-clear"
+            id="limpiarBusqueda"
+            aria-label="Limpiar búsqueda">×</button>
     </div>
 
     <select id="filtroTipo" class="filter-select">
         <option value="">Todos los tipos</option>
-        {% for tipo in tipos %}<option value="{{ tipo|lower }}">{{ tipo }}</option>{% endfor %}
+        {% for tipo in tipos %}
+            <option value="{{ tipo|lower }}">{{ tipo }}</option>
+        {% endfor %}
     </select>
 
     <select id="filtroArea" class="filter-select">
         <option value="">Todas las áreas</option>
-        {% for area in areas %}<option value="{{ area|lower }}">{{ area }}</option>{% endfor %}
+        {% for area in areas %}
+            <option value="{{ area|lower }}">{{ area }}</option>
+        {% endfor %}
+    </select>
+
+    <select id="filtroProveedor" class="filter-select">
+        <option value="">Todos los proveedores</option>
+        {% for p in proveedores %}
+            <option value="{{ p|lower }}">{{ p }}</option>
+        {% endfor %}
     </select>
 
     <select id="filtroDisponibilidad" class="filter-select">
@@ -329,18 +483,46 @@ data-adicionales='{{ adicionales.get(activo.id, [])|tojson }}'
         <option value="inhabilitado">Inhabilitado</option>
     </select>
 
+    <select id="filtroGarantia" class="filter-select">
+        <option value="">Toda garantía</option>
+        <option value="vigente">Vigente</option>
+        <option value="por_vencer">Por vencer (90 d)</option>
+        <option value="vencida">Vencida</option>
+        <option value="sin_garantia">Sin garantía</option>
+    </select>
+
     <button type="button" class="reset-filters" id="resetFiltros">Limpiar</button>
+
 </div>
 
 
 {# ===== CHIPS ===== #}
 <div class="chips" role="group" aria-label="Filtrar por disponibilidad">
-    <button type="button" class="chip active" data-filtro="todos">Todos <span data-count="todos"></span></button>
-    <button type="button" class="chip" data-filtro="disponible">Disponibles <span data-count="disponible"></span></button>
-    <button type="button" class="chip" data-filtro="asignado">Asignados <span data-count="asignado"></span></button>
-    <button type="button" class="chip" data-filtro="reparacion">Reparación <span data-count="reparacion"></span></button>
-    <button type="button" class="chip" data-filtro="inhabilitado">Inhabilitados <span data-count="inhabilitado"></span></button>
-    <button type="button" class="chip" data-filtro="baja">De baja <span data-count="baja"></span></button>
+
+    <button type="button" class="chip active" data-filtro="todos">
+        Todos <span data-count="todos"></span>
+    </button>
+
+    <button type="button" class="chip" data-filtro="disponible">
+        Disponibles <span data-count="disponible"></span>
+    </button>
+
+    <button type="button" class="chip" data-filtro="asignado">
+        Asignados <span data-count="asignado"></span>
+    </button>
+
+    <button type="button" class="chip" data-filtro="reparacion">
+        Reparación <span data-count="reparacion"></span>
+    </button>
+
+    <button type="button" class="chip" data-filtro="inhabilitado">
+        Inhabilitados <span data-count="inhabilitado"></span>
+    </button>
+
+    <button type="button" class="chip" data-filtro="baja">
+        De baja <span data-count="baja"></span>
+    </button>
+
 </div>
 
 
@@ -348,8 +530,11 @@ data-adicionales='{{ adicionales.get(activo.id, [])|tojson }}'
 <div class="inventory-layout">
 
     <div class="card card-flush">
+
         <div class="table-responsive">
+
             <table id="tablaActivos" class="table">
+
                 <thead>
                     <tr>
                         <th>Código</th>
@@ -361,15 +546,19 @@ data-adicionales='{{ adicionales.get(activo.id, [])|tojson }}'
                         <th>Estado físico</th>
                         <th>Área</th>
                         <th>Asignado a</th>
+                        <th>Garantía</th>
                         <th class="th-action">Acciones</th>
                     </tr>
                 </thead>
 
                 <tbody>
+
                 {% for activo in activos %}
 
                     {% set disponibilidad = (activo.disponibilidad or '')|lower %}
                     {% set estado = (activo.estado or '')|lower %}
+                    {% set fin = financiero.get(activo.id, {}) %}
+                    {% set eg = fin.get('estado_garantia') or 'sin_garantia' %}
 
                     {% set texto_busqueda = (
                         (activo.id|string) ~ ' ' ~
@@ -387,320 +576,1282 @@ data-adicionales='{{ adicionales.get(activo.id, [])|tojson }}'
                         (activo.hostname or '') ~ ' ' ~
                         (activo.ip or '') ~ ' ' ~
                         (activo.mac or '') ~ ' ' ~
-                        (activo.sistema_operativo or '')
+                        (activo.proveedor or '') ~ ' ' ~
+                        (activo.sistema_operativo or '') ~ ' ' ~
+                        (activo.sede or '') ~ ' ' ~
+                        (activo.centro_costo or '')
                     )|lower %}
 
                     {% if 'baja' in disponibilidad or 'baja' in estado %}
-                        {% set grupo = 'baja' %}{% set clase_disponibilidad = 'badge-baja' %}
+                        {% set grupo = 'baja' %}
+                        {% set clase_disponibilidad = 'badge-baja' %}
+
                     {% elif 'inhabilit' in disponibilidad or 'inhabilit' in estado %}
-                        {% set grupo = 'inhabilitado' %}{% set clase_disponibilidad = 'badge-inhabilitado' %}
+                        {% set grupo = 'inhabilitado' %}
+                        {% set clase_disponibilidad = 'badge-inhabilitado' %}
+
                     {% elif 'reparaci' in disponibilidad or 'mantenim' in disponibilidad %}
-                        {% set grupo = 'reparacion' %}{% set clase_disponibilidad = 'badge-reparacion' %}
+                        {% set grupo = 'reparacion' %}
+                        {% set clase_disponibilidad = 'badge-reparacion' %}
+
                     {% elif 'asignado' in disponibilidad %}
-                        {% set grupo = 'asignado' %}{% set clase_disponibilidad = 'badge-asignado' %}
+                        {% set grupo = 'asignado' %}
+                        {% set clase_disponibilidad = 'badge-asignado' %}
+
                     {% elif 'disponible' in disponibilidad %}
-                        {% set grupo = 'disponible' %}{% set clase_disponibilidad = 'badge-disponible' %}
+                        {% set grupo = 'disponible' %}
+                        {% set clase_disponibilidad = 'badge-disponible' %}
+
                     {% else %}
-                        {% set grupo = 'otro' %}{% set clase_disponibilidad = 'badge-default' %}
+                        {% set grupo = 'otro' %}
+                        {% set clase_disponibilidad = 'badge-default' %}
                     {% endif %}
 
-                    <tr data-id="{{ activo.id }}"
+                    <tr
+                        data-id="{{ activo.id }}"
                         data-grupo="{{ grupo }}"
+                        data-garantia="{{ eg }}"
                         data-tipo="{{ (activo.tipo or '')|lower }}"
                         data-area="{{ (activo.area or '')|lower }}"
+                        data-proveedor="{{ (activo.proveedor or '')|lower }}"
                         data-busqueda="{{ texto_busqueda }}">
 
-                        <td class="cell-code">{{ activo.codigo or '—' }}</td>
+                        <td class="cell-code">
+                            {{ activo.codigo or '—' }}
+                        </td>
+
                         <td>{{ activo.tipo or '—' }}</td>
+
                         <td>{{ activo.marca or '—' }}</td>
+
                         <td>{{ activo.modelo or '—' }}</td>
-                        <td class="cell-muted cell-ellipsis" title="{{ activo.serial or '' }}">{{ activo.serial or '—' }}</td>
-                        <td><span class="badge {{ clase_disponibilidad }}">{{ activo.disponibilidad or '—' }}</span></td>
+
+                        <td
+                            class="cell-muted cell-ellipsis"
+                            title="{{ activo.serial or '' }}">
+                            {{ activo.serial or '—' }}
+                        </td>
+
+                        <td>
+                            <span class="badge {{ clase_disponibilidad }}">
+                                {{ activo.disponibilidad or '—' }}
+                            </span>
+                        </td>
+
                         <td>
                             {% if activo.estado %}
-                                <span class="badge badge-default">{{ activo.estado }}</span>
+                                <span class="badge badge-default">
+                                    {{ activo.estado }}
+                                </span>
                             {% else %}
                                 <span class="cell-muted">—</span>
                             {% endif %}
                         </td>
-                        <td class="cell-muted">{{ activo.area or '—' }}</td>
-                        <td class="cell-muted">{{ activo.asignado_a or '—' }}</td>
+
+                        <td class="cell-muted">
+                            {{ activo.area or '—' }}
+                        </td>
+
+                        <td class="cell-muted">
+                            {{ activo.asignado_a or '—' }}
+                        </td>
+
+                        <td>
+                            {% if eg == 'sin_garantia' %}
+                                <span class="cell-muted">—</span>
+
+                            {% elif eg == 'vencida' %}
+                                <span class="badge badge-baja">
+                                    Vencida
+                                </span>
+
+                            {% elif eg.startswith('por_vencer') %}
+                                <span class="badge badge-reparacion">
+                                    {{ fin.get('dias_garantia') }} d
+                                </span>
+
+                            {% else %}
+                                <span class="badge badge-disponible">
+                                    Vigente
+                                </span>
+                            {% endif %}
+                        </td>
 
                         <td class="cell-action">
+
                             <div class="row-actions">
 
-                                {# VER (siempre visible) #}
-                                <button type="button" class="btn btn-sm btn-soft" data-ver
-                                    {{ datos_activo(activo, adicionales) }}>Ver</button>
+                                {# VER #}
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-soft"
+                                    data-ver
+                                    {{ datos_activo(activo, adicionales, fin) }}>
+                                    Ver
+                                </button>
 
                                 {# EDITAR #}
                                 {% if puede_editar %}
-                                    <button type="button" class="btn btn-sm btn-soft" data-editar
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-soft"
+                                        data-editar
                                         data-action="{{ url_for('editar_activo_web', activo_id=activo.id) }}"
-                                        {{ datos_activo(activo, adicionales) }}>Editar</button>
+                                        {{ datos_activo(activo, adicionales, fin) }}>
+                                        Editar
+                                    </button>
                                 {% endif %}
 
                                 {# REACTIVAR #}
                                 {% if grupo in ('baja', 'inhabilitado') %}
+
                                     {% if puede_editar %}
-                                        <form method="POST" action="{{ url_for('reactivar_activo_web', activo_id=activo.id) }}">
-                                            {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
-                                            <button type="submit" class="btn btn-sm btn-soft-warning">Reactivar</button>
+                                        <form
+                                            method="POST"
+                                            action="{{ url_for('reactivar_activo_web', activo_id=activo.id) }}">
+
+                                            {% if csrf_token is defined %}
+                                                <input
+                                                    type="hidden"
+                                                    name="csrf_token"
+                                                    value="{{ csrf_token() }}">
+                                            {% endif %}
+
+                                            <button
+                                                type="submit"
+                                                class="btn btn-sm btn-soft-warning">
+                                                Reactivar
+                                            </button>
+
                                         </form>
                                     {% endif %}
 
                                 {# INHABILITAR / BAJA #}
                                 {% elif grupo != 'asignado' %}
+
                                     {% if puede_editar %}
-                                        <button type="button" class="btn btn-sm btn-soft-warning" data-motivo
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-soft-warning"
+                                            data-motivo
                                             data-action="{{ url_for('inhabilitar_activo_web', activo_id=activo.id) }}"
                                             data-title="¿Inhabilitar {{ activo.codigo }}?"
                                             data-text="El activo dejará de estar disponible para asignaciones. Puedes reactivarlo cuando quieras."
                                             data-ok="Inhabilitar"
-                                            data-class="btn-warning">Inhabilitar</button>
+                                            data-class="btn-warning">
+                                            Inhabilitar
+                                        </button>
                                     {% endif %}
+
                                     {% if puede_baja %}
-                                        <button type="button" class="btn btn-sm btn-soft-danger" data-motivo data-required="1"
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-soft-danger"
+                                            data-motivo
+                                            data-required="1"
                                             data-action="{{ url_for('dar_de_baja_activo_web', activo_id=activo.id) }}"
                                             data-title="¿Dar de baja {{ activo.codigo }}?"
                                             data-text="El activo sale del inventario operativo. Se conserva su historial y se puede reactivar."
                                             data-ok="Dar de baja"
-                                            data-class="btn-danger">Baja</button>
+                                            data-class="btn-danger">
+                                            Baja
+                                        </button>
                                     {% endif %}
+
                                 {% endif %}
 
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                {% else %}
+
+                    <tr>
+                        <td colspan="11">
+                            <div class="empty-state">
+                                No hay activos registrados.
                             </div>
                         </td>
                     </tr>
 
-                {% else %}
-                    <tr>
-                        <td colspan="10"><div class="empty-state">No hay activos registrados.</div></td>
-                    </tr>
                 {% endfor %}
+
                 </tbody>
+
             </table>
 
-            <div class="no-results" id="sinResultados">No encontramos activos que coincidan con los filtros.</div>
+            <div class="no-results" id="sinResultados">
+                No encontramos activos que coincidan con los filtros.
+            </div>
+
         </div>
 
         {# PAGINACIÓN #}
         <div class="table-footer">
+
             <div class="pagination-info">
-                Mostrando <strong id="desdeRegistro">0</strong> - <strong id="hastaRegistro">0</strong>
-                de <strong id="totalFiltrado">0</strong>
+                Mostrando
+                <strong id="desdeRegistro">0</strong>
+                -
+                <strong id="hastaRegistro">0</strong>
+                de
+                <strong id="totalFiltrado">0</strong>
             </div>
+
             <div class="pagination">
-                <button type="button" class="page-btn" id="paginaAnterior">‹</button>
-                <div id="numerosPagina" style="display:flex;gap:5px;"></div>
-                <button type="button" class="page-btn" id="paginaSiguiente">›</button>
+                <button
+                    type="button"
+                    class="page-btn"
+                    id="paginaAnterior">‹</button>
+
+                <div
+                    id="numerosPagina"
+                    style="display:flex;gap:5px;"></div>
+
+                <button
+                    type="button"
+                    class="page-btn"
+                    id="paginaSiguiente">›</button>
             </div>
+
         </div>
+
     </div>
 
+
     <aside class="card type-sidebar">
+
         <h3>Inventario por tipo</h3>
-        <p class="type-sidebar-sub">Cantidad registrada</p>
+
+        <p class="type-sidebar-sub">
+            Cantidad registrada
+        </p>
+
         <div class="type-list" id="listaTipos">
+
             {% for tipo in tipos %}
-                <div class="type-item" data-tipo-item="{{ tipo|lower }}">
-                    <span class="type-name">{{ tipo }}</span>
-                    <span class="type-count">0</span>
+
+                <div
+                    class="type-item"
+                    data-tipo-item="{{ tipo|lower }}"
+                    role="button"
+                    tabindex="0"
+                    title="Ver solo: {{ tipo }}">
+
+                    <span class="type-name">
+                        {{ tipo }}
+                    </span>
+
+                    <span class="type-count">
+                        0
+                    </span>
+
                 </div>
+
             {% endfor %}
+
         </div>
+
     </aside>
 
 </div>
 
 
 {# ===== MODAL DETALLE ===== #}
-<dialog class="detail-dialog" id="detalleDialog" aria-labelledby="detalleTitulo">
+<dialog
+    class="detail-dialog"
+    id="detalleDialog"
+    aria-labelledby="detalleTitulo">
 
     <div class="detail-header">
+
         <div>
-            <h3 id="detalleTitulo">Detalle del activo</h3>
-            <p id="detalleSubtitulo">Información completa</p>
+            <h3 id="detalleTitulo">
+                Detalle del activo
+            </h3>
+
+            <p id="detalleSubtitulo">
+                Información completa
+            </p>
         </div>
-        <button type="button" class="detail-close" id="cerrarDetalle">×</button>
+
+        <button
+            type="button"
+            class="detail-close"
+            id="cerrarDetalle">
+            ×
+        </button>
+
     </div>
+
 
     <div class="detail-body">
 
         <div class="detail-section">
+
             <h4>Identificación</h4>
+
             <div class="detail-grid">
-                <div class="detail-item"><span class="detail-label">ID</span><span class="detail-value" id="d_id"></span></div>
-                <div class="detail-item"><span class="detail-label">Código</span><span class="detail-value" id="d_codigo"></span></div>
-                <div class="detail-item"><span class="detail-label">Tipo</span><span class="detail-value" id="d_tipo"></span></div>
-                <div class="detail-item"><span class="detail-label">Marca</span><span class="detail-value" id="d_marca"></span></div>
-                <div class="detail-item"><span class="detail-label">Modelo</span><span class="detail-value" id="d_modelo"></span></div>
-                <div class="detail-item"><span class="detail-label">Serial</span><span class="detail-value" id="d_serial"></span></div>
+
+                <div class="detail-item">
+                    <span class="detail-label">ID</span>
+                    <span class="detail-value" id="d_id"></span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Código</span>
+                    <span class="detail-value" id="d_codigo"></span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Tipo</span>
+                    <span class="detail-value" id="d_tipo"></span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Marca</span>
+                    <span class="detail-value" id="d_marca"></span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Modelo</span>
+                    <span class="detail-value" id="d_modelo"></span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Serial</span>
+                    <span class="detail-value" id="d_serial"></span>
+                </div>
+
             </div>
+
         </div>
 
+
         <div class="detail-section">
+
             <h4>Asignación y estado</h4>
+
             <div class="detail-grid">
-                <div class="detail-item"><span class="detail-label">Disponibilidad</span><span class="detail-value" id="d_disponibilidad"></span></div>
-                <div class="detail-item"><span class="detail-label">Estado físico</span><span class="detail-value" id="d_estado"></span></div>
-                <div class="detail-item"><span class="detail-label">Área</span><span class="detail-value" id="d_area"></span></div>
-                <div class="detail-item"><span class="detail-label">Asignado a</span><span class="detail-value" id="d_asignado"></span></div>
-                <div class="detail-item"><span class="detail-label">Cantidad</span><span class="detail-value" id="d_cantidad"></span></div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Disponibilidad</span>
+                    <span class="detail-value" id="d_disponibilidad"></span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Estado físico</span>
+                    <span class="detail-value" id="d_estado"></span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Área</span>
+                    <span class="detail-value" id="d_area"></span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Asignado a</span>
+                    <span class="detail-value" id="d_asignado"></span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Cantidad</span>
+                    <span class="detail-value" id="d_cantidad"></span>
+                </div>
+
             </div>
+
         </div>
 
-        <div class="detail-section laptop-card" id="laptopTechnicalCard" style="display:none;">
+
+        <div
+            class="detail-section laptop-card"
+            id="laptopTechnicalCard"
+            style="display:none;">
+
             <h4>Ficha técnica del equipo</h4>
+
             <div class="detail-grid">
-                <div class="detail-item" id="box_procesador"><span class="detail-label">Procesador</span><span class="detail-value" id="d_procesador"></span></div>
-                <div class="detail-item" id="box_ram"><span class="detail-label">RAM</span><span class="detail-value" id="d_ram"></span></div>
-                <div class="detail-item" id="box_disco"><span class="detail-label">Disco</span><span class="detail-value" id="d_disco"></span></div>
-                <div class="detail-item" id="box_hostname"><span class="detail-label">Hostname</span><span class="detail-value" id="d_hostname"></span></div>
-                <div class="detail-item" id="box_ip"><span class="detail-label">IP</span><span class="detail-value" id="d_ip"></span></div>
-                <div class="detail-item" id="box_mac"><span class="detail-label">MAC</span><span class="detail-value" id="d_mac"></span></div>
-                <div class="detail-item" id="box_so"><span class="detail-label">Sistema operativo</span><span class="detail-value" id="d_so"></span></div>
+
+                <div class="detail-item" id="box_procesador">
+                    <span class="detail-label">Procesador</span>
+                    <span class="detail-value" id="d_procesador"></span>
+                </div>
+
+                <div class="detail-item" id="box_ram">
+                    <span class="detail-label">RAM</span>
+                    <span class="detail-value" id="d_ram"></span>
+                </div>
+
+                <div class="detail-item" id="box_disco">
+                    <span class="detail-label">Disco</span>
+                    <span class="detail-value" id="d_disco"></span>
+                </div>
+
+                <div class="detail-item" id="box_hostname">
+                    <span class="detail-label">Hostname</span>
+                    <span class="detail-value" id="d_hostname"></span>
+                </div>
+
+                <div class="detail-item" id="box_ip">
+                    <span class="detail-label">IP</span>
+                    <span class="detail-value" id="d_ip"></span>
+                </div>
+
+                <div class="detail-item" id="box_mac">
+                    <span class="detail-label">MAC</span>
+                    <span class="detail-value" id="d_mac"></span>
+                </div>
+
+                <div class="detail-item" id="box_so">
+                    <span class="detail-label">Sistema operativo</span>
+                    <span class="detail-value" id="d_so"></span>
+                </div>
+
             </div>
+
         </div>
 
-        <div class="detail-section" id="adicionalesSection" style="display:none;">
+
+        <div
+            class="detail-section"
+            id="adicionalesSection"
+            style="display:none;">
+
             <h4>Adicionales</h4>
-            <div class="adicional-list" id="d_adicionales"></div>
+
+            <div
+                class="adicional-list"
+                id="d_adicionales"></div>
+
         </div>
 
+
+        {# ===== COMPRA Y VALOR ===== #}
         <div class="detail-section">
-            <h4>Información de compra</h4>
+
+            <h4>Compra y valor</h4>
+
             <div class="detail-grid">
-                <div class="detail-item"><span class="detail-label">Fecha de compra</span><span class="detail-value" id="d_fecha_compra"></span></div>
-                <div class="detail-item"><span class="detail-label">Garantía</span><span class="detail-value" id="d_garantia"></span></div>
-                <div class="detail-item"><span class="detail-label">Factura</span><span class="detail-value" id="d_factura"></span></div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Proveedor</span>
+                    <span class="detail-value" id="d_proveedor"></span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Fecha de compra</span>
+                    <span class="detail-value" id="d_fecha_compra"></span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Precio de compra</span>
+                    <span class="detail-value" id="d_precio"></span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">N.º factura</span>
+                    <span class="detail-value" id="d_nro_factura"></span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">N.º orden</span>
+                    <span class="detail-value" id="d_nro_orden"></span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Centro de costo</span>
+                    <span class="detail-value" id="d_centro_costo"></span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Sede</span>
+                    <span class="detail-value" id="d_sede"></span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Valor actual</span>
+                    <span class="detail-value" id="d_valor_actual"></span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Vida útil / uso</span>
+                    <span class="detail-value" id="d_vida"></span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Garantía inicio</span>
+                    <span class="detail-value" id="d_garantia_inicio"></span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Garantía vence</span>
+                    <span class="detail-value" id="d_garantia_fin"></span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Estado garantía</span>
+                    <span class="detail-value" id="d_garantia_estado"></span>
+                </div>
+
+                <div class="detail-item full">
+                    <span class="detail-label">Factura</span>
+                    <span class="detail-value" id="d_factura"></span>
+                </div>
+
             </div>
+
         </div>
 
-        <div class="detail-section" id="observacionesSection">
+
+        {# ===== SOFTWARE Y LICENCIAS (lo pinta static/software_activo.js) ===== #}
+        <div class="detail-section">
+            <div id="sw-activo"></div>
+        </div>
+
+
+        {# ===== CONTRATOS Y MANTENIMIENTOS (lo pinta static/contratos_activo.js) ===== #}
+        <div class="detail-section">
+            <div id="ct-activo"></div>
+        </div>
+
+
+        {# ===== DOCUMENTOS (FASE 2) ===== #}
+        <div class="detail-section">
+            <h4>Documentos</h4>
+            <ul id="d_docs" class="doc-list"></ul>
+
+            {% if puede_editar %}
+            <form id="formDocs" class="doc-upload" enctype="multipart/form-data">
+                {% if csrf_token is defined %}
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                {% endif %}
+                <select name="tipo" class="form-control" style="max-width:150px">
+                    <option value="factura">Factura</option>
+                    <option value="acta">Acta</option>
+                    <option value="manual">Manual</option>
+                    <option value="garantia">Garantía</option>
+                    <option value="otro" selected>Otro</option>
+                </select>
+                <input type="file" name="archivos" class="form-control" multiple style="max-width:260px"
+                       accept=".pdf,.jpg,.jpeg,.png,.docx,.xlsx">
+                <button type="submit" class="btn">Subir</button>
+                <span id="docsMsg" class="form-hint"></span>
+            </form>
+            {% endif %}
+        </div>
+
+
+        {# ===== HISTORIAL DE CAMBIOS (FASE 2) ===== #}
+        <div class="detail-section">
+            <h4>Historial de cambios</h4>
+            <div id="d_cambios" class="cambios-wrap"></div>
+        </div>
+
+
+        <div
+            class="detail-section"
+            id="observacionesSection">
+
             <h4>Observaciones</h4>
-            <div class="detail-item"><span class="detail-value" id="d_observaciones"></span></div>
+
+            <div class="detail-item">
+                <span
+                    class="detail-value"
+                    id="d_observaciones"></span>
+            </div>
+
         </div>
 
     </div>
+
 </dialog>
 
 
 {# ===== DIÁLOGO CREAR / EDITAR ===== #}
 {% if puede_crear or puede_editar %}
 
-<dialog class="form-dialog" id="activoDialog" aria-labelledby="activoTitulo">
+<dialog
+    class="form-dialog"
+    id="activoDialog"
+    aria-labelledby="activoTitulo">
 
-    <form method="POST" id="activoForm" enctype="multipart/form-data"
-          action="{{ url_for('crear_activo_web') }}"
-          data-crear="{{ url_for('crear_activo_web') }}">
+    <form
+        method="POST"
+        id="activoForm"
+        enctype="multipart/form-data"
+        action="{{ url_for('crear_activo_web') }}"
+        data-crear="{{ url_for('crear_activo_web') }}">
 
-        {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
+        {% if csrf_token is defined %}
+            <input
+                type="hidden"
+                name="csrf_token"
+                value="{{ csrf_token() }}">
+        {% endif %}
 
-        <h3 id="activoTitulo">Nuevo activo</h3>
-        <p class="dlg-sub">Los campos con * son obligatorios.</p>
+        <h3 id="activoTitulo">
+            Nuevo activo
+        </h3>
 
-        {# Identificación #}
+        <p class="dlg-sub">
+            Los campos con * son obligatorios.
+        </p>
+
+
+        {# ===== IDENTIFICACIÓN ===== #}
         <div class="form-section">
-            <h4 class="form-section-title">Identificación</h4>
+
+            <h4 class="form-section-title">
+                Identificación
+            </h4>
+
             <div class="dlg-grid">
-                <div><label for="f_codigo">Código *</label><input id="f_codigo" name="codigo" class="form-control" autocomplete="off" required></div>
+
+                <div>
+                    <label for="f_codigo">Código *</label>
+                    <input
+                        id="f_codigo"
+                        name="codigo"
+                        class="form-control"
+                        autocomplete="off"
+                        required>
+                </div>
+
                 <div>
                     <label for="f_tipo">Tipo *</label>
-                    <input id="f_tipo" name="tipo" class="form-control" list="lista_tipos" autocomplete="off" placeholder="Laptop, Monitor, Teclado…" required>
-                    <datalist id="lista_tipos">{% for t in tipos %}<option value="{{ t }}">{% endfor %}</datalist>
+
+                    <input
+                        id="f_tipo"
+                        name="tipo"
+                        class="form-control"
+                        list="lista_tipos"
+                        autocomplete="off"
+                        placeholder="Laptop, Monitor, Teclado…"
+                        required>
+
+                    <datalist id="lista_tipos">
+                        {% for t in tipos %}
+                            <option value="{{ t }}">
+                        {% endfor %}
+                    </datalist>
                 </div>
+
                 <div>
                     <label for="f_marca">Marca</label>
-                    <input id="f_marca" name="marca" class="form-control" list="lista_marcas" autocomplete="off">
-                    <datalist id="lista_marcas">{% for m in marcas %}<option value="{{ m }}">{% endfor %}</datalist>
-                </div>
-                <div><label for="f_modelo">Modelo</label><input id="f_modelo" name="modelo" class="form-control" autocomplete="off"></div>
-                <div class="full"><label for="f_serial">Serial</label><input id="f_serial" name="serial" class="form-control" autocomplete="off"></div>
-            </div>
-        </div>
 
-        {# Estado y asignación #}
-        <div class="form-section">
-            <h4 class="form-section-title">Estado y asignación</h4>
-            <div class="dlg-grid">
-                <div>
-                    <label for="f_disponibilidad">Disponibilidad</label>
-                    <select id="f_disponibilidad" name="disponibilidad" class="form-control">
-                        <option value="Disponible">Disponible</option>
-                        <option value="En reparación">En reparación</option>
-                        <option value="Inhabilitado">Inhabilitado</option>
-                        <option value="Dado de baja">Dado de baja</option>
-                    </select>
-                    <p class="form-hint" id="hintDisponibilidad" hidden>El activo está asignado: la disponibilidad no se edita a mano.</p>
-                </div>
-                <div><label for="f_estado">Estado físico</label><input id="f_estado" name="estado" class="form-control" placeholder="Bueno, regular, malo…"></div>
-                <div>
-                    <label for="f_persona">Asignar a</label>
-                    <select id="f_persona" name="persona_id" class="form-control">
-                        <option value="">— Sin asignar —</option>
-                        {% for p in personas %}
-                            <option value="{{ p.id }}" data-nombre="{{ p.nombre }}">{{ p.nombre }}{% if p.area %} · {{ p.area }}{% endif %}</option>
+                    <input
+                        id="f_marca"
+                        name="marca"
+                        class="form-control"
+                        list="lista_marcas"
+                        autocomplete="off">
+
+                    <datalist id="lista_marcas">
+                        {% for m in marcas %}
+                            <option value="{{ m }}">
                         {% endfor %}
-                    </select>
-                    <p class="form-hint">El área se toma de la persona. Para quitar una asignación usa Devoluciones.</p>
+                    </datalist>
                 </div>
-                <div><label for="f_cantidad">Cantidad</label><input id="f_cantidad" name="cantidad" class="form-control" type="number" min="0" step="1"></div>
+
+                <div>
+                    <label for="f_modelo">Modelo</label>
+                    <input
+                        id="f_modelo"
+                        name="modelo"
+                        class="form-control"
+                        autocomplete="off">
+                </div>
+
+                <div class="full">
+                    <label for="f_serial">Serial</label>
+                    <input
+                        id="f_serial"
+                        name="serial"
+                        class="form-control"
+                        autocomplete="off">
+                </div>
+
             </div>
+
         </div>
 
-        {# Ficha técnica + adicionales (solo laptops) #}
-        <div class="form-section form-laptop-section" id="formLaptopSection" hidden>
-            <h4 class="form-section-title">Ficha técnica del equipo</h4>
-            <p class="form-section-subtitle">Estos campos aparecen automáticamente para portátiles/laptops.</p>
+
+        {# ===== ESTADO Y ASIGNACIÓN ===== #}
+        <div class="form-section">
+
+            <h4 class="form-section-title">
+                Estado y asignación
+            </h4>
+
             <div class="dlg-grid">
-                <div><label for="f_procesador">Procesador</label><input id="f_procesador" name="procesador" class="form-control" autocomplete="off"></div>
-                <div><label for="f_ram">RAM</label><input id="f_ram" name="ram" class="form-control" placeholder="8 GB, 16 GB…"></div>
-                <div><label for="f_disco">Disco</label><input id="f_disco" name="disco" class="form-control" placeholder="256 GB SSD, 1 TB…"></div>
-                <div><label for="f_hostname">Hostname</label><input id="f_hostname" name="hostname" class="form-control" autocomplete="off"></div>
-                <div><label for="f_ip">IP</label><input id="f_ip" name="ip" class="form-control" autocomplete="off"></div>
-                <div><label for="f_mac">MAC</label><input id="f_mac" name="mac" class="form-control" autocomplete="off"></div>
-                <div class="full"><label for="f_so">Sistema Operativo</label><input id="f_so" name="sistema_operativo" class="form-control" placeholder="Windows 11 Pro, Windows 10…"></div>
+
+                <div>
+
+                    <label for="f_disponibilidad">
+                        Disponibilidad
+                    </label>
+
+                    <select
+                        id="f_disponibilidad"
+                        name="disponibilidad"
+                        class="form-control">
+
+                        <option value="Disponible">
+                            Disponible
+                        </option>
+
+                        <option value="En reparación">
+                            En reparación
+                        </option>
+
+                        <option value="Inhabilitado">
+                            Inhabilitado
+                        </option>
+
+                        <option value="Dado de baja">
+                            Dado de baja
+                        </option>
+
+                    </select>
+
+                    <p
+                        class="form-hint"
+                        id="hintDisponibilidad"
+                        hidden>
+                        El activo está asignado: la disponibilidad no se edita a mano.
+                    </p>
+
+                </div>
+
+                <div>
+                    <label for="f_estado">
+                        Estado físico
+                    </label>
+
+                    <input
+                        id="f_estado"
+                        name="estado"
+                        class="form-control"
+                        placeholder="Bueno, regular, malo…">
+                </div>
+
+                <div>
+
+                    <label for="f_persona">
+                        Asignar a
+                    </label>
+
+                    <select
+                        id="f_persona"
+                        name="persona_id"
+                        class="form-control">
+
+                        <option value="">
+                            — Sin asignar —
+                        </option>
+
+                        {% for p in personas %}
+                            <option
+                                value="{{ p.id }}"
+                                data-nombre="{{ p.nombre }}">
+                                {{ p.nombre }}
+                                {% if p.area %}
+                                    · {{ p.area }}
+                                {% endif %}
+                            </option>
+                        {% endfor %}
+
+                    </select>
+
+                    <p class="form-hint">
+                        El área se toma de la persona. Para quitar una asignación usa Devoluciones.
+                    </p>
+
+                </div>
+
+                <div>
+                    <label for="f_cantidad">
+                        Cantidad
+                    </label>
+
+                    <input
+                        id="f_cantidad"
+                        name="cantidad"
+                        class="form-control"
+                        type="number"
+                        min="0"
+                        step="1">
+                </div>
+
             </div>
+
+        </div>
+
+
+        {# ===== FICHA TÉCNICA + ADICIONALES ===== #}
+        <div
+            class="form-section form-laptop-section"
+            id="formLaptopSection"
+            hidden>
+
+            <h4 class="form-section-title">
+                Ficha técnica del equipo
+            </h4>
+
+            <p class="form-section-subtitle">
+                Estos campos aparecen automáticamente para portátiles/laptops.
+            </p>
+
+            <div class="dlg-grid">
+
+                <div>
+                    <label for="f_procesador">
+                        Procesador
+                    </label>
+
+                    <input
+                        id="f_procesador"
+                        name="procesador"
+                        class="form-control"
+                        autocomplete="off">
+                </div>
+
+                <div>
+                    <label for="f_ram">
+                        RAM
+                    </label>
+
+                    <input
+                        id="f_ram"
+                        name="ram"
+                        class="form-control"
+                        placeholder="8 GB, 16 GB…">
+                </div>
+
+                <div>
+                    <label for="f_disco">
+                        Disco
+                    </label>
+
+                    <input
+                        id="f_disco"
+                        name="disco"
+                        class="form-control"
+                        placeholder="256 GB SSD, 1 TB…">
+                </div>
+
+                <div>
+                    <label for="f_hostname">
+                        Hostname
+                    </label>
+
+                    <input
+                        id="f_hostname"
+                        name="hostname"
+                        class="form-control"
+                        autocomplete="off">
+                </div>
+
+                <div>
+                    <label for="f_ip">
+                        IP
+                    </label>
+
+                    <input
+                        id="f_ip"
+                        name="ip"
+                        class="form-control"
+                        autocomplete="off">
+                </div>
+
+                <div>
+                    <label for="f_mac">
+                        MAC
+                    </label>
+
+                    <input
+                        id="f_mac"
+                        name="mac"
+                        class="form-control"
+                        autocomplete="off">
+                </div>
+
+                <div class="full">
+                    <label for="f_so">
+                        Sistema Operativo
+                    </label>
+
+                    <input
+                        id="f_so"
+                        name="sistema_operativo"
+                        class="form-control"
+                        placeholder="Windows 11 Pro, Windows 10…">
+                </div>
+
+            </div>
+
 
             <div class="sub-block">
-                <h5>Adicionales</h5>
-                <p class="form-section-subtitle" style="margin:0 0 12px">Cargador, mouse, maletín, memoria extra… cada uno con su factura (opcional).</p>
 
-                <div class="adicional-list" id="adicionalesExistentes" style="margin-bottom:12px"></div>
+                <h5>Adicionales</h5>
+
+                <p
+                    class="form-section-subtitle"
+                    style="margin:0 0 12px">
+                    Cargador, mouse, maletín, memoria extra… cada uno con su proveedor y factura (opcionales).
+                </p>
+
+                <div
+                    class="adicional-list"
+                    id="adicionalesExistentes"
+                    style="margin-bottom:12px"></div>
 
                 <div id="adicionalesNuevos"></div>
 
-                <button type="button" class="btn btn-sm btn-soft" id="btnAgregarAdicional">+ Agregar adicional</button>
+                <button
+                    type="button"
+                    class="btn btn-sm btn-soft"
+                    id="btnAgregarAdicional">
+                    + Agregar adicional
+                </button>
+
             </div>
+
         </div>
 
-        {# Compra #}
+
+        {# ===== COMPRA Y VALOR ===== #}
         <div class="form-section">
-            <h4 class="form-section-title">Información de compra</h4>
+
+            <h4 class="form-section-title">
+                Compra y valor
+            </h4>
+
             <div class="dlg-grid">
-                <div><label for="f_fecha_compra">Fecha de compra</label><input id="f_fecha_compra" name="fecha_compra" class="form-control" type="date"></div>
-                <div><label for="f_garantia">Garantía</label><input id="f_garantia" name="garantia" class="form-control" placeholder="12 meses, vigente hasta…"></div>
+
                 <div class="full">
-                    <label for="f_factura">Factura (PDF, JPG o PNG)</label>
-                    <input id="f_factura" name="factura" class="form-control" type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png">
-                    <p class="form-hint" id="facturaActual" hidden></p>
-                    <p class="form-hint">Máximo 20 MB por envío. Al subir una nueva se reemplaza la ruta guardada; el archivo anterior se conserva en el almacenamiento.</p>
+
+                    <label for="f_proveedor">
+                        Proveedor
+                    </label>
+
+                    <input
+                        id="f_proveedor"
+                        name="proveedor"
+                        class="form-control"
+                        list="lista_proveedores"
+                        autocomplete="off"
+                        placeholder="Ej: Alkosto, Compuhard…">
+
+                    <datalist id="lista_proveedores">
+                        {% for p in proveedores %}
+                            <option value="{{ p }}">
+                        {% endfor %}
+                    </datalist>
+
                 </div>
+
+                <div>
+                    <label for="f_fecha_compra">
+                        Fecha de compra
+                    </label>
+
+                    <input
+                        id="f_fecha_compra"
+                        name="fecha_compra"
+                        class="form-control"
+                        type="date">
+                </div>
+
+                <div>
+                    <label for="f_nro_factura">
+                        N.º de factura
+                    </label>
+
+                    <input
+                        id="f_nro_factura"
+                        name="nro_factura"
+                        class="form-control"
+                        autocomplete="off">
+                </div>
+
+                <div>
+                    <label for="f_precio">
+                        Precio de compra
+                    </label>
+
+                    <input
+                        id="f_precio"
+                        name="precio_compra"
+                        class="form-control"
+                        inputmode="decimal"
+                        autocomplete="off"
+                        placeholder="Ej: 3.500.000">
+                </div>
+
+                <div>
+
+                    <label for="f_moneda">
+                        Moneda
+                    </label>
+
+                    <select
+                        id="f_moneda"
+                        name="moneda"
+                        class="form-control">
+
+                        <option value="COP">
+                            COP · Peso colombiano
+                        </option>
+
+                        <option value="USD">
+                            USD · Dólar
+                        </option>
+
+                        <option value="EUR">
+                            EUR · Euro
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div>
+
+                    <label for="f_nro_orden">
+                        N.º de orden de compra
+                    </label>
+
+                    <input
+                        id="f_nro_orden"
+                        name="nro_orden"
+                        class="form-control"
+                        autocomplete="off">
+
+                </div>
+
+                <div>
+
+                    <label for="f_centro_costo">
+                        Centro de costo
+                    </label>
+
+                    <input
+                        id="f_centro_costo"
+                        name="centro_costo"
+                        class="form-control"
+                        list="lista_centros"
+                        autocomplete="off">
+
+                    <datalist id="lista_centros">
+                        {% for c in centros %}
+                            <option value="{{ c }}">
+                        {% endfor %}
+                    </datalist>
+
+                </div>
+
+                <div>
+
+                    <label for="f_sede">
+                        Sede
+                    </label>
+
+                    <input
+                        id="f_sede"
+                        name="sede"
+                        class="form-control"
+                        list="lista_sedes"
+                        autocomplete="off">
+
+                    <datalist id="lista_sedes">
+                        {% for s in sedes %}
+                            <option value="{{ s }}">
+                        {% endfor %}
+                    </datalist>
+
+                </div>
+
+                <div>
+
+                    <label for="f_puesta_uso">
+                        Puesta en uso
+                    </label>
+
+                    <input
+                        id="f_puesta_uso"
+                        name="fecha_puesta_uso"
+                        class="form-control"
+                        type="date">
+
+                </div>
+
+                <div class="full">
+
+                    <label for="f_factura">
+                        Factura (PDF, JPG o PNG)
+                    </label>
+
+                    <input
+                        id="f_factura"
+                        name="factura"
+                        class="form-control"
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png">
+
+                    <p
+                        class="form-hint"
+                        id="facturaActual"
+                        hidden></p>
+
+                    <p class="form-hint">
+                        Máximo 20 MB por envío. Al subir una nueva se reemplaza la ruta guardada; el archivo anterior se conserva en el almacenamiento y en la lista de Documentos.
+                    </p>
+
+                </div>
+
             </div>
+
         </div>
 
+
+        {# ===== GARANTÍA Y DEPRECIACIÓN ===== #}
         <div class="form-section">
-            <h4 class="form-section-title">Observaciones</h4>
-            <textarea id="f_obs" name="observaciones" class="form-control" placeholder="Información adicional del activo…"></textarea>
+
+            <h4 class="form-section-title">
+                Garantía y depreciación
+            </h4>
+
+            <div class="dlg-grid">
+
+                <div>
+
+                    <label for="f_g_inicio">
+                        Inicio de garantía
+                    </label>
+
+                    <input
+                        id="f_g_inicio"
+                        name="garantia_inicio"
+                        class="form-control"
+                        type="date">
+
+                </div>
+
+                <div>
+
+                    <label for="f_g_meses">
+                        Duración (meses)
+                    </label>
+
+                    <input
+                        id="f_g_meses"
+                        name="garantia_meses"
+                        class="form-control"
+                        type="number"
+                        min="0"
+                        max="240"
+                        step="1"
+                        placeholder="12, 24, 36…">
+
+                </div>
+
+                <div class="full">
+
+                    <label for="f_g_fin">
+                        Vence
+                    </label>
+
+                    <input
+                        id="f_g_fin"
+                        name="garantia_fin"
+                        class="form-control"
+                        type="date">
+
+                    <p class="form-hint">
+                        Se calcula solo con inicio + duración. Si no tienes esos datos, escribe la fecha directamente. Si dejas el inicio vacío con duración, se usa la fecha de compra.
+                    </p>
+
+                </div>
+
+                <div>
+
+                    <label for="f_vida">
+                        Vida útil (meses)
+                    </label>
+
+                    <input
+                        id="f_vida"
+                        name="vida_util_meses"
+                        class="form-control"
+                        type="number"
+                        min="1"
+                        max="600"
+                        step="1"
+                        placeholder="Vacío = según el tipo">
+
+                </div>
+
+                <div>
+
+                    <label for="f_residual">
+                        Valor residual
+                    </label>
+
+                    <input
+                        id="f_residual"
+                        name="valor_residual"
+                        class="form-control"
+                        inputmode="decimal"
+                        autocomplete="off"
+                        placeholder="0">
+
+                </div>
+
+            </div>
+
         </div>
+
+
+        {# ===== OBSERVACIONES ===== #}
+        <div class="form-section">
+
+            <h4 class="form-section-title">
+                Observaciones
+            </h4>
+
+            <textarea
+                id="f_obs"
+                name="observaciones"
+                class="form-control"
+                placeholder="Información adicional del activo…"></textarea>
+
+        </div>
+
 
         <div class="dlg-actions">
-            <button type="button" class="btn btn-outline" data-cerrar>Cancelar</button>
-            <button type="submit" class="btn btn-success" id="activoGuardar">Guardar activo</button>
+
+            <button
+                type="button"
+                class="btn btn-outline"
+                data-cerrar>
+                Cancelar
+            </button>
+
+            <button
+                type="submit"
+                class="btn btn-success"
+                id="activoGuardar">
+                Guardar activo
+            </button>
+
         </div>
 
     </form>
+
 </dialog>
 
 {% endif %}
@@ -709,21 +1860,61 @@ data-adicionales='{{ adicionales.get(activo.id, [])|tojson }}'
 {# ===== DIÁLOGO INHABILITAR / BAJA ===== #}
 {% if puede_editar or puede_baja %}
 
-<dialog class="form-dialog" id="motivoDialog" aria-labelledby="motivoTitulo" style="max-width:460px">
-    <form method="POST" id="motivoForm">
-        {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
+<dialog
+    class="form-dialog"
+    id="motivoDialog"
+    aria-labelledby="motivoTitulo"
+    style="max-width:460px">
+
+    <form
+        method="POST"
+        id="motivoForm">
+
+        {% if csrf_token is defined %}
+            <input
+                type="hidden"
+                name="csrf_token"
+                value="{{ csrf_token() }}">
+        {% endif %}
 
         <h3 id="motivoTitulo"></h3>
-        <p class="dlg-sub" id="motivoTexto"></p>
 
-        <label for="f_motivo" id="motivoLabel">Motivo</label>
-        <textarea id="f_motivo" name="motivo" class="form-control" placeholder="Ej: equipo dañado sin reparación"></textarea>
+        <p
+            class="dlg-sub"
+            id="motivoTexto"></p>
+
+        <label
+            for="f_motivo"
+            id="motivoLabel">
+            Motivo
+        </label>
+
+        <textarea
+            id="f_motivo"
+            name="motivo"
+            class="form-control"
+            placeholder="Ej: equipo dañado sin reparación"></textarea>
 
         <div class="dlg-actions">
-            <button type="button" class="btn btn-outline" data-cerrar>Cancelar</button>
-            <button type="submit" class="btn" id="motivoOk">Confirmar</button>
+
+            <button
+                type="button"
+                class="btn btn-outline"
+                data-cerrar>
+                Cancelar
+            </button>
+
+            <button
+                type="submit"
+                class="btn"
+                id="motivoOk">
+                Confirmar
+            </button>
+
         </div>
+
     </form>
+
 </dialog>
 
 {% endif %}
@@ -737,25 +1928,44 @@ data-adicionales='{{ adicionales.get(activo.id, [])|tojson }}'
     "use strict";
 
     /* ===== ELEMENTOS ===== */
-    const filas = Array.from(document.querySelectorAll("#tablaActivos tbody tr[data-grupo]"));
+
+    const filas = Array.from(
+        document.querySelectorAll("#tablaActivos tbody tr[data-grupo]")
+    );
+
     const contador = document.getElementById("contador");
     const vacio = document.getElementById("sinResultados");
+
     const buscador = document.getElementById("buscador");
     const limpiarBusqueda = document.getElementById("limpiarBusqueda");
+
     const filtroTipo = document.getElementById("filtroTipo");
     const filtroArea = document.getElementById("filtroArea");
+    const filtroProveedor = document.getElementById("filtroProveedor");
     const filtroDisponibilidad = document.getElementById("filtroDisponibilidad");
+    const filtroGarantia = document.getElementById("filtroGarantia");
+
     const resetFiltros = document.getElementById("resetFiltros");
+
+    const PUEDE_ELIMINAR_DOCS = {{ 'true' if puede_baja else 'false' }};
 
     let filtroChip = "todos";
     let paginaActual = 1;
+
     const registrosPorPagina = 50;
+
     let filasFiltradas = [];
 
+
     /* ===== UTILIDADES ===== */
+
     function normalizar(texto) {
-        return (texto || "").toString().toLowerCase()
-            .normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+        return (texto || "")
+            .toString()
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .trim();
     }
 
     function esTipoLaptop(tipo) {
@@ -763,16 +1973,22 @@ data-adicionales='{{ adicionales.get(activo.id, [])|tojson }}'
         return t.includes("laptop") || t.includes("portatil");
     }
 
-    function obtenerGrupo(fila) { return fila.dataset.grupo || "otro"; }
+    function obtenerGrupo(fila) {
+        return fila.dataset.grupo || "otro";
+    }
 
     function textoSeguro(valor) {
-        if (valor === null || valor === undefined || String(valor).trim() === "") return "—";
+        if (valor === null || valor === undefined || String(valor).trim() === "") {
+            return "—";
+        }
         return String(valor);
     }
 
     function poner(id, valor) {
         const el = document.getElementById(id);
-        if (el) el.textContent = textoSeguro(valor);
+        if (el) {
+            el.textContent = textoSeguro(valor);
+        }
     }
 
     function parseAdicionales(texto) {
@@ -793,9 +2009,157 @@ data-adicionales='{{ adicionales.get(activo.id, [])|tojson }}'
         return a;
     }
 
+    function dinero(v, moneda) {
+        if (v === "" || v === undefined || v === null) {
+            return "";
+        }
+        try {
+            const dec = (moneda === "USD" || moneda === "EUR") ? 2 : 0;
+            return new Intl.NumberFormat("es-CO", {
+                style: "currency",
+                currency: moneda || "COP",
+                minimumFractionDigits: dec,
+                maximumFractionDigits: dec
+            }).format(Number(v));
+        } catch (e) {
+            return String(v);
+        }
+    }
+
+    function etiquetaGarantia(estado, dias) {
+        if (!estado || estado === "sin_garantia") {
+            return "";
+        }
+        const n = dias === "" ? null : Number(dias);
+
+        if (estado === "vencida") {
+            return "Vencida" + (n !== null ? " hace " + Math.abs(n) + " días" : "");
+        }
+        if (estado.indexOf("por_vencer") === 0) {
+            return "Vence en " + n + " días";
+        }
+        return "Vigente" + (n !== null ? " · " + n + " días restantes" : "");
+    }
+
+
+    /* ===== FASE 2: DOCUMENTOS E HISTORIAL DE CAMBIOS ===== */
+
+    let extrasActivoId = null;
+
+    function esc(s) {
+        return String(s === null || s === undefined ? "" : s)
+            .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    async function cargarExtras(id) {
+        extrasActivoId = id;
+        const ul = document.getElementById("d_docs");
+        const cam = document.getElementById("d_cambios");
+        if (!ul || !cam) return;
+        ul.innerHTML = '<li class="doc-empty">Cargando…</li>';
+        cam.innerHTML = "";
+
+        try {
+            const r = await fetch("/inventario/" + id + "/extras.json", {credentials: "same-origin"});
+            if (!r.ok) throw new Error("HTTP " + r.status);
+            const data = await r.json();
+            if (extrasActivoId !== id) return; /* el usuario abrio otro activo */
+
+            ul.innerHTML = data.documentos.length
+                ? data.documentos.map(function (d) {
+                    return '<li class="doc-item">' +
+                        '<span class="doc-tipo">' + esc(d.tipo) + '</span>' +
+                        '<a class="doc-name" href="' + esc(d.url) + '" target="_blank" rel="noopener">' + esc(d.nombre) + '</a>' +
+                        '<span class="doc-meta">' + esc(d.tamano) + ' · ' + esc(d.subido_por) + ' · ' + esc(d.fecha) + '</span>' +
+                        (PUEDE_ELIMINAR_DOCS
+                            ? '<button type="button" class="doc-del" data-doc="' + d.id + '">Eliminar</button>'
+                            : '') +
+                        '</li>';
+                }).join("")
+                : '<li class="doc-empty">Sin documentos.</li>';
+
+            cam.innerHTML = data.cambios.length
+                ? '<table class="cambios-tabla"><thead><tr><th>Fecha</th><th>Usuario</th><th>Campo</th><th>Antes</th><th>Después</th></tr></thead><tbody>' +
+                  data.cambios.map(function (c) {
+                      return '<tr><td>' + esc(c.fecha) + '</td><td>' + esc(c.usuario) + '</td><td>' + esc(c.campo) +
+                          '</td><td class="cambio-antes">' + esc(c.antes) + '</td><td class="cambio-despues">' + esc(c.despues) + '</td></tr>';
+                  }).join("") + '</tbody></table>'
+                : '<p class="doc-empty" style="padding:10px">Aún no hay cambios registrados.</p>';
+        } catch (e) {
+            ul.innerHTML = '<li class="doc-empty">No fue posible cargar los documentos.</li>';
+        }
+    }
+
+    /* Software y contratos llaman a esta función para refrescar el historial.
+       Number() porque software_activo.js pasa el id como texto. */
+    window.cargarHistorial = function (id) {
+        return cargarExtras(Number(id));
+    };
+
+    (function () {
+        const formDocs = document.getElementById("formDocs");
+        const lista = document.getElementById("d_docs");
+        const tokenEl = document.querySelector('input[name="csrf_token"]');
+        const token = tokenEl ? tokenEl.value : "";
+
+        if (formDocs) {
+            const msg = document.getElementById("docsMsg");
+
+            formDocs.addEventListener("submit", async function (ev) {
+                ev.preventDefault();
+                if (!extrasActivoId) return;
+                if (!formDocs.elements.archivos.files.length) {
+                    msg.textContent = "Selecciona un archivo.";
+                    return;
+                }
+                msg.textContent = "Subiendo…";
+                try {
+                    const r = await fetch("/inventario/" + extrasActivoId + "/documentos", {
+                        method: "POST",
+                        body: new FormData(formDocs),
+                        headers: token ? {"X-CSRFToken": token} : {},
+                        credentials: "same-origin"
+                    });
+                    const j = await r.json();
+                    msg.textContent = j.errores && j.errores.length
+                        ? j.errores.join(" ")
+                        : (j.ok ? "Listo." : (j.error || "Error."));
+                    if (j.ok) formDocs.elements.archivos.value = "";
+                } catch (e) {
+                    msg.textContent = "No fue posible subir.";
+                }
+                cargarExtras(extrasActivoId);
+            });
+        }
+
+        if (lista) {
+            lista.addEventListener("click", async function (ev) {
+                const btn = ev.target.closest(".doc-del");
+                if (!btn || !confirm("¿Eliminar este documento?")) return;
+                try {
+                    const r = await fetch("/documentos/" + btn.dataset.doc + "/eliminar", {
+                        method: "POST",
+                        headers: token ? {"X-CSRFToken": token} : {},
+                        credentials: "same-origin"
+                    });
+                    const j = await r.json().catch(function () { return {}; });
+                    if (!j.ok) alert(j.error || "No fue posible eliminar.");
+                } catch (e) {
+                    alert("No fue posible eliminar.");
+                }
+                cargarExtras(extrasActivoId);
+            });
+        }
+    })();
+
+
     function pintarAdicionales(contenedor, lista) {
+
         contenedor.innerHTML = "";
+
         lista.forEach(function (ad) {
+
             const item = document.createElement("div");
             item.className = "adicional-item";
 
@@ -803,40 +2167,58 @@ data-adicionales='{{ adicionales.get(activo.id, [])|tojson }}'
             const titulo = document.createElement("strong");
             titulo.textContent = ad.descripcion || "—";
             info.appendChild(titulo);
-            if (ad.tipo) {
-                const tipo = document.createElement("small");
-                tipo.textContent = " · " + ad.tipo;
-                info.appendChild(tipo);
+
+            const extra = [ad.tipo, ad.proveedor].filter(Boolean).join(" · ");
+
+            if (extra) {
+                const small = document.createElement("small");
+                small.textContent = " · " + extra;
+                info.appendChild(small);
             }
+
             item.appendChild(info);
 
             if (ad.factura_url) {
                 item.appendChild(crearEnlaceFactura(ad.factura_url));
             }
+
             contenedor.appendChild(item);
         });
     }
 
+
     /* ===== ESTADÍSTICAS ===== */
+
     function actualizarEstadisticas() {
-        let asignados = 0, disponibles = 0, reparacion = 0, baja = 0;
+
+        let asignados = 0;
+        let disponibles = 0;
+        let reparacion = 0;
+        let baja = 0;
+
         const tiposConteo = {};
 
         filas.forEach(function (fila) {
+
             const grupo = obtenerGrupo(fila);
+
             if (grupo === "asignado") asignados++;
             if (grupo === "disponible") disponibles++;
             if (grupo === "reparacion") reparacion++;
             if (grupo === "baja") baja++;
 
             const tipo = normalizar(fila.dataset.tipo);
-            if (tipo) tiposConteo[tipo] = (tiposConteo[tipo] || 0) + 1;
+
+            if (tipo) {
+                tiposConteo[tipo] = (tiposConteo[tipo] || 0) + 1;
+            }
         });
 
         const set = function (id, v) {
             const el = document.getElementById(id);
             if (el) el.textContent = v;
         };
+
         set("statAsignados", asignados);
         set("statDisponibles", disponibles);
         set("statReparacion", reparacion);
@@ -852,144 +2234,275 @@ data-adicionales='{{ adicionales.get(activo.id, [])|tojson }}'
 
         document.querySelectorAll("[data-tipo-item]").forEach(function (el) {
             const c = el.querySelector(".type-count");
-            if (c) c.textContent = tiposConteo[normalizar(el.dataset.tipoItem)] || 0;
+            if (c) {
+                c.textContent = tiposConteo[normalizar(el.dataset.tipoItem)] || 0;
+            }
         });
     }
 
+
     /* ===== FILTRADO ===== */
+
     function obtenerFiltradas() {
+
         const texto = normalizar(buscador ? buscador.value : "");
         const tipo = normalizar(filtroTipo ? filtroTipo.value : "");
         const area = normalizar(filtroArea ? filtroArea.value : "");
+        const prov = normalizar(filtroProveedor ? filtroProveedor.value : "");
         const disp = normalizar(filtroDisponibilidad ? filtroDisponibilidad.value : "");
+        const gar = filtroGarantia ? filtroGarantia.value : "";
 
         return filas.filter(function (fila) {
+
             const grupo = obtenerGrupo(fila);
+
             return (
                 (!texto || normalizar(fila.dataset.busqueda).includes(texto)) &&
                 (!tipo || normalizar(fila.dataset.tipo) === tipo) &&
                 (!area || normalizar(fila.dataset.area) === area) &&
+                (!prov || normalizar(fila.dataset.proveedor) === prov) &&
                 (!disp || grupo === disp) &&
+                (
+                    !gar ||
+                    (
+                        gar === "por_vencer"
+                            ? (fila.dataset.garantia || "").indexOf("por_vencer") === 0
+                            : fila.dataset.garantia === gar
+                    )
+                ) &&
                 (filtroChip === "todos" || grupo === filtroChip)
             );
         });
     }
 
+
     /* ===== PAGINACIÓN ===== */
+
     function renderPaginacion() {
+
         const total = filasFiltradas.length;
         const paginas = Math.max(1, Math.ceil(total / registrosPorPagina));
-        if (paginaActual > paginas) paginaActual = paginas;
+
+        if (paginaActual > paginas) {
+            paginaActual = paginas;
+        }
 
         const inicio = total === 0 ? 0 : (paginaActual - 1) * registrosPorPagina;
         const fin = Math.min(inicio + registrosPorPagina, total);
 
         filas.forEach(function (f) { f.hidden = true; });
+
         filasFiltradas.slice(inicio, fin).forEach(function (f) { f.hidden = false; });
 
         const set = function (id, v) {
             const el = document.getElementById(id);
             if (el) el.textContent = v;
         };
+
         set("desdeRegistro", total === 0 ? 0 : inicio + 1);
         set("hastaRegistro", fin);
         set("totalFiltrado", total);
 
         const anterior = document.getElementById("paginaAnterior");
         const siguiente = document.getElementById("paginaSiguiente");
+
         if (anterior) anterior.disabled = paginaActual <= 1;
         if (siguiente) siguiente.disabled = paginaActual >= paginas;
 
-        if (vacio) vacio.classList.toggle("visible", total === 0);
+        if (vacio) {
+            vacio.classList.toggle("visible", total === 0);
+        }
 
         const numeros = document.getElementById("numerosPagina");
-        if (!numeros) return;
+
+        if (!numeros) {
+            return;
+        }
+
         numeros.innerHTML = "";
 
         const maxBotones = 5;
+
         let ini = Math.max(1, paginaActual - Math.floor(maxBotones / 2));
         let end = Math.min(paginas, ini + maxBotones - 1);
-        if (end - ini < maxBotones - 1) ini = Math.max(1, end - maxBotones + 1);
+
+        if (end - ini < maxBotones - 1) {
+            ini = Math.max(1, end - maxBotones + 1);
+        }
 
         for (let n = ini; n <= end; n++) {
+
             const b = document.createElement("button");
+
             b.type = "button";
             b.className = "page-btn" + (n === paginaActual ? " active" : "");
             b.textContent = n;
+
             b.addEventListener("click", function () {
                 paginaActual = n;
                 renderPaginacion();
             });
+
             numeros.appendChild(b);
         }
     }
 
     function aplicarFiltros() {
+
         filasFiltradas = obtenerFiltradas();
         paginaActual = 1;
-        if (contador) contador.textContent = filasFiltradas.length;
+
+        if (contador) {
+            contador.textContent = filasFiltradas.length;
+        }
+
         renderPaginacion();
+
         if (limpiarBusqueda) {
             limpiarBusqueda.classList.toggle("visible", !!(buscador && buscador.value));
         }
+
+        sincronizarSidebar();
     }
 
-    if (buscador) buscador.addEventListener("input", aplicarFiltros);
+
+    /* ===== BARRA LATERAL ===== */
+
+    function sincronizarSidebar() {
+
+        const actual = normalizar(filtroTipo ? filtroTipo.value : "");
+
+        document.querySelectorAll("[data-tipo-item]").forEach(function (el) {
+            el.classList.toggle(
+                "active",
+                !!actual && normalizar(el.dataset.tipoItem) === actual
+            );
+        });
+    }
+
+    document.querySelectorAll("[data-tipo-item]").forEach(function (el) {
+
+        function elegir() {
+
+            if (!filtroTipo) {
+                return;
+            }
+
+            const valor = el.dataset.tipoItem;
+            const yaActivo = normalizar(filtroTipo.value) === normalizar(valor);
+
+            filtroTipo.value = yaActivo ? "" : valor;
+
+            aplicarFiltros();
+
+            if (!yaActivo && window.innerWidth <= 1150) {
+                const tabla = document.getElementById("tablaActivos");
+                if (tabla) {
+                    tabla.scrollIntoView({behavior: "smooth", block: "start"});
+                }
+            }
+        }
+
+        el.addEventListener("click", elegir);
+
+        el.addEventListener("keydown", function (e) {
+            if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                elegir();
+            }
+        });
+    });
+
+    if (buscador) {
+        buscador.addEventListener("input", aplicarFiltros);
+    }
 
     if (limpiarBusqueda) {
         limpiarBusqueda.addEventListener("click", function () {
-            if (buscador) { buscador.value = ""; buscador.focus(); }
+            if (buscador) {
+                buscador.value = "";
+                buscador.focus();
+            }
             aplicarFiltros();
         });
     }
 
-    [filtroTipo, filtroArea, filtroDisponibilidad].forEach(function (s) {
-        if (s) s.addEventListener("change", aplicarFiltros);
+    [filtroTipo, filtroArea, filtroProveedor, filtroDisponibilidad, filtroGarantia].forEach(function (s) {
+        if (s) {
+            s.addEventListener("change", aplicarFiltros);
+        }
     });
 
     if (resetFiltros) {
         resetFiltros.addEventListener("click", function () {
+
             if (buscador) buscador.value = "";
             if (filtroTipo) filtroTipo.value = "";
             if (filtroArea) filtroArea.value = "";
+            if (filtroProveedor) filtroProveedor.value = "";
             if (filtroDisponibilidad) filtroDisponibilidad.value = "";
+            if (filtroGarantia) filtroGarantia.value = "";
+
             filtroChip = "todos";
+
             document.querySelectorAll(".chip").forEach(function (c) {
                 c.classList.toggle("active", c.dataset.filtro === "todos");
             });
+
             aplicarFiltros();
         });
     }
 
     document.querySelectorAll(".chip").forEach(function (chip) {
         chip.addEventListener("click", function () {
+
             filtroChip = chip.dataset.filtro;
+
             document.querySelectorAll(".chip").forEach(function (c) {
                 c.classList.toggle("active", c === chip);
             });
+
             aplicarFiltros();
         });
     });
 
     const btnAnterior = document.getElementById("paginaAnterior");
+
     if (btnAnterior) {
         btnAnterior.addEventListener("click", function () {
-            if (paginaActual > 1) { paginaActual--; renderPaginacion(); }
+            if (paginaActual > 1) {
+                paginaActual--;
+                renderPaginacion();
+            }
         });
     }
 
     const btnSiguiente = document.getElementById("paginaSiguiente");
+
     if (btnSiguiente) {
         btnSiguiente.addEventListener("click", function () {
             const paginas = Math.ceil(filasFiltradas.length / registrosPorPagina);
-            if (paginaActual < paginas) { paginaActual++; renderPaginacion(); }
+            if (paginaActual < paginas) {
+                paginaActual++;
+                renderPaginacion();
+            }
         });
     }
 
+
     /* ===== MODAL DETALLE ===== */
+
     const detalleDialog = document.getElementById("detalleDialog");
 
+    function limpiarSeccionesExternas() {
+        ["sw-activo", "ct-activo"].forEach(function (i) {
+            const el = document.getElementById(i);
+            if (el) el.innerHTML = "";
+        });
+    }
+
     function abrirDetalle(boton) {
+
         const d = boton.dataset;
 
         poner("d_id", d.id);
@@ -1003,14 +2516,37 @@ data-adicionales='{{ adicionales.get(activo.id, [])|tojson }}'
         poner("d_area", d.area);
         poner("d_asignado", d.asignado);
         poner("d_cantidad", d.cantidad);
+
+        poner("d_proveedor", d.proveedor);
         poner("d_fecha_compra", d.fechaCompra);
-        poner("d_garantia", d.garantia);
+        poner("d_precio", dinero(d.precioCompra, d.moneda));
+        poner("d_nro_factura", d.nroFactura);
+        poner("d_nro_orden", d.nroOrden);
+        poner("d_centro_costo", d.centroCosto);
+        poner("d_sede", d.sede);
+        poner("d_valor_actual", dinero(d.valorActual, d.moneda));
+
+        poner(
+            "d_vida",
+            d.vidaEfectiva
+                ? d.vidaEfectiva + " meses · " + (d.mesesUso || 0) + " de uso"
+                : ""
+        );
+
+        poner("d_garantia_inicio", d.garantiaInicio);
+        poner("d_garantia_fin", d.garantiaFin);
+        poner("d_garantia_estado", etiquetaGarantia(d.estadoGarantia, d.diasGarantia));
         poner("d_observaciones", d.observaciones);
 
-        /* Factura */
+
+        /* ===== FACTURA ===== */
+
         const facturaEl = document.getElementById("d_factura");
+
         if (facturaEl) {
+
             facturaEl.textContent = "";
+
             if (d.facturaUrl) {
                 facturaEl.appendChild(crearEnlaceFactura(d.facturaUrl, "Ver factura"));
             } else {
@@ -1018,9 +2554,14 @@ data-adicionales='{{ adicionales.get(activo.id, [])|tojson }}'
             }
         }
 
-        /* Ficha técnica */
+
+        /* ===== FICHA TÉCNICA ===== */
+
         const laptopCard = document.getElementById("laptopTechnicalCard");
-        if (laptopCard) laptopCard.style.display = esTipoLaptop(d.tipo) ? "block" : "none";
+
+        if (laptopCard) {
+            laptopCard.style.display = esTipoLaptop(d.tipo) ? "block" : "none";
+        }
 
         poner("d_procesador", d.procesador);
         poner("d_ram", d.ram);
@@ -1040,27 +2581,64 @@ data-adicionales='{{ adicionales.get(activo.id, [])|tojson }}'
             ["box_so", d.so]
         ].forEach(function (item) {
             const box = document.getElementById(item[0]);
-            if (box) box.style.display = item[1] ? "" : "none";
+            if (box) {
+                box.style.display = item[1] ? "" : "none";
+            }
         });
 
-        /* Adicionales */
+
+        /* ===== ADICIONALES ===== */
+
         const adSec = document.getElementById("adicionalesSection");
         const adList = document.getElementById("d_adicionales");
+
         const adicionales = parseAdicionales(d.adicionales);
+
         if (adSec && adList) {
             pintarAdicionales(adList, adicionales);
             adSec.style.display = adicionales.length ? "" : "none";
         }
 
+
+        /* ===== OBSERVACIONES ===== */
+
         const obsSection = document.getElementById("observacionesSection");
-        if (obsSection) obsSection.style.display = d.observaciones ? "" : "none";
+
+        if (obsSection) {
+            obsSection.style.display = d.observaciones ? "" : "none";
+        }
+
+
+        /* ===== TÍTULO ===== */
 
         const titulo = document.getElementById("detalleTitulo");
         const subtitulo = document.getElementById("detalleSubtitulo");
-        if (titulo) titulo.textContent = d.codigo || "Detalle del activo";
+
+        if (titulo) {
+            titulo.textContent = d.codigo || "Detalle del activo";
+        }
+
         if (subtitulo) {
             subtitulo.textContent = [d.tipo, d.marca, d.modelo].filter(Boolean).join(" · ");
         }
+
+
+        /* ===== DOCUMENTOS, HISTORIAL, SOFTWARE, CONTRATOS Y MANTENIMIENTOS ===== */
+
+        limpiarSeccionesExternas();
+
+        const idActivo = Number(d.id);
+
+        cargarExtras(idActivo);
+
+        if (window.swActivoCargar) {
+            window.swActivoCargar(idActivo);
+        }
+
+        if (window.ctActivoCargar) {
+            window.ctActivoCargar(idActivo);
+        }
+
 
         if (detalleDialog && typeof detalleDialog.showModal === "function") {
             detalleDialog.showModal();
@@ -1068,26 +2646,38 @@ data-adicionales='{{ adicionales.get(activo.id, [])|tojson }}'
     }
 
     document.querySelectorAll("[data-ver]").forEach(function (b) {
-        b.addEventListener("click", function () { abrirDetalle(b); });
+        b.addEventListener("click", function () {
+            abrirDetalle(b);
+        });
     });
 
     if (detalleDialog) {
         detalleDialog.addEventListener("click", function (e) {
-            if (e.target === detalleDialog) detalleDialog.close();
+            if (e.target === detalleDialog) {
+                detalleDialog.close();
+            }
         });
+
+        detalleDialog.addEventListener("close", limpiarSeccionesExternas);
     }
 
     const cerrarDetalle = document.getElementById("cerrarDetalle");
+
     if (cerrarDetalle) {
         cerrarDetalle.addEventListener("click", function () {
-            if (detalleDialog) detalleDialog.close();
+            if (detalleDialog) {
+                detalleDialog.close();
+            }
         });
     }
 
+
     /* ===== CREAR / EDITAR ===== */
+
     const dlgActivo = document.getElementById("activoDialog");
 
     if (dlgActivo) {
+
         const form = document.getElementById("activoForm");
         const titulo = document.getElementById("activoTitulo");
         const guardar = document.getElementById("activoGuardar");
@@ -1099,107 +2689,228 @@ data-adicionales='{{ adicionales.get(activo.id, [])|tojson }}'
         const hintDisp = document.getElementById("hintDisponibilidad");
 
         dlgActivo.addEventListener("click", function (e) {
-            if (e.target === dlgActivo) dlgActivo.close();
-        });
-        dlgActivo.querySelectorAll("[data-cerrar]").forEach(function (b) {
-            b.addEventListener("click", function () { dlgActivo.close(); });
+            if (e.target === dlgActivo) {
+                dlgActivo.close();
+            }
         });
 
-        function actualizarFichaLaptop() {
-            if (ficha) ficha.hidden = !esTipoLaptop(form.elements.tipo ? form.elements.tipo.value : "");
+        dlgActivo.querySelectorAll("[data-cerrar]").forEach(function (b) {
+            b.addEventListener("click", function () {
+                dlgActivo.close();
+            });
+        });
+
+
+        /* ===== GARANTÍA ===== */
+
+        function calcularFinGarantia() {
+
+            const ini = form.elements.garantia_inicio.value;
+            const meses = form.elements.garantia_meses.value;
+            const fin = form.elements.garantia_fin;
+
+            if (ini && meses !== "") {
+
+                const p = ini.split("-").map(Number);
+
+                const f = new Date(p[0], p[1] - 1 + Number(meses), p[2]);
+
+                if (f.getDate() !== p[2]) {
+                    f.setDate(0);
+                }
+
+                fin.value =
+                    f.getFullYear() + "-" +
+                    String(f.getMonth() + 1).padStart(2, "0") + "-" +
+                    String(f.getDate()).padStart(2, "0");
+
+                fin.readOnly = true;
+
+            } else {
+
+                fin.readOnly = false;
+            }
         }
 
-        if (form.elements.tipo) form.elements.tipo.addEventListener("input", actualizarFichaLaptop);
+        if (form.elements.garantia_inicio) {
+            form.elements.garantia_inicio.addEventListener("input", calcularFinGarantia);
+        }
 
-        /* Filas de adicionales nuevos */
+        if (form.elements.garantia_meses) {
+            form.elements.garantia_meses.addEventListener("input", calcularFinGarantia);
+        }
+
+
+        /* ===== FICHA LAPTOP ===== */
+
+        function actualizarFichaLaptop() {
+            if (ficha) {
+                ficha.hidden = !esTipoLaptop(form.elements.tipo ? form.elements.tipo.value : "");
+            }
+        }
+
+        if (form.elements.tipo) {
+            form.elements.tipo.addEventListener("input", actualizarFichaLaptop);
+        }
+
+
+        /* ===== FILAS DE ADICIONALES ===== */
+
         function agregarFilaAdicional() {
+
             const fila = document.createElement("div");
             fila.className = "adicional-row";
+
+            /* Tipo */
 
             const colTipo = document.createElement("div");
             const lblTipo = document.createElement("label");
             lblTipo.textContent = "Tipo";
+
             const selTipo = document.createElement("select");
             selTipo.name = "adicional_tipo";
             selTipo.className = "form-control";
+
             ["Cargador", "Mouse", "Teclado", "Maletín", "Memoria RAM", "Disco", "Otro"].forEach(function (t) {
                 const o = document.createElement("option");
                 o.value = t;
                 o.textContent = t;
                 selTipo.appendChild(o);
             });
+
             colTipo.appendChild(lblTipo);
             colTipo.appendChild(selTipo);
+
+            /* Descripción */
 
             const colDesc = document.createElement("div");
             const lblDesc = document.createElement("label");
             lblDesc.textContent = "Descripción";
+
             const inDesc = document.createElement("input");
             inDesc.name = "adicional_descripcion";
             inDesc.className = "form-control";
             inDesc.autocomplete = "off";
             inDesc.placeholder = "Ej: Cargador 65 W";
+
             colDesc.appendChild(lblDesc);
             colDesc.appendChild(inDesc);
+
+            /* Proveedor */
+
+            const colProv = document.createElement("div");
+            const lblProv = document.createElement("label");
+            lblProv.textContent = "Proveedor";
+
+            const inProv = document.createElement("input");
+            inProv.name = "adicional_proveedor";
+            inProv.className = "form-control";
+            inProv.autocomplete = "off";
+            inProv.setAttribute("list", "lista_proveedores");
+
+            colProv.appendChild(lblProv);
+            colProv.appendChild(inProv);
+
+            /* Factura */
 
             const colFile = document.createElement("div");
             const lblFile = document.createElement("label");
             lblFile.textContent = "Factura";
+
             const inFile = document.createElement("input");
             inFile.type = "file";
             inFile.name = "adicional_factura";
             inFile.className = "form-control";
             inFile.accept = ".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png";
+
             colFile.appendChild(lblFile);
             colFile.appendChild(inFile);
+
+            /* Quitar */
 
             const quitar = document.createElement("button");
             quitar.type = "button";
             quitar.className = "btn-quitar";
             quitar.setAttribute("aria-label", "Quitar adicional");
             quitar.textContent = "×";
-            quitar.addEventListener("click", function () { fila.remove(); });
+
+            quitar.addEventListener("click", function () {
+                fila.remove();
+            });
 
             fila.appendChild(colTipo);
             fila.appendChild(colDesc);
+            fila.appendChild(colProv);
             fila.appendChild(colFile);
             fila.appendChild(quitar);
+
             listaNuevos.appendChild(fila);
         }
 
-        if (btnAgregar) btnAgregar.addEventListener("click", agregarFilaAdicional);
+        if (btnAgregar) {
+            btnAgregar.addEventListener("click", agregarFilaAdicional);
+        }
 
         function seleccionarPersona(nombre) {
+
             const sel = form.elements.persona_id;
-            if (!sel) return;
+
+            if (!sel) {
+                return;
+            }
+
             sel.value = "";
-            if (!nombre) return;
+
+            if (!nombre) {
+                return;
+            }
+
             Array.from(sel.options).forEach(function (o) {
-                if (o.dataset.nombre === nombre) sel.value = o.value;
+                if (o.dataset.nombre === nombre) {
+                    sel.value = o.value;
+                }
             });
         }
 
+
+        /* ===== ABRIR ACTIVO ===== */
+
         function abrirActivo(modo, datos) {
+
             form.reset();
+
             datos = datos || {};
 
             form.action = modo === "crear" ? form.dataset.crear : datos.action;
+
             titulo.textContent = modo === "crear" ? "Nuevo activo" : "Editar activo";
+
             guardar.textContent = modo === "crear" ? "Guardar activo" : "Guardar cambios";
+
             guardar.disabled = false;
 
             const setField = function (name, value) {
                 const f = form.elements[name];
-                if (f) f.value = value || "";
+                if (f) {
+                    f.value = value || "";
+                }
             };
+
+            /* Identificación */
 
             setField("codigo", datos.codigo);
             setField("tipo", datos.tipo);
             setField("marca", datos.marca);
             setField("modelo", datos.modelo);
             setField("serial", datos.serial);
+
+            /* Estado */
+
             setField("estado", datos.estado);
             setField("cantidad", datos.cantidad);
+
+            /* Ficha técnica */
+
             setField("procesador", datos.procesador);
             setField("ram", datos.ram);
             setField("disco", datos.disco);
@@ -1207,38 +2918,86 @@ data-adicionales='{{ adicionales.get(activo.id, [])|tojson }}'
             setField("ip", datos.ip);
             setField("mac", datos.mac);
             setField("sistema_operativo", datos.so);
+
+            /* Compra */
+
+            setField("proveedor", datos.proveedor);
             setField("fecha_compra", datos.fechaCompra);
-            setField("garantia", datos.garantia);
+            setField("precio_compra", datos.precioCompra);
+            setField("moneda", datos.moneda || "COP");
+            setField("nro_factura", datos.nroFactura);
+            setField("nro_orden", datos.nroOrden);
+            setField("centro_costo", datos.centroCosto);
+            setField("sede", datos.sede);
+            setField("fecha_puesta_uso", datos.fechaPuestaUso);
+
+            /* Depreciación */
+
+            setField("vida_util_meses", datos.vidaUtilMeses);
+            setField("valor_residual", datos.valorResidual);
+
+            /* Garantía */
+
+            setField("garantia_inicio", datos.garantiaInicio);
+            setField("garantia_meses", datos.garantiaMeses);
+            setField("garantia_fin", datos.garantiaFin);
+
+            calcularFinGarantia();
+
+            /* Observaciones */
+
             setField("observaciones", datos.observaciones || datos.obs);
 
-            /* Disponibilidad: si está asignado, no se edita a mano */
+            /* Disponibilidad */
+
             const dispSel = form.elements.disponibilidad;
-            const asignado = modo === "editar" && normalizar(datos.disponibilidad).includes("asignado");
+
+            const asignado =
+                modo === "editar" &&
+                normalizar(datos.disponibilidad).includes("asignado");
+
             if (dispSel) {
+
                 dispSel.value = asignado ? "Disponible" : (datos.disponibilidad || "Disponible");
-                if (!dispSel.value) dispSel.value = "Disponible";
+
+                if (!dispSel.value) {
+                    dispSel.value = "Disponible";
+                }
+
                 dispSel.disabled = asignado;
             }
-            if (hintDisp) hintDisp.hidden = !asignado;
+
+            if (hintDisp) {
+                hintDisp.hidden = !asignado;
+            }
 
             /* Persona */
+
             seleccionarPersona(modo === "editar" ? datos.asignado : "");
 
             /* Factura actual */
+
             if (facturaActual) {
+
                 facturaActual.textContent = "";
+
                 if (modo === "editar" && datos.facturaUrl) {
+
                     facturaActual.appendChild(document.createTextNode("Factura actual: "));
                     facturaActual.appendChild(crearEnlaceFactura(datos.facturaUrl, "ver"));
                     facturaActual.hidden = false;
+
                 } else {
+
                     facturaActual.hidden = true;
                 }
             }
 
             /* Adicionales */
+
             listaNuevos.innerHTML = "";
             listaExistentes.innerHTML = "";
+
             if (modo === "editar") {
                 pintarAdicionales(listaExistentes, parseAdicionales(datos.adicionales));
             }
@@ -1246,31 +3005,58 @@ data-adicionales='{{ adicionales.get(activo.id, [])|tojson }}'
             actualizarFichaLaptop();
 
             dlgActivo.showModal();
+
             form.elements.codigo.focus();
         }
 
+
+        /* ===== NUEVO ===== */
+
         const btnNuevo = document.getElementById("btnNuevo");
-        if (btnNuevo) btnNuevo.addEventListener("click", function () { abrirActivo("crear"); });
+
+        if (btnNuevo) {
+            btnNuevo.addEventListener("click", function () {
+                abrirActivo("crear");
+            });
+        }
+
+
+        /* ===== EDITAR ===== */
 
         document.querySelectorAll("[data-editar]").forEach(function (b) {
-            b.addEventListener("click", function () { abrirActivo("editar", b.dataset); });
+            b.addEventListener("click", function () {
+                abrirActivo("editar", b.dataset);
+            });
         });
 
+
+        /* ===== SUBMIT ===== */
+
         form.addEventListener("submit", function () {
-            /* Quita filas de adicionales vacías para no desalinear la lista */
+
+            /* Quita filas de adicionales vacías para no desalinear la lista. */
+
             listaNuevos.querySelectorAll(".adicional-row").forEach(function (fila) {
+
                 const desc = fila.querySelector('[name="adicional_descripcion"]');
-                if (desc && !desc.value.trim()) fila.remove();
+
+                if (desc && !desc.value.trim()) {
+                    fila.remove();
+                }
             });
+
             guardar.disabled = true;
             guardar.textContent = "Guardando…";
         });
     }
 
+
     /* ===== MOTIVO / BAJA ===== */
+
     const dlgMotivo = document.getElementById("motivoDialog");
 
     if (dlgMotivo) {
+
         const form = document.getElementById("motivoForm");
         const titulo = document.getElementById("motivoTitulo");
         const texto = document.getElementById("motivoTexto");
@@ -1279,15 +3065,22 @@ data-adicionales='{{ adicionales.get(activo.id, [])|tojson }}'
         const label = document.getElementById("motivoLabel");
 
         dlgMotivo.addEventListener("click", function (e) {
-            if (e.target === dlgMotivo) dlgMotivo.close();
+            if (e.target === dlgMotivo) {
+                dlgMotivo.close();
+            }
         });
+
         dlgMotivo.querySelectorAll("[data-cerrar]").forEach(function (b) {
-            b.addEventListener("click", function () { dlgMotivo.close(); });
+            b.addEventListener("click", function () {
+                dlgMotivo.close();
+            });
         });
 
         document.querySelectorAll("[data-motivo]").forEach(function (boton) {
             boton.addEventListener("click", function () {
+
                 form.reset();
+
                 form.action = boton.dataset.action;
                 titulo.textContent = boton.dataset.title;
                 texto.textContent = boton.dataset.text;
@@ -1296,19 +3089,26 @@ data-adicionales='{{ adicionales.get(activo.id, [])|tojson }}'
                 ok.disabled = false;
 
                 const obligatorio = !!boton.dataset.required;
+
                 campo.required = obligatorio;
                 label.textContent = obligatorio ? "Motivo *" : "Motivo (opcional)";
 
                 dlgMotivo.showModal();
+
                 campo.focus();
             });
         });
 
-        form.addEventListener("submit", function () { ok.disabled = true; });
+        form.addEventListener("submit", function () {
+            ok.disabled = true;
+        });
     }
 
+
     /* ===== EXPORTAR CSV ===== */
+
     function exportarCSV() {
+
         if (!filasFiltradas.length) {
             alert("No hay registros para exportar.");
             return;
@@ -1316,44 +3116,81 @@ data-adicionales='{{ adicionales.get(activo.id, [])|tojson }}'
 
         const datos = [[
             "Código", "Tipo", "Marca", "Modelo", "Serial",
-            "Disponibilidad", "Estado físico", "Área", "Asignado a"
+            "Disponibilidad", "Estado físico", "Área", "Asignado a", "Garantía"
         ]];
 
         filasFiltradas.forEach(function (fila) {
+
             const celdas = fila.querySelectorAll("td");
             const out = [];
-            for (let i = 0; i < 9; i++) {
+
+            for (let i = 0; i < 10; i++) {
                 out.push(celdas[i] ? celdas[i].innerText.trim() : "");
             }
+
             datos.push(out);
         });
 
-        const csv = datos.map(function (f) {
-            return f.map(function (v) {
-                return '"' + String(v).replace(/"/g, '""') + '"';
-            }).join(",");
-        }).join("\n");
+        const csv = datos
+            .map(function (f) {
+                return f
+                    .map(function (v) {
+                        return '"' + String(v).replace(/"/g, '""') + '"';
+                    })
+                    .join(",");
+            })
+            .join("\n");
 
-        const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+        const blob = new Blob(["\uFEFF" + csv], {type: "text/csv;charset=utf-8;"});
+
         const url = URL.createObjectURL(blob);
+
         const a = document.createElement("a");
         a.href = url;
         a.download = "inventario_activos.csv";
+
         document.body.appendChild(a);
         a.click();
         a.remove();
+
         URL.revokeObjectURL(url);
     }
 
     const exportCSV = document.getElementById("exportCSV");
-    if (exportCSV) exportCSV.addEventListener("click", exportarCSV);
+
+    if (exportCSV) {
+        exportCSV.addEventListener("click", exportarCSV);
+    }
 
     const exportPDF = document.getElementById("exportPDF");
-    if (exportPDF) exportPDF.addEventListener("click", function () { window.print(); });
+
+    if (exportPDF) {
+        exportPDF.addEventListener("click", function () {
+            window.print();
+        });
+    }
+
 
     /* ===== INICIO ===== */
+
     actualizarEstadisticas();
+
     aplicarFiltros();
+
+
+    /* ===== ATAJO /inventario?nuevo=1 ===== */
+
+    if (new URLSearchParams(window.location.search).get("nuevo") === "1") {
+
+        const btn = document.getElementById("btnNuevo");
+
+        if (btn) {
+            btn.click();
+        }
+
+        history.replaceState(null, "", window.location.pathname);
+    }
+
 })();
 </script>
 {% endblock %}

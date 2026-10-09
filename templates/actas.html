@@ -34,13 +34,49 @@
 
     textarea.form-control { resize: vertical; min-height: 96px; }
 
+    /* ---------- Seleccion de equipos ---------- */
+    .equipos { margin-top: 18px; }
+    .equipos[hidden] { display: none; }
+    .equipos-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+    .equipos-head label { margin: 0; }
+    .link-btn { padding: 0; border: 0; background: none; color: var(--primary); font-size: 13px; font-weight: 600; cursor: pointer; }
+    .link-btn:hover { text-decoration: underline; }
+
+    .equipo-list { display: flex; flex-direction: column; gap: 8px; }
+    .equipo {
+        display: flex; align-items: center; gap: 12px;
+        padding: 11px 14px; cursor: pointer;
+        border: 1px solid var(--border); border-radius: 10px;
+        background: var(--surface);
+        transition: border-color .15s ease, background .15s ease;
+    }
+    .equipo:hover { border-color: var(--primary); }
+    .equipo:has(input:checked) { border-color: var(--primary); background: var(--primary-soft); }
+    .equipo input { width: 18px; height: 18px; flex-shrink: 0; margin: 0; accent-color: var(--primary); }
+    .equipo-main { flex: 1; min-width: 0; }
+    .equipo-main strong { display: block; font-size: 14px; font-weight: 600; }
+    .equipo-main small { display: block; margin-top: 1px; color: var(--text-light); font-size: 12.5px; overflow-wrap: anywhere; }
+    .equipos-empty { padding: 14px; border: 1px dashed var(--border); border-radius: 10px; color: var(--text-light); font-size: 13.5px; }
+    .equipos-error { margin-top: 8px; color: var(--danger); font-size: 13px; }
+    .equipos-error[hidden] { display: none; }
+
+    .hint { margin-top: 8px; color: var(--text-light); font-size: 12.5px; }
+
     .form-actions {
         display: flex;
+        align-items: center;
         justify-content: flex-end;
+        gap: 14px;
         margin-top: 22px;
         padding-top: 18px;
         border-top: 1px solid var(--border);
     }
+
+    /* Estado del envio (generando / error) */
+    .envio-msg { margin: 0; font-size: 13px; color: var(--text-light); }
+    .envio-msg[hidden] { display: none; }
+    .envio-msg.es-error { color: var(--danger); }
+    .btn[disabled] { opacity: .65; cursor: progress; }
 
     .list-head {
         display: flex;
@@ -65,13 +101,15 @@
     }
 
     .cell-muted { color: var(--text-light); }
-    .cell-obs { max-width: 360px; color: var(--text-light); }
+    .cell-obs { max-width: 360px; color: var(--text-light); overflow-wrap: anywhere; word-break: break-word; }
     .btn-sm { padding: 7px 13px; font-size: 12.5px; white-space: nowrap; }
 
     .empty-state { padding: 48px 16px; text-align: center; color: var(--text-light); }
 
     @media (max-width: 900px) {
+        .form-actions { flex-direction: column-reverse; align-items: stretch; }
         .form-actions .btn { width: 100%; }
+        .envio-msg { text-align: center; }
         .table { min-width: 800px; }
     }
 </style>
@@ -93,7 +131,8 @@
         <h2 class="card-title">Generar nueva acta</h2>
         <p class="card-sub">Los campos con * son obligatorios.</p>
 
-        <form method="POST" action="/actas/generar">
+        <form method="POST" action="/actas/generar" id="acta-form" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
             <div class="acta-grid">
 
@@ -117,18 +156,31 @@
                         <option value="Cambio">Cambio de equipo</option>
                         <option value="Paz y salvo">Paz y salvo</option>
                     </select>
+                    <p class="hint" id="tipo-hint">Incluye todos los equipos asignados a la persona.</p>
                 </div>
 
+            </div>
+
+            <!-- Solo en Devolucion y Cambio -->
+            <div class="equipos" id="equipos" hidden>
+                <div class="equipos-head">
+                    <label>Equipo(s) del acta *</label>
+                    <button type="button" class="link-btn" id="sel-todos" hidden>Seleccionar todos</button>
+                </div>
+                <div class="equipo-list" id="equipo-list"></div>
+                <p class="equipos-error" id="equipos-error" hidden>Selecciona al menos un equipo.</p>
             </div>
 
             <div class="field-full">
                 <label for="observaciones">Observaciones</label>
                 <textarea id="observaciones" name="observaciones" class="form-control" rows="5"
+                          maxlength="1000"
                           placeholder="Accesorios, estado del equipo o novedades"></textarea>
             </div>
 
             <div class="form-actions">
-                <button type="submit" class="btn btn-success">Generar y descargar PDF</button>
+                <p class="envio-msg" id="envio-msg" role="status" aria-live="polite" hidden></p>
+                <button type="submit" class="btn btn-success" id="btn-generar">Generar y descargar PDF</button>
             </div>
 
         </form>
@@ -155,7 +207,7 @@
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Persona ID</th>
+                        <th>Persona</th>
                         <th>Tipo</th>
                         <th>Fecha</th>
                         <th>Observaciones</th>
@@ -181,9 +233,9 @@
 
                         <tr>
                             <td class="cell-muted">{{ acta.id }}</td>
-                            <td class="cell-muted">{{ acta.persona_id }}</td>
+                            <td>{{ acta.persona_nombre or acta.persona_id }}</td>
                             <td><span class="badge {{ clase }}">{{ acta.tipo or "—" }}</span></td>
-                            <td>{{ acta.fecha or "" }}</td>
+                            <td>{{ acta.fecha_local or acta.fecha or "" }}</td>
                             <td class="cell-obs">{{ acta.observaciones or "" }}</td>
                             <td>
                                 {% if acta.ruta_pdf %}
@@ -214,4 +266,207 @@
 
 </div>
 
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+    (function () {
+        const EQUIPOS = {{ equipos|tojson }};
+        const CON_SELECCION = ['Devolucion', 'Cambio'];
+        const TIEMPO_MAX_MS = 60000;
+
+        const form = document.getElementById('acta-form');
+        const persona = document.getElementById('persona_id');
+        const tipo = document.getElementById('tipo');
+        const hint = document.getElementById('tipo-hint');
+        const box = document.getElementById('equipos');
+        const lista = document.getElementById('equipo-list');
+        const selTodos = document.getElementById('sel-todos');
+        const error = document.getElementById('equipos-error');
+        const boton = document.getElementById('btn-generar');
+        const msg = document.getElementById('envio-msg');
+        const textoBoton = boton.textContent;
+
+        let enviando = false;
+
+        const necesitaSeleccion = () => CON_SELECCION.includes(tipo.value);
+
+        function fila(e) {
+            const label = document.createElement('label');
+            label.className = 'equipo';
+
+            const input = document.createElement('input');
+            input.type = 'checkbox';
+            input.name = 'activo_ids';
+            input.value = e.id;
+            input.addEventListener('change', () => { error.hidden = true; });
+
+            const main = document.createElement('div');
+            main.className = 'equipo-main';
+            const titulo = document.createElement('strong');
+            titulo.textContent = e.codigo + ' · ' + (e.tipo || 'Equipo');
+            const sub = document.createElement('small');
+            sub.textContent = [e.detalle, e.serial ? 'S/N ' + e.serial : ''].filter(Boolean).join(' · ') || 'Sin detalle';
+            main.append(titulo, sub);
+
+            label.append(input, main);
+            return label;
+        }
+
+        function dibujar() {
+            const usar = necesitaSeleccion();
+            box.hidden = !usar;
+            hint.textContent = usar
+                ? 'Elige abajo el equipo que va en el acta.'
+                : 'Incluye todos los equipos asignados a la persona.';
+
+            lista.replaceChildren();
+            selTodos.hidden = true;
+            error.hidden = true;
+            if (!usar) return;
+
+            if (!persona.value) {
+                const vacio = document.createElement('div');
+                vacio.className = 'equipos-empty';
+                vacio.textContent = 'Primero selecciona una persona.';
+                lista.append(vacio);
+                return;
+            }
+
+            const items = EQUIPOS[persona.value] || [];
+            if (!items.length) {
+                const vacio = document.createElement('div');
+                vacio.className = 'equipos-empty';
+                vacio.textContent = 'Esta persona no tiene equipos asignados.';
+                lista.append(vacio);
+                return;
+            }
+
+            items.forEach(e => lista.append(fila(e)));
+            selTodos.hidden = items.length < 2;
+            // Con un solo equipo queda marcado y se ahorra el clic
+            if (items.length === 1) lista.querySelector('input').checked = true;
+        }
+
+        selTodos.addEventListener('click', () => {
+            lista.querySelectorAll('input').forEach(i => { i.checked = true; });
+            error.hidden = true;
+        });
+
+        persona.addEventListener('change', dibujar);
+        tipo.addEventListener('change', dibujar);
+
+        /* ---------- Envio y descarga ---------- */
+
+        function mostrar(texto, esError) {
+            msg.textContent = texto;
+            msg.classList.toggle('es-error', !!esError);
+            msg.hidden = !texto;
+        }
+
+        function bloquear(si) {
+            enviando = si;
+            boton.disabled = si;
+            boton.textContent = si ? 'Generando PDF…' : textoBoton;
+        }
+
+        // Nombre del archivo desde Content-Disposition (con respaldo)
+        function nombreArchivo(res) {
+            const cd = res.headers.get('Content-Disposition') || '';
+            let m = cd.match(/filename\*=UTF-8''([^;]+)/i);
+            if (m) {
+                try { return decodeURIComponent(m[1]); } catch (_) { /* sigue */ }
+            }
+            m = cd.match(/filename="?([^";]+)"?/i);
+            return m ? m[1] : 'acta.pdf';
+        }
+
+        function descargar(blob, nombre) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = nombre;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 30000);
+        }
+
+        // Si el servidor respondio con una pagina (error), intenta leer su aviso
+        function avisoDeHtml(html) {
+            try {
+                const doc = new DOMParser().parseFromString(html, 'text/html');
+                const el = doc.querySelector('.alert-danger, .alert-warning, .alert, .flash');
+                const txt = el && el.textContent.replace(/\s+/g, ' ').trim();
+                return txt || '';
+            } catch (_) {
+                return '';
+            }
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (enviando) return;
+
+            if (!persona.value) {
+                persona.focus();
+                return;
+            }
+            if (necesitaSeleccion() && !lista.querySelector('input:checked')) {
+                error.hidden = false;
+                return;
+            }
+
+            bloquear(true);
+            mostrar('Esto puede tardar unos segundos. No cierres la página.', false);
+
+            const control = new AbortController();
+            const reloj = setTimeout(() => control.abort(), TIEMPO_MAX_MS);
+
+            try {
+                const res = await fetch(form.action, {
+                    method: 'POST',
+                    body: new FormData(form),
+                    credentials: 'same-origin',
+                    signal: control.signal,
+                });
+
+                const contentType = res.headers.get('Content-Type') || '';
+
+                if (res.ok && contentType.includes('application/pdf')) {
+                    const blob = await res.blob();
+                    descargar(blob, nombreArchivo(res));
+                    mostrar('PDF descargado. Actualizando la lista…', false);
+
+                    // La descarga ya salió desde memoria: ahora sí es seguro recargar
+                    setTimeout(() => location.reload(), 1000);
+                    return;
+                }
+
+                // No llegó un PDF: el servidor devolvió una pagina (error o aviso)
+                const html = await res.text();
+                const aviso = avisoDeHtml(html);
+                mostrar(
+                    aviso || 'No fue posible generar el acta. Revisa los datos e intenta de nuevo.',
+                    true
+                );
+                bloquear(false);
+            } catch (err) {
+                const agotado = err && err.name === 'AbortError';
+                mostrar(
+                    agotado
+                        ? 'La generación tardó demasiado. Revisa la lista por si el acta quedó creada o intenta de nuevo.'
+                        : 'Se perdió la conexión. Intenta de nuevo.',
+                    true
+                );
+                bloquear(false);
+            } finally {
+                clearTimeout(reloj);
+            }
+        });
+
+        dibujar();
+    })();
+</script>
 {% endblock %}

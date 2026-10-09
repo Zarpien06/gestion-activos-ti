@@ -13,6 +13,26 @@
 
     .stack { display: flex; flex-direction: column; gap: 24px; }
 
+    /* ---------- Mensajes flash ---------- */
+    .flash-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+    .flash {
+        padding: 12px 16px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 500;
+        border: 1px solid transparent;
+    }
+    .flash-success {
+        color: var(--success);
+        background: color-mix(in srgb, var(--success) 10%, transparent);
+        border-color: color-mix(in srgb, var(--success) 25%, transparent);
+    }
+    .flash-error {
+        color: var(--danger);
+        background: color-mix(in srgb, var(--danger) 10%, transparent);
+        border-color: color-mix(in srgb, var(--danger) 25%, transparent);
+    }
+
     .form-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
@@ -51,6 +71,9 @@
         border-bottom: 1px solid var(--border);
     }
 
+    .head-tools { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .buscador { width: min(100%, 300px); min-height: 38px; padding: 7px 12px; font-size: 13px; }
+
     .count-pill {
         padding: 5px 13px;
         color: var(--primary);
@@ -60,6 +83,31 @@
         font-weight: 600;
         white-space: nowrap;
     }
+
+    /* ---------- Pestañas Activos / Inactivos / Todos ---------- */
+    .tabs { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px 22px 0; }
+    .tab {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 14px;
+        color: var(--text-light);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+    .tab:hover { color: var(--primary); border-color: var(--primary); }
+    .tab.on { color: var(--primary); background: var(--primary-soft); border-color: transparent; }
+    .tab small {
+        padding: 1px 8px;
+        border-radius: 999px;
+        font-size: 12px;
+        background: color-mix(in srgb, currentColor 12%, transparent);
+    }
+    .tabs + .tabla-scroll { margin-top: 14px; border-top: 1px solid var(--border); }
 
     /* Sin scroll interno: la pagina hace el scroll. Solo horizontal en pantallas chicas */
     .tabla-scroll { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -81,6 +129,10 @@
     }
     .tabla-personas tbody tr { border-top: 1px solid var(--border); }
     .tabla-personas tbody tr:hover { background: var(--primary-soft); }
+    .tabla-personas tbody tr.inactiva .avatar { color: var(--text-light); background: var(--surface-2); }
+
+    /* Evita que display:block de la vista en fichas anule el atributo hidden */
+    .tabla-personas tr[hidden] { display: none !important; }
 
     /* Cabecera fija bajo la barra superior mientras se hace scroll en la pagina */
     @media (min-width: 900px) {
@@ -115,6 +167,14 @@
     .cell-muted { color: var(--text-light); }
     .cell-ellipsis { max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
 
+    .retiro-txt { white-space: normal; line-height: 1.35; }
+    .retiro-txt small { display: block; color: var(--text-light); font-size: 12px; }
+
+    .badge-warn {
+        color: var(--warning, #b45309);
+        background: color-mix(in srgb, var(--warning, #d97706) 14%, transparent);
+    }
+
     /* ---------- Acciones ---------- */
     .th-action, .cell-action { text-align: right; width: 1%; }
     .row-actions {
@@ -135,7 +195,7 @@
         box-shadow: none;
     }
     .btn-soft-danger:hover { color: #fff; background: var(--danger); }
-  
+
     .btn-soft-success {
         color: var(--success);
         background: color-mix(in srgb, var(--success) 10%, transparent);
@@ -147,22 +207,28 @@
     .empty-state { padding: 48px 16px; text-align: center; color: var(--text-light); }
 
     /* ---------- Columnas por prioridad segun el ancho de la tarjeta ---------- */
-    @container lista (max-width: 1200px) {
+    @container lista (max-width: 1400px) {
         .c-correo { display: none; }
     }
-    @container lista (max-width: 1000px) {
+    @container lista (max-width: 1200px) {
+        .c-telefono { display: none; }
+    }
+    @container lista (max-width: 1050px) {
         .c-documento { display: none; }
         .tabla-personas th, .tabla-personas td { padding: 13px 12px; }
     }
-    @container lista (max-width: 820px) {
+    @container lista (max-width: 900px) {
         .c-cargo { display: none; }
     }
 
     /* ---------- Tarjeta angosta: cada persona es una ficha ---------- */
     @container lista (max-width: 640px) {
-        .c-correo, .c-documento, .c-cargo { display: flex; }
+        .c-correo, .c-telefono, .c-documento, .c-cargo { display: flex; }
 
         .list-head { padding: 16px; }
+        .head-tools { width: 100%; }
+        .buscador { width: 100%; flex: 1 1 100%; }
+        .tabs { padding: 12px 16px 0; }
         .tabla-scroll { overflow: visible; padding: 12px; }
 
         .tabla-personas,
@@ -235,12 +301,25 @@
 {# Solo se muestran las columnas que tienen datos en al menos una persona #}
 {% set hay_documento = personas | selectattr('documento') | list | length > 0 %}
 {% set hay_correo = personas | selectattr('correo') | list | length > 0 %}
+{% set hay_telefono = personas | selectattr('telefono') | list | length > 0 %}
 {% set hay_cargo = personas | selectattr('cargo') | list | length > 0 %}
+{% set ver_retiro = filtro != 'activos' %}
 
 <div class="page-header">
     <h1>Personas</h1>
-    <p>Registra y administra los colaboradores.</p>
+    <p>Registra y administra los colaboradores. Quienes se retiran no se eliminan: quedan en Inactivos con su historial.</p>
 </div>
+
+{# Mensajes (éxito / error de duplicados). Quita este bloque si base.html ya los muestra #}
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-list" role="alert">
+        {% for categoria, mensaje in messages %}
+            <div class="flash flash-{{ 'error' if categoria in ('error', 'danger') else 'success' }}">{{ mensaje }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+{% endwith %}
 
 <div class="stack">
 
@@ -249,7 +328,7 @@
     <div class="card">
 
         <h2 class="card-title">Nueva persona</h2>
-        <p class="card-sub">Los campos con * son obligatorios.</p>
+        <p class="card-sub">Todos los campos son obligatorios. Documento, correo y teléfono no pueden repetirse.</p>
 
         <form action="/personas/crear" method="POST">
 
@@ -262,27 +341,33 @@
                 </div>
 
                 <div>
-                    <label for="documento">Documento</label>
+                    <label for="documento">Documento *</label>
                     <input id="documento" name="documento" type="text" class="form-control"
-                           placeholder="Número de documento">
+                           placeholder="Número de documento" inputmode="numeric" required>
                 </div>
 
                 <div>
-                    <label for="correo">Correo</label>
+                    <label for="correo">Correo *</label>
                     <input id="correo" name="correo" type="email" class="form-control"
-                           placeholder="correo@planeta.com.co">
+                           placeholder="correo@planeta.com.co" required>
                 </div>
 
                 <div>
-                    <label for="cargo">Cargo</label>
+                    <label for="telefono">Teléfono *</label>
+                    <input id="telefono" name="telefono" type="tel" class="form-control"
+                           placeholder="Número de teléfono" required>
+                </div>
+
+                <div>
+                    <label for="cargo">Cargo *</label>
                     <input id="cargo" name="cargo" type="text" class="form-control"
-                           placeholder="Cargo">
+                           placeholder="Cargo" required>
                 </div>
 
                 <div>
-                    <label for="area">Área</label>
+                    <label for="area">Área *</label>
                     <input id="area" name="area" type="text" class="form-control"
-                           placeholder="Área">
+                           placeholder="Área" required>
                 </div>
 
             </div>
@@ -303,24 +388,48 @@
         <div class="list-head">
             <div>
                 <h2 class="card-title">Personas registradas</h2>
-                <p class="card-sub">Colaboradores del sistema</p>
+                <p class="card-sub">
+                    {% if filtro == 'inactivos' %}Personas retiradas o desactivadas
+                    {% elif filtro == 'todos' %}Activas e inactivas
+                    {% else %}Colaboradores activos{% endif %}
+                </p>
             </div>
 
-            <span class="count-pill">Total: {{ personas|length }}</span>
+            <div class="head-tools">
+                <input type="search" id="buscarPersona" class="form-control buscador"
+                       placeholder="Buscar por nombre, documento, correo…"
+                       autocomplete="off" aria-label="Buscar persona">
+                <span class="count-pill" id="contador">Mostrando: {{ personas|length }}</span>
+            </div>
         </div>
+
+        <nav class="tabs" aria-label="Filtro por estado">
+            <a class="tab {{ 'on' if filtro == 'activos' }}" href="{{ url_for('personas', estado='activos') }}">
+                Activos <small>{{ conteos.activos }}</small>
+            </a>
+            <a class="tab {{ 'on' if filtro == 'inactivos' }}" href="{{ url_for('personas', estado='inactivos') }}">
+                Inactivos / retirados <small>{{ conteos.inactivos }}</small>
+            </a>
+            <a class="tab {{ 'on' if filtro == 'todos' }}" href="{{ url_for('personas', estado='todos') }}">
+                Todos <small>{{ conteos.todos }}</small>
+            </a>
+        </nav>
 
         <div class="tabla-scroll">
 
-            <table class="table tabla-personas">
+            <table class="table tabla-personas" id="tablaPersonas">
 
                 <thead>
                     <tr>
                         <th>Nombre</th>
                         {% if hay_documento %}<th class="c-documento">Documento</th>{% endif %}
                         {% if hay_correo %}<th class="c-correo">Correo</th>{% endif %}
+                        {% if hay_telefono %}<th class="c-telefono">Teléfono</th>{% endif %}
                         {% if hay_cargo %}<th class="c-cargo">Cargo</th>{% endif %}
                         <th>Área</th>
+                        <th>Equipos</th>
                         <th>Estado</th>
+                        {% if ver_retiro %}<th>Retiro</th>{% endif %}
                         <th class="th-action">Acción</th>
                     </tr>
                 </thead>
@@ -331,7 +440,7 @@
 
                         {% set activa = (persona.estado or "Activo") == "Activo" %}
 
-                        <tr>
+                        <tr class="{{ '' if activa else 'inactiva' }}">
 
                             <td data-label="Nombre" class="cell-main">
                                 <a class="person person-link"
@@ -348,10 +457,25 @@
                                 <td data-label="Correo" class="c-correo cell-muted cell-ellipsis"
                                     title="{{ persona.correo or '' }}">{{ persona.correo or "" }}</td>
                             {% endif %}
+                            {% if hay_telefono %}
+                                <td data-label="Teléfono" class="c-telefono">{{ persona.telefono or "" }}</td>
+                            {% endif %}
                             {% if hay_cargo %}
                                 <td data-label="Cargo" class="c-cargo">{{ persona.cargo or "" }}</td>
                             {% endif %}
                             <td data-label="Área">{{ persona.area or "" }}</td>
+
+                            <td data-label="Equipos">
+                                {% if persona.equipos %}
+                                    {% if activa %}
+                                        {{ persona.equipos }}
+                                    {% else %}
+                                        <span class="badge badge-warn">{{ persona.equipos }} sin devolver</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="cell-muted">0</span>
+                                {% endif %}
+                            </td>
 
                             <td data-label="Estado">
                                 {% if activa %}
@@ -361,23 +485,33 @@
                                 {% endif %}
                             </td>
 
+                            {% if ver_retiro %}
+                                <td data-label="Retiro" class="retiro-txt">
+                                    {% if persona.retiro %}
+                                        {{ persona.retiro.fecha_txt or "Sin fecha" }}
+                                        <small>{{ persona.retiro.motivo or "" }}</small>
+                                    {% elif not activa %}
+                                        <span class="cell-muted">Sin registrar</span>
+                                    {% endif %}
+                                </td>
+                            {% endif %}
+
                             <td data-label="Acción" class="cell-action">
                                 <div class="row-actions">
                                     <a class="btn btn-sm"
                                        href="{{ url_for('persona_detalle', persona_id=persona.id) }}">
-                                        Ver / Editar
+                                        {{ 'Ver / Editar' if activa else 'Ver historial' }}
                                     </a>
 
                                     {% if activa and tiene_permiso('personas', 'eliminar') %}
-                                    <form action="/personas/{{ persona.id }}/desactivar" method="POST">
-                                        <button type="submit" class="btn btn-sm btn-soft-danger"
-                                                onclick="return confirm('¿Deseas desactivar esta persona?');">
-                                            Desactivar
-                                        </button>
-                                        </form>
+                                        <a class="btn btn-sm btn-soft-danger"
+                                           href="{{ url_for('persona_detalle', persona_id=persona.id) }}#retiro">
+                                            Registrar retiro
+                                        </a>
                                     {% elif not activa and tiene_permiso('personas', 'editar') %}
                                         <form action="/personas/{{ persona.id }}/activar" method="POST">
-                                            <button type="submit" class="btn btn-sm btn-soft-success">
+                                            <button type="submit" class="btn btn-sm btn-soft-success"
+                                                    onclick="return confirm('¿Reactivar a esta persona?');">
                                                 Activar
                                             </button>
                                         </form>
@@ -390,12 +524,21 @@
                     {% else %}
 
                         <tr class="empty-row">
-                            <td colspan="7">
-                                <div class="empty-state">No hay personas registradas.</div>
+                            <td colspan="10">
+                                <div class="empty-state">
+                                    {% if filtro == 'inactivos' %}No hay personas inactivas ni retiradas.
+                                    {% else %}No hay personas registradas.{% endif %}
+                                </div>
                             </td>
                         </tr>
 
                     {% endfor %}
+
+                    <tr class="empty-row" id="sinResultados" hidden>
+                        <td colspan="10">
+                            <div class="empty-state">Ninguna persona coincide con la búsqueda.</div>
+                        </td>
+                    </tr>
 
                 </tbody>
 
@@ -407,4 +550,32 @@
 
 </div>
 
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+(function () {
+    const input = document.getElementById("buscarPersona");
+    const contador = document.getElementById("contador");
+    const sinRes = document.getElementById("sinResultados");
+    const filas = document.querySelectorAll("#tablaPersonas tbody tr:not(.empty-row)");
+    if (!input) return;
+
+    const norm = (t) => (t || "").toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+    input.addEventListener("input", () => {
+        const q = norm(input.value.trim());
+        let visibles = 0;
+        filas.forEach((tr) => {
+            const ok = !q || norm(tr.textContent).includes(q);
+            tr.hidden = !ok;
+            if (ok) visibles++;
+        });
+        contador.textContent = "Mostrando: " + visibles;
+        if (sinRes && filas.length) sinRes.hidden = visibles > 0;
+    });
+})();
+</script>
 {% endblock %}

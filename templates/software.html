@@ -1,0 +1,1116 @@
+{% extends "base.html" %}
+
+{% block title %}Software y licencias{% endblock %}
+
+{% block content %}
+
+<style>
+/* =========================================================
+   SOFTWARE Y LICENCIAS (usa las variables de base.html)
+   Escala fluida: letra y espacios se ajustan solos al ancho de la pantalla
+========================================================= */
+.sw-page, .sw-modal, .sw-toast {
+    --fs:  clamp(14px, 11px + 0.2vw, 16px);
+    --pad: clamp(14px, 7px + 0.6vw, 20px);
+    --gap: clamp(14px, 8px + 0.6vw, 22px);
+}
+.sw-page { max-width: min(1900px, 100%); margin: 0 auto; }
+
+/* ---------- Encabezado ---------- */
+.sw-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 18px; }
+.sw-header-title h2 { margin: 0; font-size: calc(var(--fs) + 12px); font-weight: 700; color: var(--text); }
+.sw-header-title p { margin: 6px 0 0; color: var(--text-light); font-size: var(--fs); }
+.sw-header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* ---------- Guía ---------- */
+.sw-guia { margin-bottom: var(--gap); padding: 10px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); }
+.sw-guia summary { cursor: pointer; font-weight: 600; font-size: var(--fs); }
+.sw-guia-grid { display: grid; gap: 14px; margin-top: 12px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.sw-guia-item { font-size: calc(var(--fs) - 1px); color: var(--text-light); line-height: 1.5; }
+.sw-guia-item strong { display: block; color: var(--text); margin-bottom: 2px; }
+
+/* ---------- Botones ---------- */
+.sw-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    min-height: calc(var(--fs) + 26px); padding: 0 calc(var(--fs) + 1px);
+    border: 1px solid transparent; border-radius: 9px; cursor: pointer;
+    font-size: var(--fs); font-weight: 600; white-space: nowrap; transition: var(--transition);
+}
+.sw-btn:hover { transform: translateY(-1px); }
+.sw-btn:focus-visible { outline: 3px solid var(--primary-soft); outline-offset: 2px; }
+.sw-btn-primary { background: var(--primary); color: #fff; }
+.sw-btn-primary:hover { background: var(--primary-hover); }
+.sw-btn-secondary { background: var(--surface-2); color: var(--text); border-color: var(--border); }
+.sw-btn-secondary:hover { background: var(--primary-soft); }
+.sw-btn-danger { color: var(--danger); background: color-mix(in srgb, var(--danger) 10%, var(--surface)); border-color: color-mix(in srgb, var(--danger) 30%, transparent); }
+.sw-btn-danger:hover { background: color-mix(in srgb, var(--danger) 18%, var(--surface)); }
+.sw-btn-sm { min-height: calc(var(--fs) + 18px); padding: 0 11px; font-size: calc(var(--fs) - 1px); }
+
+/* ---------- Tarjetas de resumen ---------- */
+.sw-alertas { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--gap); margin-bottom: var(--gap); }
+.sw-alert-card {
+    display: flex; align-items: center; gap: 14px; padding: var(--pad);
+    background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--tone, var(--border));
+    border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);
+}
+.sw-alert-card[data-filtro] { cursor: pointer; transition: var(--transition); }
+.sw-alert-card[data-filtro]:hover { transform: translateY(-2px); background: var(--surface-2); }
+.sw-alert-card.activa { outline: 2px solid var(--tone); }
+.sw-alert-icon {
+    width: calc(var(--fs) + 32px); height: calc(var(--fs) + 32px); min-width: calc(var(--fs) + 32px);
+    display: flex; align-items: center; justify-content: center; border-radius: 11px;
+    font-size: calc(var(--fs) + 6px); font-weight: 700; color: var(--tone);
+    background: color-mix(in srgb, var(--tone) 15%, transparent);
+}
+.sw-alert-info { min-width: 0; }
+.sw-alert-number { font-size: calc(var(--fs) + 14px); font-weight: 800; line-height: 1; margin-bottom: 5px; color: var(--tone); }
+.sw-alert-label { color: var(--text-light); font-size: calc(var(--fs) - 1px); }
+.sw-alert-danger  { --tone: var(--danger); }
+.sw-alert-warning { --tone: var(--warning); }
+.sw-alert-purple  { --tone: #8b5cf6; }
+.sw-alert-ok      { --tone: var(--success); }
+.sw-loading-card  { --tone: var(--text-light); }
+
+/* ---------- Panel ---------- */
+.sw-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: hidden; }
+.sw-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: var(--pad); border-bottom: 1px solid var(--border); background: var(--surface-2); }
+.sw-toolbar-left { display: flex; align-items: center; gap: 10px; flex: 1; flex-wrap: wrap; }
+.sw-search { position: relative; flex: 1; min-width: 220px; max-width: 520px; }
+.sw-search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-light); pointer-events: none; }
+.sw-search input, .sw-filter {
+    height: calc(var(--fs) + 26px); font-size: var(--fs); color: var(--text); background: var(--surface);
+    border: 1px solid var(--border); border-radius: 9px; outline: none; transition: var(--transition);
+}
+.sw-search input { width: 100%; padding: 0 14px 0 38px; }
+.sw-filter { padding: 0 12px; min-width: 230px; }
+.sw-search input::placeholder { color: var(--text-light); }
+.sw-search input:focus, .sw-filter:focus { border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-soft); }
+.sw-results { color: var(--text-light); font-size: calc(var(--fs) - 1px); white-space: nowrap; }
+
+/* ---------- Tabla ---------- */
+.sw-table-wrapper { overflow-x: auto; }
+.sw-table { width: 100%; border-collapse: collapse; min-width: 980px; }
+.sw-table th {
+    padding: 13px var(--pad); text-align: left; white-space: nowrap;
+    font-size: calc(var(--fs) - 2.5px); font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--text-light); background: var(--surface-2); border-bottom: 1px solid var(--border);
+}
+.sw-table td { padding: calc(var(--pad) - 1px) var(--pad); vertical-align: middle; font-size: var(--fs); color: var(--text); border-bottom: 1px solid var(--border); }
+.sw-table tbody tr { transition: background var(--transition); }
+.sw-table tbody tr:hover { background: var(--primary-soft); }
+.sw-table tbody tr:last-child td { border-bottom: 0; }
+.sw-row-off td { opacity: .6; }
+.sw-row-off td:last-child { opacity: 1; }
+.sw-row-vencida td:first-child { box-shadow: inset 4px 0 0 var(--danger); }
+.sw-row-por_vencer td:first-child { box-shadow: inset 4px 0 0 var(--warning); }
+
+.sw-name { display: flex; flex-direction: column; gap: 3px; }
+.sw-name-btn { padding: 0; text-align: left; background: none; border: 0; cursor: pointer; color: var(--text); font-size: calc(var(--fs) + 1px); font-weight: 700; }
+.sw-name-btn:hover { color: var(--primary); text-decoration: underline; }
+.sw-version { color: var(--text-light); font-size: calc(var(--fs) - 2px); }
+.sw-muted { color: var(--text-light); }
+.sw-small { margin-top: 5px; font-size: calc(var(--fs) - 2.5px); color: var(--text-light); }
+.sw-small.warn { color: var(--warning); font-weight: 600; }
+
+/* ---------- Licencias (barra) ---------- */
+.sw-license { min-width: 170px; }
+.sw-license-info { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 6px; font-size: calc(var(--fs) - 1px); }
+.sw-license-value { font-weight: 700; color: var(--text); }
+.sw-license-danger { color: var(--danger); font-weight: 700; }
+.sw-license-bar { height: 7px; background: var(--border); border-radius: 999px; overflow: hidden; }
+.sw-license-fill { height: 100%; border-radius: inherit; background: var(--primary); transition: width .3s ease; }
+.sw-license-fill.warning { background: var(--warning); }
+.sw-license-fill.danger { background: var(--danger); }
+
+/* ---------- Badges ---------- */
+.sw-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px; font-size: calc(var(--fs) - 2px); font-weight: 600; white-space: nowrap; }
+.sw-badge-normal  { color: var(--success); background: color-mix(in srgb, var(--success) 14%, transparent); }
+.sw-badge-warning { color: var(--warning); background: color-mix(in srgb, var(--warning) 16%, transparent); }
+.sw-badge-danger  { color: var(--danger);  background: color-mix(in srgb, var(--danger) 14%, transparent); }
+.sw-badge-neutral { color: var(--text-light); background: var(--surface-2); border: 1px solid var(--border); }
+
+/* ---------- Acciones ---------- */
+.sw-actions { display: flex; align-items: center; justify-content: flex-end; gap: 7px; flex-wrap: wrap; }
+
+/* ---------- Estado vacío ---------- */
+.sw-empty { text-align: center; padding: 55px 20px !important; }
+.sw-empty-icon { font-size: 38px; margin-bottom: 10px; opacity: .6; }
+.sw-empty-title { color: var(--text); font-size: calc(var(--fs) + 2px); font-weight: 700; }
+.sw-empty-text { margin-top: 5px; color: var(--text-light); font-size: var(--fs); }
+
+/* ---------- Modal ---------- */
+.sw-modal { position: fixed; inset: 0; z-index: 2000; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(2, 6, 23, .6); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+.sw-modal.active { display: flex; }
+.sw-modal-card {
+    width: 100%; max-width: clamp(540px, 34vw + 140px, 740px); max-height: calc(100vh - 40px); overflow-y: auto; color: var(--text);
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    box-shadow: 0 30px 70px rgba(0,0,0,.45); animation: swPop .18s ease; font-size: var(--fs);
+}
+.sw-modal-card.wide { max-width: clamp(780px, 50vw + 100px, 1080px); }
+@keyframes swPop { from { opacity: 0; transform: translateY(8px) scale(.97); } to { opacity: 1; transform: none; } }
+.sw-modal-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 15px; padding: 20px clamp(20px, 2vw, 28px); border-bottom: 1px solid var(--border); }
+.sw-modal-header h3 { margin: 0; color: var(--text); font-size: calc(var(--fs) + 5px); }
+.sw-modal-header p { margin: 5px 0 0; color: var(--text-light); font-size: calc(var(--fs) - 1px); }
+.sw-modal-close { width: 34px; height: 34px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); color: var(--text-light); cursor: pointer; font-size: 18px; line-height: 1; }
+.sw-modal-close:hover { color: var(--text); background: var(--primary-soft); }
+.sw-modal-body { padding: clamp(20px, 2vw, 26px) clamp(20px, 2vw, 28px); }
+@media (max-width: 600px) { .sw-modal-header, .sw-modal-body, .sw-modal-footer { padding-left: 18px; padding-right: 18px; } .sw-form-row { gap: 0; } }
+.sw-modal-footer { display: flex; justify-content: flex-end; gap: 9px; padding: 16px clamp(20px, 2vw, 28px); border-top: 1px solid var(--border); background: var(--surface-2); }
+
+.sw-form-group { margin-bottom: 18px; }
+.sw-form-group label { display: block; margin-bottom: 8px; color: var(--text); font-size: var(--fs); font-weight: 600; }
+.sw-form-group input, .sw-form-group select {
+    width: 100%; height: calc(var(--fs) + 28px); padding: 0 14px; font-size: var(--fs); color: var(--text);
+    background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px; outline: none; transition: var(--transition);
+}
+.sw-form-group input::placeholder { color: var(--text-light); opacity: .75; }
+.sw-form-group input[type="date"], .sw-form-group select { cursor: pointer; }
+.sw-modal-footer .sw-btn { min-height: calc(var(--fs) + 26px); }
+.sw-form-group input:focus, .sw-form-group select:focus { border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-soft); }
+.sw-form-help { margin-top: 6px; color: var(--text-light); font-size: calc(var(--fs) - 2px); }
+.sw-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+/* ---------- Lista de licencias ---------- */
+.sw-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+.sw-stat { padding: 12px 14px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; }
+.sw-stat strong { display: block; font-size: calc(var(--fs) + 8px); line-height: 1.1; }
+.sw-stat span { color: var(--text-light); font-size: calc(var(--fs) - 2px); }
+.sw-lic-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 18px; margin-bottom: 8px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; }
+.sw-lic-main { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.sw-lic-main strong { font-size: calc(var(--fs) + 1px); }
+.sw-lic-main span { font-size: calc(var(--fs) - 1px); }
+.sw-lic-side { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+
+/* ---------- Cargando / avisos ---------- */
+.sw-loading { padding: 45px 20px; text-align: center; color: var(--text-light); }
+.sw-spinner { width: 28px; height: 28px; margin: 0 auto 10px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: swSpin .7s linear infinite; }
+@keyframes swSpin { to { transform: rotate(360deg); } }
+.sw-toast {
+    position: fixed; right: 24px; bottom: 24px; z-index: 3000; max-width: min(460px, calc(100% - 48px));
+    padding: 13px 18px; border-radius: 10px; font-size: var(--fs); font-weight: 600; color: var(--text);
+    background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--success);
+    box-shadow: 0 14px 40px rgba(0,0,0,.35); animation: swPop .18s ease;
+}
+.sw-toast.error { border-left-color: var(--danger); }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1100px) { .sw-alertas { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 900px) {
+    .sw-header { flex-direction: column; }
+    .sw-header-actions { width: 100%; }
+    .sw-header-actions .sw-btn { flex: 1; }
+}
+@media (max-width: 600px) {
+    .sw-alertas { grid-template-columns: 1fr; }
+    .sw-toolbar { align-items: stretch; flex-direction: column; }
+    .sw-search { max-width: none; }
+    .sw-filter { width: 100%; }
+    .sw-results { text-align: right; }
+    .sw-form-row, .sw-stats { grid-template-columns: 1fr; gap: 0 14px; }
+    .sw-modal { padding: 10px; }
+    .sw-lic-item { flex-direction: column; align-items: stretch; }
+    .sw-lic-side { justify-content: space-between; }
+}
+</style>
+
+
+<div class="sw-page">
+
+    <!-- ENCABEZADO -->
+    <div class="sw-header">
+        <div class="sw-header-title">
+            <h2>Software y licencias</h2>
+            <p>Catálogo de software, licencias compradas, uso en equipos y vencimientos.</p>
+        </div>
+
+        {% if tiene_permiso('inventario', 'crear') %}
+        <div class="sw-header-actions">
+            <button class="sw-btn sw-btn-primary" type="button" onclick="swNuevoSoftware()">
+                <span>＋</span> Nuevo software
+            </button>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- GUÍA -->
+    <details class="sw-guia">
+        <summary>¿Cómo leer esta pantalla?</summary>
+        <div class="sw-guia-grid">
+            <div class="sw-guia-item"><strong>1. Software</strong>Es el producto del catálogo (ej. Microsoft Office). Haz clic en su nombre para ver sus licencias.</div>
+            <div class="sw-guia-item"><strong>2. Licencias</strong>Son las compras de ese software. La barra muestra <em>en uso / compradas</em>; roja = hay más instalaciones que licencias.</div>
+            <div class="sw-guia-item"><strong>3. Vencimiento</strong>Es la fecha de la licencia que vence primero. Naranja = vence en {{ 90 }} días o menos; rojo = ya venció.</div>
+            <div class="sw-guia-item"><strong>4. Desactivar</strong>Nada se borra: un software o licencia desactivado queda como historial y se puede reactivar.</div>
+        </div>
+    </details>
+
+    <!-- RESUMEN -->
+    <div id="sw-alertas" class="sw-alertas">
+        <div class="sw-alert-card sw-loading-card">
+            <div class="sw-alert-icon">…</div>
+            <div class="sw-alert-info">
+                <div class="sw-alert-number">—</div>
+                <div class="sw-alert-label">Cargando...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CATÁLOGO -->
+    <div class="sw-panel">
+
+        <div class="sw-toolbar">
+            <div class="sw-toolbar-left">
+                <div class="sw-search">
+                    <span class="sw-search-icon">⌕</span>
+                    <input id="sw-q" type="search" placeholder="Buscar software, fabricante o categoría..." autocomplete="off" oninput="swRender()">
+                </div>
+
+                <select id="sw-filtro" class="sw-filter" aria-label="Filtrar" onchange="swRender()">
+                    <option value="">Software activo</option>
+                    <option value="alerta">Con alguna alerta</option>
+                    <option value="vencida">Con licencias vencidas</option>
+                    <option value="por_vencer">Por vencer (90 días)</option>
+                    <option value="excedida">Con exceso de uso</option>
+                    <option value="sin_licencias">Sin licencias</option>
+                    <option value="inactivo">Solo desactivados</option>
+                    <option value="todos">Activos y desactivados</option>
+                </select>
+            </div>
+
+            <div id="sw-results" class="sw-results">0 resultados</div>
+        </div>
+
+        <div class="sw-table-wrapper">
+            <table class="sw-table">
+                <thead>
+                    <tr>
+                        <th>Software</th>
+                        <th>Fabricante</th>
+                        <th>Instalado en</th>
+                        <th>Licencias (en uso / compradas)</th>
+                        <th>Próximo vencimiento</th>
+                        <th style="text-align:right">Acciones</th>
+                    </tr>
+                </thead>
+
+                <tbody id="sw-body">
+                    <tr>
+                        <td colspan="6">
+                            <div class="sw-loading"><div class="sw-spinner"></div>Cargando software...</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- MODAL SOFTWARE (crear / editar) -->
+<div id="sw-modal-software" class="sw-modal">
+    <div class="sw-modal-card">
+
+        <div class="sw-modal-header">
+            <div>
+                <h3 id="sw-software-titulo">Nuevo software</h3>
+                <p id="sw-software-desc">Agrega un software al catálogo.</p>
+            </div>
+            <button type="button" class="sw-modal-close" onclick="swCerrarModal('sw-modal-software')">×</button>
+        </div>
+
+        <form id="sw-form-software">
+            <div class="sw-modal-body">
+                <input type="hidden" id="sw-software-id">
+
+                <div class="sw-form-group">
+                    <label for="sw-nombre">Nombre del software *</label>
+                    <input id="sw-nombre" required placeholder="Ej. Microsoft Office">
+                </div>
+
+                <div class="sw-form-row">
+                    <div class="sw-form-group">
+                        <label for="sw-fabricante">Fabricante</label>
+                        <input id="sw-fabricante" placeholder="Ej. Microsoft">
+                    </div>
+                    <div class="sw-form-group">
+                        <label for="sw-version">Versión</label>
+                        <input id="sw-version" placeholder="Ej. 365">
+                    </div>
+                </div>
+
+                <div class="sw-form-group">
+                    <label for="sw-categoria">Categoría</label>
+                    <input id="sw-categoria" placeholder="Ej. Ofimática, Antivirus, Diseño...">
+                </div>
+            </div>
+
+            <div class="sw-modal-footer">
+                <button type="button" class="sw-btn sw-btn-secondary" onclick="swCerrarModal('sw-modal-software')">Cancelar</button>
+                <button type="submit" class="sw-btn sw-btn-primary" id="sw-software-guardar">Guardar software</button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+
+<!-- MODAL LISTA DE LICENCIAS -->
+<div id="sw-modal-lista" class="sw-modal">
+    <div class="sw-modal-card wide">
+
+        <div class="sw-modal-header">
+            <div>
+                <h3 id="sw-lista-titulo">Licencias</h3>
+                <p id="sw-lista-desc"></p>
+            </div>
+            <button type="button" class="sw-modal-close" onclick="swCerrarLista()">×</button>
+        </div>
+
+        <div class="sw-modal-body" id="sw-lista-cuerpo"></div>
+
+        <div class="sw-modal-footer">
+            <button type="button" class="sw-btn sw-btn-secondary" onclick="swCerrarLista()">Cerrar</button>
+            <button type="button" class="sw-btn sw-btn-primary" id="sw-lista-agregar">＋ Agregar licencia</button>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- MODAL LICENCIA (crear / editar) -->
+<div id="sw-modal-licencia" class="sw-modal">
+    <div class="sw-modal-card">
+
+        <div class="sw-modal-header">
+            <div>
+                <h3 id="sw-licencia-titulo">Nueva licencia</h3>
+                <p id="sw-licencia-software">Registrar licencia.</p>
+            </div>
+            <button type="button" class="sw-modal-close" onclick="swCerrarModal('sw-modal-licencia')">×</button>
+        </div>
+
+        <form id="sw-form-licencia">
+            <div class="sw-modal-body">
+
+                <input type="hidden" id="sw-licencia-software-id">
+                <input type="hidden" id="sw-licencia-id">
+
+                <div class="sw-form-row">
+                    <div class="sw-form-group">
+                        <label for="sw-tipo">Tipo de licencia *</label>
+                        <select id="sw-tipo" required>
+                            <option value="perpetua">Perpetua</option>
+                            <option value="suscripcion">Suscripción</option>
+                            <option value="oem">OEM</option>
+                            <option value="volumen">Volumen</option>
+                            <option value="open_source">Open Source</option>
+                        </select>
+                    </div>
+                    <div class="sw-form-group">
+                        <label for="sw-cantidad">Cantidad de licencias *</label>
+                        <input id="sw-cantidad" type="number" min="1" value="1" required>
+                    </div>
+                </div>
+
+                <div class="sw-form-group">
+                    <label for="sw-clave">Clave / serial</label>
+                    <input id="sw-clave" placeholder="Opcional" autocomplete="off">
+                </div>
+
+                <div class="sw-form-group">
+                    <label for="sw-proveedor">Proveedor</label>
+                    <input id="sw-proveedor" placeholder="Ej. Microsoft, Lenovo...">
+                </div>
+
+                <div class="sw-form-row">
+                    <div class="sw-form-group">
+                        <label for="sw-fecha-compra">Fecha de compra</label>
+                        <input id="sw-fecha-compra" type="date">
+                    </div>
+                    <div class="sw-form-group">
+                        <label for="sw-fecha-vence">Fecha de vencimiento</label>
+                        <input id="sw-fecha-vence" type="date">
+                        <div class="sw-form-help">Déjalo vacío si la licencia no vence.</div>
+                    </div>
+                </div>
+
+                <div class="sw-form-row">
+                    <div class="sw-form-group">
+                        <label for="sw-costo">Costo total</label>
+                        <input id="sw-costo" type="number" min="0" step="0.01" placeholder="0">
+                    </div>
+                    <div class="sw-form-group">
+                        <label for="sw-moneda">Moneda</label>
+                        <input id="sw-moneda" value="COP" maxlength="5">
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="sw-modal-footer">
+                <button type="button" class="sw-btn sw-btn-secondary" onclick="swCerrarModal('sw-modal-licencia')">Cancelar</button>
+                <button type="submit" class="sw-btn sw-btn-primary" id="sw-licencia-guardar">Guardar licencia</button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+<div id="sw-toast-zona"></div>
+
+
+<script>
+
+/* =========================================================
+   ESTADO
+========================================================= */
+
+let SW = [];
+let SW_LISTA_ID = null;   // software cuya lista de licencias está abierta
+
+const PUEDE = {{ {
+    'crear': tiene_permiso('inventario', 'crear'),
+    'editar': tiene_permiso('inventario', 'editar'),
+    'eliminar': tiene_permiso('inventario', 'eliminar')
+} | tojson }};
+
+const TIPOS_LIC = {
+    perpetua: 'Perpetua', suscripcion: 'Suscripción', oem: 'OEM',
+    volumen: 'Volumen', open_source: 'Open Source'
+};
+
+const DIAS_ALERTA = 90;
+
+
+/* =========================================================
+   UTILIDADES
+========================================================= */
+
+const esc = s =>
+    String(s ?? '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+
+/* Aviso dentro de la página (no usa los cuadros del navegador) */
+let swToastTimer = null;
+function swToast(texto, tipo = 'ok') {
+    document.getElementById('sw-toast-zona').innerHTML =
+        `<div class="sw-toast ${tipo === 'error' ? 'error' : ''}" role="status">${esc(texto)}</div>`;
+    clearTimeout(swToastTimer);
+    swToastTimer = setTimeout(() => { document.getElementById('sw-toast-zona').innerHTML = ''; }, tipo === 'error' ? 7000 : 3500);
+}
+
+function swFormatoFecha(fecha) {
+    if (!fecha) return 'Sin vencimiento';
+    const p = String(fecha).slice(0, 10).split('-');
+    if (p.length !== 3) return esc(fecha);
+    return `${p[2]}/${p[1]}/${p[0]}`;
+}
+
+function swDinero(valor, moneda) {
+    if (valor === null || valor === undefined || valor === '') return '';
+    const n = Number(valor);
+    if (Number.isNaN(n)) return '';
+    try {
+        return new Intl.NumberFormat('es-CO', { style: 'currency', currency: moneda || 'COP', maximumFractionDigits: 0 }).format(n);
+    } catch (e) {
+        return `${n.toLocaleString('es-CO')} ${esc(moneda || '')}`;
+    }
+}
+
+function swDiasParaVencer(fecha) {
+    if (!fecha) return null;
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const v = new Date(`${String(fecha).slice(0, 10)}T00:00:00`);
+    return Math.ceil((v - hoy) / 86400000);
+}
+
+function swEstadoVencimiento(fecha) {
+    const dias = swDiasParaVencer(fecha);
+    if (dias === null) return { clase: 'sw-badge-neutral', texto: 'Sin vencimiento' };
+    if (dias < 0) {
+        const n = Math.abs(dias);
+        return { clase: 'sw-badge-danger', texto: `Vencida hace ${n} día${n === 1 ? '' : 's'}` };
+    }
+    if (dias <= DIAS_ALERTA) {
+        return { clase: 'sw-badge-warning', texto: `Vence en ${dias} día${dias === 1 ? '' : 's'}` };
+    }
+    return { clase: 'sw-badge-normal', texto: `Vence ${swFormatoFecha(fecha)}` };
+}
+
+/* ¿Está activo? (si el servidor no envía el campo, se asume activo) */
+const swActivo = s => s.activo !== false && s.activo !== 0;
+
+/* Resumen de un software: uso de licencias, vencimiento y banderas de alerta */
+function swInfo(s) {
+    const licencias = Array.isArray(s.licencias) ? s.licencias : [];
+    const usadas = licencias.reduce((t, l) => t + Number(l.usadas || 0), 0);
+    const total = Number(s.licencias_total || 0);
+    const inst = Number(s.instalaciones || 0);
+    const fecha = licencias.map(l => l.fecha_vence).filter(Boolean).sort()[0] || null;
+    const dias = swDiasParaVencer(fecha);
+
+    return {
+        licencias, usadas, total, inst, fecha, dias,
+        excedida: usadas > total,
+        sinLic: total === 0,
+        vencida: dias !== null && dias < 0,
+        porVencer: dias !== null && dias >= 0 && dias <= DIAS_ALERTA,
+        sinAsignar: Math.max(inst - usadas, 0)
+    };
+}
+
+const FILTROS = {
+    alerta:        i => i.vencida || i.porVencer || i.excedida,
+    vencida:       i => i.vencida,
+    por_vencer:    i => i.porVencer,
+    excedida:      i => i.excedida,
+    sin_licencias: i => i.sinLic
+};
+
+
+/* =========================================================
+   API
+========================================================= */
+
+async function api(url, method = 'GET', body) {
+
+    const options = { method, headers: { 'Content-Type': 'application/json' } };
+    if (body !== undefined) options.body = JSON.stringify(body);
+
+    const r = await fetch(url, options);
+
+    let j = {};
+    let texto = '';
+
+    try {
+        texto = await r.text();
+        j = JSON.parse(texto);
+    } catch (e) {
+        j = {};
+    }
+
+    if (!r.ok) {
+        if (j.error) throw new Error(j.error);
+
+        let detalle = `Error ${r.status} en ${url}`;
+        if (r.redirected || /<html/i.test(texto)) {
+            detalle += r.status === 200 || r.redirected
+                ? ' (te redirigió a otra página; revisa sesión/permisos)'
+                : ' (el servidor devolvió una página en lugar de JSON; revisa la terminal de Flask)';
+        }
+        throw new Error(detalle);
+    }
+
+    return j;
+}
+
+
+/* =========================================================
+   CARGAR
+========================================================= */
+
+async function swCargar() {
+
+    try {
+
+        const [software, alertas] = await Promise.all([
+            api('/api/software?incluir_inactivos=1'),
+            api('/api/licencias/alertas')
+        ]);
+
+        SW = Array.isArray(software) ? software : [];
+
+        swRender();
+        swRenderAlertas(alertas);
+
+        if (SW_LISTA_ID !== null && document.getElementById('sw-modal-lista').classList.contains('active')) {
+            swPintarLista();
+        }
+
+    } catch (error) {
+
+        console.error(error);
+
+        document.getElementById('sw-body').innerHTML = `
+            <tr><td colspan="6" class="sw-empty">
+                <div class="sw-empty-icon">⚠️</div>
+                <div class="sw-empty-title">No fue posible cargar el catálogo</div>
+                <div class="sw-empty-text">${esc(error.message)}</div>
+            </td></tr>`;
+    }
+}
+
+
+/* =========================================================
+   TARJETAS DE RESUMEN (al hacer clic filtran la tabla)
+========================================================= */
+
+function swRenderAlertas(a) {
+
+    const vencidas  = a?.vencidas?.length  || 0;
+    const porVencer = a?.por_vencer?.length || 0;
+    const excedidas = a?.excedidas?.length  || 0;
+
+    const activos = SW.filter(swActivo).map(swInfo);
+    const usadas = activos.reduce((t, i) => t + i.usadas, 0);
+    const total = activos.reduce((t, i) => t + i.total, 0);
+
+    const f = document.getElementById('sw-filtro').value;
+    const act = k => (f === k ? ' activa' : '');
+
+    document.getElementById('sw-alertas').innerHTML = `
+
+        <div class="sw-alert-card sw-alert-danger${act('vencida')}" data-filtro="vencida"
+             title="Ver software con licencias vencidas" onclick="swFiltrarPor('vencida')">
+            <div class="sw-alert-icon">⚠</div>
+            <div class="sw-alert-info">
+                <div class="sw-alert-number">${vencidas}</div>
+                <div class="sw-alert-label">Licencias vencidas</div>
+            </div>
+        </div>
+
+        <div class="sw-alert-card sw-alert-warning${act('por_vencer')}" data-filtro="por_vencer"
+             title="Ver software con licencias por vencer" onclick="swFiltrarPor('por_vencer')">
+            <div class="sw-alert-icon">◷</div>
+            <div class="sw-alert-info">
+                <div class="sw-alert-number">${porVencer}</div>
+                <div class="sw-alert-label">Vencen en ${DIAS_ALERTA} días o menos</div>
+            </div>
+        </div>
+
+        <div class="sw-alert-card sw-alert-purple${act('excedida')}" data-filtro="excedida"
+             title="Ver software con exceso de uso" onclick="swFiltrarPor('excedida')">
+            <div class="sw-alert-icon">!</div>
+            <div class="sw-alert-info">
+                <div class="sw-alert-number">${excedidas}</div>
+                <div class="sw-alert-label">Con más instalaciones que licencias</div>
+            </div>
+        </div>
+
+        <div class="sw-alert-card sw-alert-ok">
+            <div class="sw-alert-icon">✓</div>
+            <div class="sw-alert-info">
+                <div class="sw-alert-number">${usadas} / ${total}</div>
+                <div class="sw-alert-label">Licencias en uso (software activo)</div>
+            </div>
+        </div>`;
+}
+
+function swFiltrarPor(valor) {
+    const sel = document.getElementById('sw-filtro');
+    sel.value = sel.value === valor ? '' : valor;   // segundo clic quita el filtro
+    swRender();
+    document.querySelectorAll('.sw-alert-card[data-filtro]').forEach(el =>
+        el.classList.toggle('activa', el.dataset.filtro === sel.value));
+    document.querySelector('.sw-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+
+/* =========================================================
+   RENDER TABLA
+========================================================= */
+
+function swRender() {
+
+    const q = (document.getElementById('sw-q')?.value || '').trim().toLowerCase();
+    const filtro = document.getElementById('sw-filtro')?.value || '';
+
+    const rows = SW.filter(s => {
+        const texto = [s.nombre, s.fabricante, s.version, s.categoria].filter(Boolean).join(' ').toLowerCase();
+        if (!texto.includes(q)) return false;
+
+        const activo = swActivo(s);
+        if (filtro === 'inactivo') return !activo;
+        if (filtro === 'todos') return true;
+        if (!activo) return false;
+        return !filtro || FILTROS[filtro](swInfo(s));
+    });
+
+    document.getElementById('sw-results').textContent =
+        `${rows.length} resultado${rows.length === 1 ? '' : 's'}`;
+
+    const body = document.getElementById('sw-body');
+
+    if (!rows.length) {
+        const hayFiltros = q || filtro;
+        body.innerHTML = `
+            <tr><td colspan="6" class="sw-empty">
+                <div class="sw-empty-icon">📦</div>
+                <div class="sw-empty-title">${hayFiltros ? 'No se encontraron resultados' : 'No hay software registrado'}</div>
+                <div class="sw-empty-text">${hayFiltros ? 'Prueba con otra búsqueda o cambia el filtro.' : 'Agrega el primer software con «Nuevo software».'}</div>
+            </td></tr>`;
+        return;
+    }
+
+    body.innerHTML = rows.map(s => {
+
+        const activo = swActivo(s);
+        const i = swInfo(s);
+        const porcentaje = i.total > 0 ? Math.min((i.usadas / i.total) * 100, 100) : 0;
+        const claseBarra = i.excedida ? 'danger' : porcentaje >= 80 ? 'warning' : '';
+        const estado = swEstadoVencimiento(i.fecha);
+        const claseFila = !activo ? 'sw-row-off' : i.vencida ? 'sw-row-vencida' : i.porVencer ? 'sw-row-por_vencer' : '';
+
+        let aviso = '';
+        if (i.sinLic && i.inst > 0) {
+            aviso = `<div class="sw-small warn">Sin licencias registradas</div>`;
+        } else if (i.excedida) {
+            aviso = `<div class="sw-small warn">Faltan ${i.usadas - i.total} licencia${i.usadas - i.total === 1 ? '' : 's'}</div>`;
+        } else if (i.sinAsignar > 0) {
+            aviso = `<div class="sw-small">${i.sinAsignar} instalación${i.sinAsignar === 1 ? '' : 'es'} sin licencia asignada</div>`;
+        } else if (i.total > i.usadas) {
+            aviso = `<div class="sw-small">${i.total - i.usadas} disponible${i.total - i.usadas === 1 ? '' : 's'}</div>`;
+        }
+
+        const botones = !activo
+            ? (PUEDE.eliminar ? `
+                <button type="button" class="sw-btn sw-btn-secondary sw-btn-sm"
+                        onclick="swReactivar(${Number(s.id)})">Reactivar</button>` : '')
+            : `
+                <button type="button" class="sw-btn sw-btn-secondary sw-btn-sm"
+                        onclick="swVerLicencias(${Number(s.id)})" title="Ver las licencias de este software">Licencias</button>
+
+                ${PUEDE.crear ? `
+                <button type="button" class="sw-btn sw-btn-secondary sw-btn-sm"
+                        onclick="swNuevaLicencia(${Number(s.id)})" title="Agregar una licencia">＋ Licencia</button>` : ''}
+
+                ${PUEDE.editar ? `
+                <button type="button" class="sw-btn sw-btn-secondary sw-btn-sm"
+                        onclick="swEditarSoftware(${Number(s.id)})" title="Editar datos del software">Editar</button>` : ''}
+
+                ${PUEDE.eliminar ? `
+                <button type="button" class="sw-btn sw-btn-danger sw-btn-sm"
+                        data-confirm="Se desactivará «${esc(s.nombre)}». Se conserva todo el historial y podrás reactivarlo cuando quieras."
+                        data-confirm-title="¿Desactivar software?"
+                        data-confirm-ok="Desactivar"
+                        data-confirm-danger="1"
+                        onclick="swDesactivar(${Number(s.id)})" title="Desactivar software">Desactivar</button>` : ''}`;
+
+        return `
+            <tr class="${claseFila}">
+                <td>
+                    <div class="sw-name">
+                        <button type="button" class="sw-name-btn" onclick="swVerLicencias(${Number(s.id)})"
+                                title="Ver licencias">${esc(s.nombre)}</button>
+                        ${s.version ? `<span class="sw-version">Versión ${esc(s.version)}</span>` : ''}
+                        ${s.categoria ? `<span class="sw-version">${esc(s.categoria)}</span>` : ''}
+                        ${!activo ? `<span class="sw-badge sw-badge-neutral" style="align-self:flex-start">Desactivado</span>` : ''}
+                    </div>
+                </td>
+
+                <td>${s.fabricante ? esc(s.fabricante) : '<span class="sw-muted">—</span>'}</td>
+
+                <td><span class="sw-badge sw-badge-neutral">${i.inst} equipo${i.inst === 1 ? '' : 's'}</span></td>
+
+                <td>
+                    <div class="sw-license">
+                        <div class="sw-license-info">
+                            <span class="${i.excedida ? 'sw-license-danger' : ''}">${i.usadas} / ${i.total}</span>
+                            <span class="sw-license-value">${Math.round(porcentaje)}%</span>
+                        </div>
+                        <div class="sw-license-bar"><div class="sw-license-fill ${claseBarra}" style="width:${porcentaje}%"></div></div>
+                        ${aviso}
+                    </div>
+                </td>
+
+                <td><span class="sw-badge ${estado.clase}">${estado.texto}</span></td>
+
+                <td><div class="sw-actions">${botones}</div></td>
+            </tr>`;
+    }).join('');
+}
+
+
+/* =========================================================
+   MODALES
+========================================================= */
+
+function swAbrirModal(id)  { document.getElementById(id).classList.add('active'); }
+function swCerrarModal(id) { document.getElementById(id).classList.remove('active'); }
+
+function swCerrarLista() {
+    SW_LISTA_ID = null;
+    swCerrarModal('sw-modal-lista');
+}
+
+document.querySelectorAll('.sw-modal').forEach(modal => {
+    modal.addEventListener('click', e => {
+        if (e.target === modal) {
+            modal.classList.remove('active');
+            if (modal.id === 'sw-modal-lista') SW_LISTA_ID = null;
+        }
+    });
+});
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.sw-modal.active').forEach(m => m.classList.remove('active'));
+        SW_LISTA_ID = null;
+    }
+});
+
+
+/* =========================================================
+   SOFTWARE: NUEVO / EDITAR / DESACTIVAR / REACTIVAR
+========================================================= */
+
+function swNuevoSoftware() {
+    document.getElementById('sw-form-software').reset();
+    document.getElementById('sw-software-id').value = '';
+    document.getElementById('sw-software-titulo').textContent = 'Nuevo software';
+    document.getElementById('sw-software-desc').textContent = 'Agrega un software al catálogo.';
+    document.getElementById('sw-software-guardar').textContent = 'Guardar software';
+    swAbrirModal('sw-modal-software');
+    setTimeout(() => document.getElementById('sw-nombre').focus(), 100);
+}
+
+function swEditarSoftware(sid) {
+    const s = SW.find(x => Number(x.id) === Number(sid));
+    if (!s) { swToast('No se encontró el software seleccionado.', 'error'); return; }
+
+    document.getElementById('sw-software-id').value = s.id;
+    document.getElementById('sw-nombre').value = s.nombre || '';
+    document.getElementById('sw-fabricante').value = s.fabricante || '';
+    document.getElementById('sw-version').value = s.version || '';
+    document.getElementById('sw-categoria').value = s.categoria || '';
+    document.getElementById('sw-software-titulo').textContent = 'Editar software';
+    document.getElementById('sw-software-desc').textContent = 'Corrige los datos del catálogo.';
+    document.getElementById('sw-software-guardar').textContent = 'Guardar cambios';
+    swAbrirModal('sw-modal-software');
+    setTimeout(() => document.getElementById('sw-nombre').focus(), 100);
+}
+
+document.getElementById('sw-form-software').addEventListener('submit', async e => {
+
+    e.preventDefault();
+
+    const id = document.getElementById('sw-software-id').value;
+    const nombre = document.getElementById('sw-nombre').value.trim();
+    const fabricante = document.getElementById('sw-fabricante').value.trim();
+    const version = document.getElementById('sw-version').value.trim();
+    const categoria = document.getElementById('sw-categoria').value.trim();
+
+    if (!nombre) { swToast('El nombre del software es obligatorio.', 'error'); return; }
+
+    try {
+        await api(id ? '/api/software/' + id : '/api/software', id ? 'PUT' : 'POST',
+                  { nombre, fabricante, version, categoria });
+        swCerrarModal('sw-modal-software');
+        await swCargar();
+        swToast(id ? 'Software actualizado.' : 'Software creado.');
+    } catch (error) {
+        swToast(error.message, 'error');
+    }
+});
+
+/* La confirmación la muestra el diálogo de base.html (atributos data-confirm del botón) */
+async function swDesactivar(id) {
+    try {
+        await api('/api/software/' + id, 'DELETE');          // desactiva, no borra
+        await swCargar();
+        swToast('Software desactivado. Puedes reactivarlo desde «Solo desactivados».');
+    } catch (error) {
+        swToast(error.message, 'error');
+    }
+}
+
+async function swReactivar(id) {
+    try {
+        await api('/api/software/' + id + '/reactivar', 'POST', {});
+        await swCargar();
+        swToast('Software reactivado.');
+    } catch (error) {
+        swToast(error.message, 'error');
+    }
+}
+
+
+/* =========================================================
+   LISTA DE LICENCIAS DE UN SOFTWARE
+========================================================= */
+
+function swVerLicencias(sid) {
+    SW_LISTA_ID = Number(sid);
+    swPintarLista();
+    swAbrirModal('sw-modal-lista');
+}
+
+function swPintarLista() {
+
+    const s = SW.find(x => Number(x.id) === SW_LISTA_ID);
+    if (!s) { swCerrarLista(); return; }
+
+    const i = swInfo(s);
+    const n = i.licencias.length;
+
+    document.getElementById('sw-lista-titulo').textContent = `Licencias · ${s.nombre}`;
+    document.getElementById('sw-lista-desc').textContent =
+        `${n} licencia${n === 1 ? '' : 's'} activa${n === 1 ? '' : 's'}` +
+        (s.fabricante ? ` · ${s.fabricante}` : '') + (s.version ? ` · versión ${s.version}` : '');
+
+    const agregar = document.getElementById('sw-lista-agregar');
+    agregar.style.display = PUEDE.crear && swActivo(s) ? '' : 'none';
+    agregar.onclick = () => swNuevaLicencia(SW_LISTA_ID);
+
+    const disponibles = i.total - i.usadas;
+    const resumen = `
+        <div class="sw-stats">
+            <div class="sw-stat"><strong>${i.inst}</strong><span>equipos con el software instalado</span></div>
+            <div class="sw-stat"><strong>${i.usadas} / ${i.total}</strong><span>licencias en uso / compradas</span></div>
+            <div class="sw-stat"><strong class="${disponibles < 0 ? 'sw-license-danger' : ''}">${disponibles}</strong>
+                <span>${disponibles < 0 ? 'licencias que faltan' : 'licencias disponibles'}</span></div>
+        </div>`;
+
+    const cuerpo = document.getElementById('sw-lista-cuerpo');
+
+    if (!n) {
+        cuerpo.innerHTML = resumen + `
+            <div class="sw-empty" style="padding:30px 10px !important">
+                <div class="sw-empty-icon">🔑</div>
+                <div class="sw-empty-title">Este software no tiene licencias activas</div>
+                <div class="sw-empty-text">Agrega una para poder asignarla a los equipos.</div>
+            </div>`;
+        return;
+    }
+
+    const ordenadas = [...i.licencias].sort((a, b) =>
+        String(a.fecha_vence || '9999-12-31').localeCompare(String(b.fecha_vence || '9999-12-31')));
+
+    cuerpo.innerHTML = resumen + ordenadas.map(l => {
+
+        const estado = swEstadoVencimiento(l.fecha_vence);
+        const usadas = Number(l.usadas || 0);
+        const cantidad = Number(l.cantidad || 0);
+        const costo = swDinero(l.costo, l.moneda);
+        const detalle = [
+            `Uso ${usadas} / ${cantidad}`,
+            l.proveedor ? esc(l.proveedor) : '',
+            costo,
+            l.clave ? `Clave ••••${esc(String(l.clave).slice(-4))}` : ''
+        ].filter(Boolean).join(' · ');
+
+        return `
+            <div class="sw-lic-item">
+                <div class="sw-lic-main">
+                    <strong>${esc(TIPOS_LIC[l.tipo] || l.tipo || 'Licencia')} · ${cantidad} licencia${cantidad === 1 ? '' : 's'}</strong>
+                    <span class="sw-muted ${usadas > cantidad ? 'sw-license-danger' : ''}">${detalle}</span>
+                </div>
+                <div class="sw-lic-side">
+                    <span class="sw-badge ${estado.clase}">${estado.texto}</span>
+                    ${PUEDE.editar ? `
+                    <button type="button" class="sw-btn sw-btn-secondary sw-btn-sm"
+                            onclick="swEditarLicencia(${Number(l.id)})">Editar</button>` : ''}
+                    ${PUEDE.eliminar ? `
+                    <button type="button" class="sw-btn sw-btn-danger sw-btn-sm"
+                            data-confirm="Se desactivará esta licencia. Se conserva el historial de instalaciones."
+                            data-confirm-title="¿Desactivar licencia?"
+                            data-confirm-ok="Desactivar"
+                            data-confirm-danger="1"
+                            onclick="swDesactivarLicencia(${Number(l.id)})">Desactivar</button>` : ''}
+                </div>
+            </div>`;
+    }).join('');
+}
+
+async function swDesactivarLicencia(id) {
+    try {
+        await api('/api/licencias/' + id, 'DELETE');
+        await swCargar();
+        swToast('Licencia desactivada.');
+    } catch (error) {
+        swToast(error.message, 'error');
+    }
+}
+
+
+/* =========================================================
+   LICENCIA: NUEVA / EDITAR
+========================================================= */
+
+function swNuevaLicencia(sid) {
+
+    const software = SW.find(s => Number(s.id) === Number(sid));
+    if (!software) { swToast('No se encontró el software seleccionado.', 'error'); return; }
+
+    document.getElementById('sw-form-licencia').reset();
+    document.getElementById('sw-licencia-id').value = '';
+    document.getElementById('sw-licencia-software-id').value = sid;
+    document.getElementById('sw-licencia-titulo').textContent = 'Nueva licencia';
+    document.getElementById('sw-licencia-software').textContent = `Registrar licencia para ${software.nombre}`;
+    document.getElementById('sw-licencia-guardar').textContent = 'Guardar licencia';
+    document.getElementById('sw-cantidad').value = 1;
+    document.getElementById('sw-moneda').value = 'COP';
+
+    swAbrirModal('sw-modal-licencia');
+}
+
+function swEditarLicencia(lid) {
+
+    const software = SW.find(s => Number(s.id) === SW_LISTA_ID);
+    const l = (software?.licencias || []).find(x => Number(x.id) === Number(lid));
+    if (!l) { swToast('No se encontró la licencia seleccionada.', 'error'); return; }
+
+    document.getElementById('sw-form-licencia').reset();
+    document.getElementById('sw-licencia-id').value = l.id;
+    document.getElementById('sw-licencia-software-id').value = software.id;
+    document.getElementById('sw-licencia-titulo').textContent = 'Editar licencia';
+    document.getElementById('sw-licencia-software').textContent = `Licencia de ${software.nombre}`;
+    document.getElementById('sw-licencia-guardar').textContent = 'Guardar cambios';
+    document.getElementById('sw-tipo').value = l.tipo || 'perpetua';
+    document.getElementById('sw-cantidad').value = l.cantidad || 1;
+    document.getElementById('sw-clave').value = l.clave || '';
+    document.getElementById('sw-proveedor').value = l.proveedor || '';
+    document.getElementById('sw-fecha-compra').value = l.fecha_compra ? String(l.fecha_compra).slice(0, 10) : '';
+    document.getElementById('sw-fecha-vence').value = l.fecha_vence ? String(l.fecha_vence).slice(0, 10) : '';
+    document.getElementById('sw-costo').value = l.costo ?? '';
+    document.getElementById('sw-moneda').value = l.moneda || 'COP';
+
+    swAbrirModal('sw-modal-licencia');
+}
+
+document.getElementById('sw-form-licencia').addEventListener('submit', async e => {
+
+    e.preventDefault();
+
+    const id = document.getElementById('sw-licencia-id').value;
+    const software_id = Number(document.getElementById('sw-licencia-software-id').value);
+    const tipo = document.getElementById('sw-tipo').value;
+    const cantidad = Number(document.getElementById('sw-cantidad').value);
+    const clave = document.getElementById('sw-clave').value.trim();
+    const proveedor = document.getElementById('sw-proveedor').value.trim();
+    const fecha_compra = document.getElementById('sw-fecha-compra').value;
+    const fecha_vence = document.getElementById('sw-fecha-vence').value;
+    const costo = document.getElementById('sw-costo').value;
+    const moneda = document.getElementById('sw-moneda').value.trim() || 'COP';
+
+    if (!cantidad || cantidad < 1) { swToast('La cantidad debe ser mayor a cero.', 'error'); return; }
+    if (fecha_compra && fecha_vence && fecha_vence < fecha_compra) {
+        swToast('El vencimiento no puede ser anterior a la compra.', 'error');
+        return;
+    }
+
+    try {
+        await api(id ? '/api/licencias/' + id : '/api/licencias', id ? 'PUT' : 'POST', {
+            software_id, tipo, cantidad, clave, proveedor, fecha_compra, fecha_vence, costo, moneda
+        });
+        swCerrarModal('sw-modal-licencia');
+        await swCargar();
+        swToast(id ? 'Licencia actualizada.' : 'Licencia registrada.');
+    } catch (error) {
+        swToast(error.message, 'error');
+    }
+});
+
+
+/* =========================================================
+   INICIO
+========================================================= */
+
+swCargar();
+
+</script>
+
+{% endblock %}

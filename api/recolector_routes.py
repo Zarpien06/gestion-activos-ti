@@ -1,11 +1,10 @@
 import io
-from functools import wraps
+import json
 from pathlib import Path
 
 from flask import (
     Blueprint,
     flash,
-    jsonify,
     redirect,
     render_template,
     request,
@@ -13,6 +12,7 @@ from flask import (
     url_for,
 )
 from flask_login import login_required
+from werkzeug.utils import secure_filename
 
 from auth.decorators import permiso_requerido
 from supabase_client import supabase
@@ -21,7 +21,6 @@ from api.recolector_service import (
     crear_activo_desde_escaneo,
     obtener_escaneo,
     procesar_escaneo,
-    validar_token,
     vincular_escaneo,
 )
 
@@ -30,45 +29,55 @@ recolector_bp = Blueprint("recolector", __name__)
 CARPETA_CLIENTE = Path(__file__).resolve().parent.parent / "recolector_cliente"
 ARCHIVO_RECOLECTOR = "recolector.ps1"
 
-
-def extraer_token():
-    cabecera = request.headers.get("Authorization", "").strip()
-    if cabecera.lower().startswith("bearer "):
-        return cabecera[7:].strip()
-    return request.headers.get("X-Recolector-Token", "").strip()
+MAX_ARCHIVO = 256 * 1024  # 256 KB por archivo
 
 
-def token_requerido(funcion):
-    @wraps(funcion)
-    def wrapper(*args, **kwargs):
+@recolector_bp.post("/recolector/subir")
+@login_required
+@permiso_requerido("recolector", "crear")
+def subir_archivos():
+    """Recibe uno o varios NOMBRE-DEL-EQUIPO.json generados por el recolector."""
+    archivos = [a for a in request.files.getlist("archivos") if a and a.filename]
+    if not archivos:
+        flash("Selecciona al menos un archivo.", "danger")
+        return redirect(url_for("recolector.bandeja"))
+
+    procesados, errores = [], []
+    for archivo in archivos:
+        nombre = secure_filename(archivo.filename) or "archivo"
         try:
-            valido = validar_token(extraer_token())
+            if not nombre.lower().endswith(".json"):
+                raise ValueError("no es un archivo .json")
+
+            crudo = archivo.read(MAX_ARCHIVO + 1)
+            if len(crudo) > MAX_ARCHIVO:
+                raise ValueError("pesa demasiado")
+
+            # utf-8-sig: acepta el archivo con o sin BOM
+            datos = json.loads(crudo.decode("utf-8-sig"))
+            if not isinstance(datos, dict):
+                raise ValueError("formato inválido")
+
+            # Si el archivo no trae hostname, se usa el nombre del archivo
+            if not str(datos.get("hostname") or "").strip():
+                datos["hostname"] = Path(nombre).stem
+
+            procesados.append(procesar_escaneo(datos))
         except Exception as error:
-            print(f"Error validando token del recolector: {error}")
-            return jsonify({"error": "No fue posible validar el token."}), 500
-        if not valido:
-            return jsonify({"error": "Token invalido"}), 401
-        return funcion(*args, **kwargs)
-    return wrapper
+            print(f"Error procesando {nombre}: {error}")
+            errores.append(f"{nombre}: {error}")
 
+    if procesados:
+        vinculados = sum(1 for r in procesados if r.get("resultado") == "vinculado")
+        flash(
+            f"{len(procesados)} equipo(s) procesado(s): {vinculados} vinculado(s), "
+            f"{len(procesados) - vinculados} sin vincular.",
+            "success",
+        )
+    for e in errores:
+        flash(f"No se pudo procesar {e}", "danger")
 
-@recolector_bp.post("/api/recolector/equipos")
-@token_requerido
-def recibir_equipo():
-    datos = request.get_json(silent=True)
-    if not isinstance(datos, dict):
-        return jsonify({"error": "Se esperaba un JSON valido."}), 400
-    if not str(datos.get("hostname") or "").strip():
-        return jsonify({"error": "Falta hostname"}), 400
-
-    try:
-        resultado = procesar_escaneo(datos)
-    except Exception as error:
-        print(f"Error procesando escaneo: {error}")
-        return jsonify({"error": "No fue posible guardar el equipo."}), 500
-
-    resultado["mensaje"] = "Equipo recibido correctamente"
-    return jsonify(resultado), 201
+    return redirect(url_for("recolector.bandeja"))
 
 
 @recolector_bp.get("/recolector/descargar")

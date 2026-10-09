@@ -294,7 +294,7 @@
                     <span class="dirty-note">Tienes cambios sin guardar</span>
                     <div class="actions-group">
                         <button type="button" id="perfilOperador" class="btn btn-outline"
-                                title="Dashboard, Personas, Asignaciones, Devoluciones, Tickets, Actas e Inventario (crear/editar, sin eliminar)">Perfil Operador</button>
+                                title="Dashboard, Inventario, Software y licencias, Contratos y mantenimiento, Equipos detectados, Personas, Asignaciones, Devoluciones, Tickets, Actas y Reportes (crear/editar según módulo, sin eliminar)">Perfil Operador</button>
                         <button type="button" id="viewOnly" class="btn btn-outline">Solo lectura</button>
                         <button type="button" id="selectAll" class="btn btn-outline">Marcar todos</button>
                         <button type="button" id="clearAll" class="btn btn-outline">Limpiar todos</button>
@@ -339,16 +339,21 @@
         let sucio = false;
 
         // Perfil predefinido: acciones permitidas por codigo de modulo.
-        // Inventario sin "eliminar": el operador puede crear, editar e
+        // Ningun modulo incluye "eliminar": el operador puede crear, editar e
         // inhabilitar, pero no dar de baja ni reactivar.
+        // "configuracion" no se incluye (es administrativo).
         const PERFIL_OPERADOR = {
             dashboard:    ['ver'],
             inventario:   ['ver', 'crear', 'editar'],
+            software:     ['ver', 'crear', 'editar'],
+            contratos:    ['ver', 'crear', 'editar'],
+            recolector:   ['ver', 'editar'],
             personas:     ['ver'],
             asignaciones: ['ver', 'crear'],
             devoluciones: ['ver', 'crear'],
             tickets:      ['ver', 'crear', 'editar'],
-            actas:        ['ver', 'crear']
+            actas:        ['ver', 'crear'],
+            reportes:     ['ver']
         };
 
         function celdas(tr) {

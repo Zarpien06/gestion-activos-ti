@@ -2,18 +2,6 @@
 
 {% block title %}Configuración | Gestión TI{% endblock %}
 
-{% macro campo(name, label, value="", type="text", placeholder="", help="", required=false, autocomplete="off") %}
-<div class="field">
-    <label for="{{ name }}">{{ label }}{% if required %} <span aria-hidden="true">*</span>{% endif %}</label>
-    <input id="{{ name }}" name="{{ name }}" type="{{ type }}" class="form-control"
-           value="{{ value if value is not none else '' }}" placeholder="{{ placeholder }}"
-           autocomplete="{{ autocomplete }}" {% if required %}required{% endif %}
-           {% if errores.get(name) %}aria-invalid="true"{% endif %}>
-    {% if help %}<small class="field-help">{{ help }}</small>{% endif %}
-    {% if errores.get(name) %}<small class="field-error">{{ errores[name] }}</small>{% endif %}
-</div>
-{% endmacro %}
-
 {% block extra_css %}
 <style>
     .page-header { margin-bottom: 24px; }
@@ -26,7 +14,7 @@
     .settings-nav a:hover { background: var(--surface-2); }
     .settings-nav a.active { color: var(--primary); background: var(--primary-soft); font-weight: 600; }
 
-    .settings-section { scroll-margin-top: 90px; margin-bottom: 20px; }
+    .settings-section { margin-bottom: 20px; }
     .settings-section[hidden] { display: none; }
     .section-head { margin-bottom: 18px; }
     .section-head h2 { margin: 0; font-size: 16px; font-weight: 600; }
@@ -37,6 +25,24 @@
     .field-help { color: var(--text-light); }
     .field-error { color: var(--danger); }
     .form-control[aria-invalid="true"] { border-color: var(--danger); }
+    textarea.form-control { min-height: 140px; resize: vertical; line-height: 1.5; }
+
+    .switch-row {
+        display: flex; align-items: center; justify-content: space-between; gap: 16px;
+        padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; margin-top: 18px;
+    }
+    .switch-row strong { display: block; font-size: 14px; font-weight: 600; }
+    .switch-row small { display: block; margin-top: 2px; font-size: 12px; color: var(--text-light); }
+    .switch { position: relative; width: 42px; height: 24px; flex-shrink: 0; }
+    .switch input { position: absolute; inset: 0; opacity: 0; cursor: pointer; z-index: 1; margin: 0; }
+    .switch .track { position: absolute; inset: 0; border-radius: 12px; background: var(--border); transition: background .2s; }
+    .switch .track::after {
+        content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px;
+        border-radius: 50%; background: #fff; transition: transform .2s; box-shadow: 0 1px 2px rgba(0,0,0,.2);
+    }
+    .switch input:checked + .track { background: var(--primary); }
+    .switch input:checked + .track::after { transform: translateX(18px); }
+    .switch input:focus-visible + .track { outline: 2px solid var(--primary); outline-offset: 2px; }
 
     .savebar {
         position: sticky; bottom: 16px; z-index: 10; display: none;
@@ -51,6 +57,7 @@
     @media (max-width: 900px) {
         .settings { grid-template-columns: 1fr; gap: 16px; }
         .settings-nav { position: static; flex-direction: row; overflow-x: auto; }
+        .settings-nav a { white-space: nowrap; }
         .field-grid { grid-template-columns: 1fr; }
     }
 </style>
@@ -58,16 +65,30 @@
 
 {% block content %}
 
+{% macro campo(name, label, value="", type="text", placeholder="", help="", required=false, autocomplete="off", attrs="") %}
+<div class="field">
+    <label for="{{ name }}">{{ label }}{% if required %} <span aria-hidden="true">*</span>{% endif %}</label>
+    <input id="{{ name }}" name="{{ name }}" type="{{ type }}" class="form-control"
+           value="{{ value if value is not none else '' }}" placeholder="{{ placeholder }}"
+           autocomplete="{{ autocomplete }}" {% if required %}required{% endif %} {{ attrs|safe }}
+           {% if errores.get(name) %}aria-invalid="true"{% endif %}>
+    {% if help %}<small class="field-help">{{ help }}</small>{% endif %}
+    {% if errores.get(name) %}<small class="field-error">{{ errores[name] }}</small>{% endif %}
+</div>
+{% endmacro %}
+
 <div class="page-header">
     <h1>Configuración</h1>
-    <p>Administra los datos generales del sistema.</p>
+    <p>Datos generales y reglas del sistema.</p>
 </div>
 
 <div class="settings">
 
     <nav class="settings-nav" aria-label="Secciones de configuración">
         <a href="#general" data-section="general" class="active">General</a>
-        <a href="#alertas" data-section="alertas">Garantías y alertas</a>
+        <a href="#activos" data-section="activos">Activos y garantías</a>
+        <a href="#actas" data-section="actas">Actas</a>
+        <a href="#seguridad" data-section="seguridad">Seguridad</a>
     </nav>
 
     <form method="post" id="config-form" novalidate>
@@ -79,20 +100,57 @@
                 <p>Identidad de la organización en el sistema y en los documentos.</p>
             </div>
             <div class="field-grid">
-                {{ campo("nombre_empresa", "Nombre empresa", cfg.nombre_empresa, required=true, autocomplete="organization") }}
+                {{ campo("nombre_empresa", "Nombre empresa", cfg.nombre_empresa, required=true, autocomplete="organization",
+                         help="Aparece en el encabezado, pie y cláusula de las actas.") }}
                 {{ campo("correo_soporte", "Correo soporte", cfg.correo_soporte, type="email",
                          placeholder="soporte@planeta.com.co", autocomplete="email",
-                         help="Se usa en las actas y en las notificaciones.") }}
+                         help="Aparece en el pie de las actas.") }}
             </div>
         </section>
 
-        <section class="card settings-section" id="alertas" hidden>
+        <section class="card settings-section" id="activos" hidden>
             <div class="section-head">
-                <h2>Garantías y alertas</h2>
-                <p>Avisos automáticos por correo.</p>
+                <h2>Activos y garantías</h2>
+                <p>Reglas al registrar equipos y aviso de vencimientos.</p>
             </div>
             <div class="field-grid">
-                {{ campo("dias_alerta_garantia", "Días de aviso antes del vencimiento", cfg.dias_alerta_garantia, type="number") }}
+                {{ campo("dias_alerta_garantia", "Aviso de garantía (días antes)", cfg.dias_alerta_garantia, type="number",
+                         attrs='min="1" max="365"',
+                         help="El dashboard muestra las garantías que vencen dentro de este plazo.") }}
+            </div>
+            <div class="switch-row">
+                <div>
+                    <strong>Serial obligatorio</strong>
+                    <small>No deja registrar ni editar un activo sin número de serie.</small>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" name="exigir_serial" {% if cfg.exigir_serial %}checked{% endif %} aria-label="Serial obligatorio">
+                    <span class="track"></span>
+                </label>
+            </div>
+        </section>
+
+        <section class="card settings-section" id="actas" hidden>
+            <div class="section-head">
+                <h2>Actas</h2>
+                <p>Texto legal que aparece en todas las actas generadas.</p>
+            </div>
+            <div class="field">
+                <label for="texto_clausula">Cláusula</label>
+                <textarea id="texto_clausula" name="texto_clausula" class="form-control" rows="7"
+                          placeholder="Si lo dejas vacío se usa el texto estándar.">{{ cfg.texto_clausula or '' }}</textarea>
+                <small class="field-help">Escribe {empresa} para insertar el nombre de la empresa. Vacío = texto estándar. Aplica a las actas nuevas.</small>
+            </div>
+        </section>
+
+        <section class="card settings-section" id="seguridad" hidden>
+            <div class="section-head">
+                <h2>Seguridad</h2>
+                <p>Control de sesiones.</p>
+            </div>
+            <div class="field-grid">
+                {{ campo("sesion_minutos", "Cierre por inactividad (min)", cfg.sesion_minutos, type="number",
+                         attrs='min="5" max="1440"', help="Entre 5 y 1440. Aplica en máximo 1 minuto.") }}
             </div>
         </section>
 
@@ -114,8 +172,10 @@
         const form = document.getElementById('config-form');
         const bar = document.getElementById('savebar');
         const save = document.getElementById('save');
+        const mostrarBarra = () => bar.classList.add('visible');
 
-        form.addEventListener('input', () => bar.classList.add('visible'));
+        form.addEventListener('input', mostrarBarra);
+        form.addEventListener('change', mostrarBarra);
 
         document.getElementById('discard').addEventListener('click', () => {
             form.reset();
@@ -127,10 +187,8 @@
             save.textContent = 'Guardando…';
         });
 
-        // Si el servidor devolvió errores de validación, deja la barra visible
         {% if errores %}bar.classList.add('visible');{% endif %}
 
-        // Ctrl+S para guardar
         document.addEventListener('keydown', e => {
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
                 e.preventDefault();
@@ -138,7 +196,6 @@
             }
         });
 
-        // Pestañas: muestra una sección a la vez
         const links = document.querySelectorAll('.settings-nav a');
         const sections = document.querySelectorAll('.settings-section');
 
@@ -154,12 +211,8 @@
             history.replaceState(null, '', '#' + a.dataset.section);
         }));
 
-        // Sección inicial: la del hash, o la que tenga un error de validación
         const conError = document.querySelector('[aria-invalid="true"]');
-        const inicial = conError
-            ? conError.closest('.settings-section').id
-            : location.hash.slice(1);
-        mostrar(inicial);
+        mostrar(conError ? conError.closest('.settings-section').id : location.hash.slice(1));
     })();
 </script>
 {% endblock %}

@@ -1,0 +1,744 @@
+{% extends "base.html" %}
+
+{% block title %}Contratos{% endblock %}
+
+{% block extra_css %}
+<style>
+    .ct-cabecera { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+    .ct-cabecera h2 { margin: 0; font-size: 22px; }
+    .ct-cabecera p { margin: 2px 0 0; color: var(--text-light); }
+    .ct-botones { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* Guía del proceso */
+    .ct-guia { margin-bottom: 14px; padding: 10px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+    .ct-guia summary { cursor: pointer; font-weight: 600; font-size: 14px; }
+    .ct-pasos { display: grid; gap: 10px; margin-top: 12px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+    .ct-paso { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; color: var(--text-light); }
+    .ct-paso b { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: var(--primary-soft); color: var(--text); }
+    .ct-paso strong { display: block; color: var(--text); }
+
+    /* Alertas proactivas */
+    .ct-alertas { margin-bottom: 16px; }
+    .ct-alertas h3 { margin: 0 0 8px; font-size: 15px; }
+    .ct-alerta { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding: 9px 14px; margin-bottom: 6px; background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--warning); border-radius: var(--radius); font-size: 13.5px; }
+    .ct-alerta.rojo { border-left-color: var(--danger); }
+    .ct-alerta.gris { border-left-color: var(--text-light); }
+    .ct-alerta small { color: var(--text-light); }
+    .ct-ok { padding: 10px 14px; border: 1px solid var(--border); border-left: 4px solid var(--success); border-radius: var(--radius); background: var(--surface); font-size: 13.5px; }
+
+    /* Resumen clicable */
+    .ct-resumen { display: grid; gap: 14px; margin-bottom: 18px; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+    .ct-resumen .card { padding: 14px 16px; }
+    .ct-resumen .card[data-filtro] { cursor: pointer; transition: transform .12s; }
+    .ct-resumen .card[data-filtro]:hover { transform: translateY(-2px); }
+    .ct-resumen .card.activa { outline: 2px solid var(--primary); }
+    .ct-resumen strong { display: block; font-size: 26px; line-height: 1.1; }
+    .ct-resumen .costo strong { font-size: 18px; }
+    .ct-resumen span { color: var(--text-light); font-size: 12.5px; }
+    .ct-resumen .rojo strong { color: var(--danger); }
+    .ct-resumen .ambar strong { color: var(--warning); }
+    .ct-resumen .verde strong { color: var(--success); }
+
+    .ct-filtros { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; }
+    .ct-filtros .form-select { width: auto; min-width: 170px; }
+    .ct-filtros .form-control { width: auto; min-width: 220px; }
+    .ct-contador { margin-left: auto; color: var(--text-light); font-size: 13px; }
+
+    .ct-acc { display: flex; gap: 6px; flex-wrap: wrap; }
+    .ct-sm { padding: 6px 10px; font-size: 12.5px; }
+    .ct-muted { color: var(--text-light); font-size: 12.5px; }
+
+    tr.ct-f-vencido td:first-child { box-shadow: inset 4px 0 0 var(--danger); }
+    tr.ct-f-por_vencer td:first-child { box-shadow: inset 4px 0 0 var(--warning); }
+    .ct-barra { height: 5px; margin-top: 5px; background: var(--surface-2); border-radius: 3px; overflow: hidden; min-width: 120px; }
+    .ct-barra i { display: block; height: 100%; background: var(--success); }
+    .ct-barra.ambar i { background: var(--warning); }
+    .ct-barra.rojo i { background: var(--danger); }
+    .ct-vacio { color: var(--warning); font-weight: 600; }
+
+    .ct-dialog { width: min(640px, calc(100% - 32px)); padding: 24px; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: 0 30px 70px rgba(0, 0, 0, .45); }
+    .ct-dialog::backdrop { background: rgba(2, 6, 23, .6); backdrop-filter: blur(3px); }
+    .ct-dialog h3 { margin: 0 0 14px; font-size: 18px; }
+    .ct-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+    .ct-grid .ancho { grid-column: 1 / -1; }
+    .ct-pie { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+    .ct-error { margin-top: 12px; }
+
+    .ct-equipo { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 12px; margin-bottom: 6px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); }
+    .ct-lista { max-height: 260px; overflow-y: auto; }
+    .ct-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+    .ct-chip { padding: 3px 10px; font-size: 12px; background: var(--primary-soft); border-radius: 999px; }
+    .ct-resultado { display: block; width: 100%; text-align: left; padding: 8px 12px; margin-top: 4px; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; }
+    .ct-resultado:hover { background: var(--primary-soft); }
+    .ct-bloque { margin-top: 14px; }
+    .ct-masivo { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .ct-masivo .form-select { flex: 1; min-width: 160px; }
+    .ct-nota { margin: 0 0 12px; color: var(--text-light); font-size: 13px; }
+    .ct-previa { padding: 10px 12px; margin-bottom: 12px; font-size: 13px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); }
+    .ct-previa li { margin: 2px 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="ct-cabecera">
+    <div>
+        <h2>Contratos</h2>
+        <p>Mantenimiento, leasing, soporte y garantías extendidas, con los equipos que cubre cada uno.</p>
+    </div>
+    <div class="ct-botones">
+        {% if tiene_permiso('inventario', 'crear') %}
+            <button type="button" class="btn" id="ctNuevo">Nuevo contrato</button>
+        {% endif %}
+    </div>
+</div>
+
+<details class="ct-guia">
+    <summary>¿Cómo funciona la gestión de contratos?</summary>
+    <div class="ct-pasos">
+        <div class="ct-paso"><b>1</b><div><strong>Crea el contrato</strong>Tipo, proveedor, fechas y costo. Elige si se renueva manual o automático.</div></div>
+        <div class="ct-paso"><b>2</b><div><strong>Asigna los equipos</strong>Botón «Equipos»: busca por código o agrega todos los de un tipo de una vez.</div></div>
+        <div class="ct-paso"><b>3</b><div><strong>Vigila las alertas</strong>Arriba verás qué venció, qué vence pronto y qué contratos no cubren ningún equipo.</div></div>
+        <div class="ct-paso"><b>4</b><div><strong>Renueva con un clic</strong>Se crea el contrato nuevo, se copian los equipos y el anterior queda como historial.</div></div>
+    </div>
+</details>
+
+<div id="ctAviso"></div>
+<div class="ct-alertas" id="ctAlertas"></div>
+<div class="ct-resumen" id="ctResumen"></div>
+
+<div class="ct-filtros">
+    <input type="search" class="form-control" id="ctBusqueda" placeholder="Buscar proveedor o N.º de contrato" aria-label="Buscar">
+    <select class="form-select" id="ctFiltro" aria-label="Filtrar por estado">
+        <option value="">Todos los estados</option>
+        <option value="vencido">Vencidos</option>
+        <option value="por_vencer">Por vencer</option>
+        <option value="vigente">Vigentes</option>
+        <option value="sin_fecha">Sin fecha de fin</option>
+        <option value="inactivo">Inactivos</option>
+    </select>
+    <select class="form-select" id="ctFiltroTipo" aria-label="Filtrar por tipo">
+        <option value="">Todos los tipos</option>
+        {% for clave, nombre in tipos.items() %}
+            <option value="{{ clave }}">{{ nombre }}</option>
+        {% endfor %}
+    </select>
+    <select class="form-select" id="ctFiltroProveedor" aria-label="Filtrar por proveedor">
+        <option value="">Todos los proveedores</option>
+    </select>
+    <button type="button" class="btn btn-outline ct-sm" id="ctLimpiar">Limpiar filtros</button>
+    <span class="ct-contador" id="ctContador"></span>
+</div>
+
+<div class="table-responsive">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Tipo</th>
+                <th>Proveedor</th>
+                <th>N.º</th>
+                <th>Vigencia</th>
+                <th>Equipos</th>
+                <th>Costo</th>
+                <th>Estado</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody id="ctCuerpo">
+            <tr><td colspan="8" class="ct-muted">Cargando contratos…</td></tr>
+        </tbody>
+    </table>
+</div>
+
+
+<!-- Crear / editar -->
+<dialog class="ct-dialog" id="ctDlgForm">
+    <h3 id="ctFormTitulo">Nuevo contrato</h3>
+    <form id="ctForm" autocomplete="off">
+        <input type="hidden" id="ctId">
+        <div class="ct-grid">
+            <div>
+                <label for="ctTipo">Tipo</label>
+                <select class="form-select" id="ctTipo">
+                    {% for clave, nombre in tipos.items() %}
+                        <option value="{{ clave }}">{{ nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="ctProveedor">Proveedor</label>
+                <input type="text" class="form-control" id="ctProveedor" required>
+            </div>
+            <div>
+                <label for="ctNumero">N.º de contrato</label>
+                <input type="text" class="form-control" id="ctNumero">
+            </div>
+            <div>
+                <label for="ctRenovacion">Renovación</label>
+                <select class="form-select" id="ctRenovacion">
+                    {% for clave, nombre in renovaciones.items() %}
+                        <option value="{{ clave }}">{{ nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="ctInicio">Inicio</label>
+                <input type="date" class="form-control" id="ctInicio">
+            </div>
+            <div>
+                <label for="ctFin">Fin</label>
+                <input type="date" class="form-control" id="ctFin">
+            </div>
+            <div>
+                <label for="ctCosto">Costo</label>
+                <input type="number" min="0" step="any" class="form-control" id="ctCosto">
+            </div>
+            <div>
+                <label for="ctMoneda">Moneda</label>
+                <input type="text" class="form-control" id="ctMoneda" value="COP" maxlength="5">
+            </div>
+            <div class="ancho">
+                <label for="ctNotas">Notas</label>
+                <textarea class="form-control" id="ctNotas" rows="2"></textarea>
+            </div>
+        </div>
+        <div class="ct-error" id="ctFormError"></div>
+        <div class="ct-pie">
+            <button type="button" class="btn btn-outline" data-cerrar="ctDlgForm">Cancelar</button>
+            <button type="submit" class="btn">Guardar contrato</button>
+        </div>
+    </form>
+</dialog>
+
+
+<!-- Renovar -->
+<dialog class="ct-dialog" id="ctDlgRenovar">
+    <h3 id="ctRenovarTitulo">Renovar contrato</h3>
+    <div class="ct-previa" id="ctRenovarPrevia"></div>
+    <form id="ctFormRenovar" autocomplete="off">
+        <div class="ct-grid">
+            <div>
+                <label for="ctRenInicio">Inicio</label>
+                <input type="date" class="form-control" id="ctRenInicio">
+            </div>
+            <div>
+                <label for="ctRenFin">Fin</label>
+                <input type="date" class="form-control" id="ctRenFin">
+            </div>
+            <div>
+                <label for="ctRenCosto">Costo</label>
+                <input type="number" min="0" step="any" class="form-control" id="ctRenCosto">
+            </div>
+        </div>
+        <div class="ct-error" id="ctRenovarError"></div>
+        <div class="ct-pie">
+            <button type="button" class="btn btn-outline" data-cerrar="ctDlgRenovar">Cancelar</button>
+            <button type="submit" class="btn" id="ctRenovarOk">Renovar contrato</button>
+        </div>
+    </form>
+</dialog>
+
+
+<!-- Equipos cubiertos -->
+<dialog class="ct-dialog" id="ctDlgEquipos">
+    <h3 id="ctEquiposTitulo">Equipos cubiertos</h3>
+    <div class="ct-chips" id="ctEquiposResumen"></div>
+    <div class="ct-lista" id="ctEquiposLista"></div>
+
+    {% if tiene_permiso('inventario', 'editar') %}
+    <div class="ct-bloque">
+        <label for="ctBuscar">Agregar equipo por código</label>
+        <input type="search" class="form-control" id="ctBuscar" placeholder="Escribe al menos 2 caracteres">
+        <div id="ctResultados"></div>
+    </div>
+
+    <div class="ct-bloque">
+        <label for="ctTipoMasivo">Agregar todos los equipos de un tipo</label>
+        <div class="ct-masivo">
+            <select class="form-select" id="ctTipoMasivo">
+                <option value="">Selecciona un tipo…</option>
+            </select>
+            <button type="button" class="btn btn-outline" data-acc="masivo" id="ctMasivoBtn">Agregar todos</button>
+        </div>
+        <div class="ct-muted" style="margin-top:4px">
+            Se omiten los equipos dados de baja y los que ya están en el contrato.
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="ct-error" id="ctEquiposError"></div>
+    <div class="ct-pie">
+        <button type="button" class="btn btn-outline" data-cerrar="ctDlgEquipos">Cerrar</button>
+    </div>
+</dialog>
+
+
+<!-- Confirmación dentro de la página -->
+<dialog class="ct-dialog" id="ctDlgConfirmar" style="width:min(440px, calc(100% - 32px))">
+    <h3 id="ctConfTitulo">Confirmar acción</h3>
+    <p class="ct-nota" id="ctConfTexto" style="font-size:14px"></p>
+    <div class="ct-pie">
+        <button type="button" class="btn btn-outline" id="ctConfNo">Cancelar</button>
+        <button type="button" class="btn" id="ctConfOk">Aceptar</button>
+    </div>
+</dialog>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+(function () {
+    var U = window.ctUtil;
+    if (!U) {
+        document.getElementById("ctCuerpo").innerHTML =
+            '<tr><td colspan="8"><div class="alert alert-danger">Falta cargar contratos_activo.js en base.html.</div></td></tr>';
+        return;
+    }
+
+    var TIPOS = {{ tipos | tojson }};
+    var PUEDE = {{ {
+        'crear': tiene_permiso('inventario', 'crear'),
+        'editar': tiene_permiso('inventario', 'editar'),
+        'eliminar': tiene_permiso('inventario', 'eliminar')
+    } | tojson }};
+
+    var ORDEN = { vencido: 0, por_vencer: 1, vigente: 2, sin_fecha: 3, inactivo: 4 };
+    var contratos = [];
+    var umbralDias = 30;
+    var contratoActual = null;
+    var renovando = null;
+    var tiposCargados = false;
+
+    function $(id) { return document.getElementById(id); }
+    function errorEn(id, texto) {
+        $(id).innerHTML = texto ? '<div class="alert alert-danger">' + U.esc(texto) + '</div>' : '';
+    }
+    function exitoEn(id, texto) {
+        $(id).innerHTML = texto ? '<div class="alert alert-success">' + U.esc(texto) + '</div>' : '';
+    }
+
+    // Aviso de error dentro de la página
+    var avisoTimer = null;
+    function aviso(texto) {
+        $("ctAviso").innerHTML = '<div class="alert alert-danger" style="margin-bottom:12px">' + U.esc(texto) + '</div>';
+        clearTimeout(avisoTimer);
+        avisoTimer = setTimeout(function () { $("ctAviso").innerHTML = ""; }, 7000);
+    }
+    // Confirmación dentro de la página; devuelve una promesa true/false
+    function confirmar(texto, etiqueta, titulo) {
+        return new Promise(function (resolver) {
+            var dlg = $("ctDlgConfirmar"), acepto = false;
+            $("ctConfTitulo").textContent = titulo || "Confirmar acción";
+            $("ctConfTexto").textContent = texto;
+            $("ctConfOk").textContent = etiqueta || "Aceptar";
+            function fin() { dlg.removeEventListener("close", fin); resolver(acepto); }
+            $("ctConfOk").onclick = function () { acepto = true; dlg.close(); };
+            $("ctConfNo").onclick = function () { dlg.close(); };
+            dlg.addEventListener("close", fin);
+            dlg.showModal();
+        });
+    }
+
+    // ---------- fechas (UTC para evitar desfases de zona horaria) ----------
+    function hoyISO() {
+        var d = new Date();
+        return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    }
+    function sumarDias(iso, n) {
+        var d = new Date(iso.slice(0, 10) + "T00:00:00Z");
+        d.setUTCDate(d.getUTCDate() + n);
+        return d.toISOString().slice(0, 10);
+    }
+    function diasEntre(a, b) {
+        return Math.round((Date.parse(b.slice(0, 10)) - Date.parse(a.slice(0, 10))) / 86400000);
+    }
+    // Dias que faltan para el fin (negativo = ya vencio). null si no hay fecha.
+    function restantes(c) { return c.fecha_fin ? diasEntre(hoyISO(), c.fecha_fin) : null; }
+    function textoPlazo(c) {
+        var d = restantes(c);
+        if (d === null) return "sin fecha de fin";
+        if (d < 0) return "venció hace " + Math.abs(d) + " día(s)";
+        if (d === 0) return "vence hoy";
+        return "vence en " + d + " día(s)";
+    }
+    // Porcentaje de vigencia transcurrido (para la barra)
+    function avance(c) {
+        if (!c.fecha_inicio || !c.fecha_fin) return null;
+        var total = diasEntre(c.fecha_inicio, c.fecha_fin);
+        if (total <= 0) return 100;
+        return Math.max(0, Math.min(100, Math.round(diasEntre(c.fecha_inicio, hoyISO()) / total * 100)));
+    }
+    function nombre(c) { return (TIPOS[c.tipo] || c.tipo) + " · " + c.proveedor + (c.numero ? " (" + c.numero + ")" : ""); }
+
+    // ---------- alertas proactivas ----------
+    function pintarAlertas() {
+        var activos = contratos.filter(function (c) { return c.activo; });
+        var urgentes = activos.filter(function (c) { return c.estado === "vencido" || c.estado === "por_vencer"; })
+            .sort(function (a, b) { return (restantes(a) || 0) - (restantes(b) || 0); });
+        var sinEquipos = activos.filter(function (c) { return c.estado !== "vencido" && !c.equipos; });
+        var autoVencen = urgentes.filter(function (c) { return c.renovacion && c.renovacion !== "manual"; });
+
+        if (!urgentes.length && !sinEquipos.length) {
+            $("ctAlertas").innerHTML = '<div class="ct-ok">✔ Todo en orden: no hay contratos vencidos ni próximos a vencer.</div>';
+            return;
+        }
+        var html = '<h3>Requiere tu atención (' + (urgentes.length + sinEquipos.length) + ')</h3>';
+        urgentes.slice(0, 6).forEach(function (c) {
+            var rojo = c.estado === "vencido";
+            html += '<div class="ct-alerta ' + (rojo ? 'rojo' : '') + '"><div><strong>' + U.esc(nombre(c)) + '</strong> · ' +
+                U.esc(textoPlazo(c)) + ' <small>· ' + c.equipos + ' equipo(s) quedan ' + (rojo ? 'sin cobertura' : 'por cubrir') + '</small></div>' +
+                '<div class="ct-acc">' +
+                (PUEDE.crear ? '<button type="button" class="btn ct-sm" data-acc="renovar" data-id="' + c.id + '">Renovar</button>' : '') +
+                '<button type="button" class="btn btn-outline ct-sm" data-acc="equipos" data-id="' + c.id + '">Ver equipos</button></div></div>';
+        });
+        if (urgentes.length > 6) {
+            html += '<div class="ct-muted" style="margin:4px 0 8px">…y ' + (urgentes.length - 6) +
+                ' más. <a href="#" data-filtro="urgentes">Ver todos en la tabla</a></div>';
+        }
+        sinEquipos.slice(0, 3).forEach(function (c) {
+            html += '<div class="ct-alerta gris"><div><strong>' + U.esc(nombre(c)) + '</strong> · <small>no cubre ningún equipo todavía</small></div>' +
+                '<div class="ct-acc"><button type="button" class="btn btn-outline ct-sm" data-acc="equipos" data-id="' + c.id + '">Asignar equipos</button></div></div>';
+        });
+        if (autoVencen.length) {
+            html += '<div class="ct-muted">ℹ ' + autoVencen.length + ' de estos contratos tienen renovación distinta de manual: confirma con el proveedor que se renueve.</div>';
+        }
+        $("ctAlertas").innerHTML = html;
+    }
+
+    // ---------- resumen ----------
+    function costoDe(lista) {
+        var porMoneda = {};
+        lista.forEach(function (c) {
+            if (c.costo == null) return;
+            var m = c.moneda || "COP";
+            porMoneda[m] = (porMoneda[m] || 0) + Number(c.costo);
+        });
+        var monedas = Object.keys(porMoneda);
+        if (!monedas.length) return "—";
+        return monedas.map(function (m) { return U.dinero(porMoneda[m], m); }).join(" · ");
+    }
+
+    function pintarResumen(r, umbral) {
+        function n(k) { return r[k] || 0; }
+        var vigentes = contratos.filter(function (c) { return c.estado === "vigente" || c.estado === "sin_fecha" || c.estado === "por_vencer"; });
+        var equipos = contratos.reduce(function (s, c) { return s + (c.activo && c.estado !== "vencido" ? (c.equipos || 0) : 0); }, 0);
+        var enRiesgo = contratos.reduce(function (s, c) { return s + (c.activo && (c.estado === "vencido" || c.estado === "por_vencer") ? (c.equipos || 0) : 0); }, 0);
+        var f = $("ctFiltro").value;
+        function act(k) { return f === k ? " activa" : ""; }
+        $("ctResumen").innerHTML =
+            '<div class="card rojo' + act("vencido") + '" data-filtro="vencido"><strong>' + n("vencido") + '</strong><span>Vencidos</span></div>' +
+            '<div class="card ambar' + act("por_vencer") + '" data-filtro="por_vencer"><strong>' + n("por_vencer") + '</strong><span>Vencen en ' + umbral + ' días o menos</span></div>' +
+            '<div class="card verde' + act("vigente") + '" data-filtro="vigente"><strong>' + (n("vigente") + n("sin_fecha")) + '</strong><span>Vigentes</span></div>' +
+            '<div class="card"><strong>' + equipos + '</strong><span>Equipos con cobertura</span></div>' +
+            '<div class="card ambar"><strong>' + enRiesgo + '</strong><span>Equipos en riesgo (vencidos o por vencer)</span></div>' +
+            '<div class="card costo"><strong>' + U.esc(costoDe(vigentes)) + '</strong><span>Costo de contratos vigentes</span></div>';
+    }
+
+    // ---------- filtros ----------
+    function pintarProveedores() {
+        var sel = $("ctFiltroProveedor");
+        var actual = sel.value;
+        var vistos = {};
+        contratos.forEach(function (c) { if (c.proveedor) vistos[c.proveedor] = true; });
+        var nombres = Object.keys(vistos).sort(function (a, b) { return a.localeCompare(b, "es"); });
+        sel.innerHTML = '<option value="">Todos los proveedores</option>' + nombres.map(function (p) {
+            return '<option value="' + U.esc(p) + '">' + U.esc(p) + '</option>';
+        }).join("");
+        sel.value = vistos[actual] ? actual : "";
+    }
+
+    function filtrados() {
+        var fe = $("ctFiltro").value, ft = $("ctFiltroTipo").value, fp = $("ctFiltroProveedor").value;
+        var q = $("ctBusqueda").value.trim().toLowerCase();
+        return contratos.filter(function (c) {
+            if (fe && c.estado !== fe) return false;
+            if (ft && c.tipo !== ft) return false;
+            if (fp && c.proveedor !== fp) return false;
+            if (q && (String(c.proveedor || "") + " " + String(c.numero || "")).toLowerCase().indexOf(q) < 0) return false;
+            return true;
+        }).sort(function (a, b) {
+            var o = (ORDEN[a.estado] || 0) - (ORDEN[b.estado] || 0);
+            if (o) return o;
+            var da = restantes(a), db = restantes(b);
+            return (da === null ? 9e9 : da) - (db === null ? 9e9 : db);
+        });
+    }
+
+    function pintarTabla() {
+        var lista = filtrados();
+        $("ctContador").textContent = lista.length + " de " + contratos.length + " contrato(s)";
+        pintarResumenActivo();
+        if (!lista.length) {
+            $("ctCuerpo").innerHTML = '<tr><td colspan="8" class="ct-muted">' +
+                (contratos.length ? 'Ningún contrato coincide con los filtros.' : 'Todavía no hay contratos. Crea el primero con «Nuevo contrato».') +
+                '</td></tr>';
+            return;
+        }
+        $("ctCuerpo").innerHTML = lista.map(function (c) {
+            var acc = '<button type="button" class="btn btn-outline ct-sm" data-acc="equipos" data-id="' + c.id + '">Equipos</button>';
+            if (PUEDE.crear && c.activo) acc += '<button type="button" class="btn btn-outline ct-sm" data-acc="renovar" data-id="' + c.id + '">Renovar</button>';
+            if (PUEDE.editar) acc += '<button type="button" class="btn btn-outline ct-sm" data-acc="editar" data-id="' + c.id + '">Editar</button>';
+            if (PUEDE.eliminar) {
+                acc += c.activo
+                    ? '<button type="button" class="btn btn-outline ct-sm" data-acc="desactivar" data-id="' + c.id + '">Desactivar</button>'
+                    : '<button type="button" class="btn btn-outline ct-sm" data-acc="reactivar" data-id="' + c.id + '">Reactivar</button>';
+            }
+            var av = avance(c);
+            var barra = av === null ? '' :
+                '<div class="ct-barra ' + (c.estado === "vencido" ? "rojo" : c.estado === "por_vencer" ? "ambar" : "") + '"><i style="width:' + av + '%"></i></div>';
+            var plazo = c.activo ? '<div class="ct-muted">' + U.esc(textoPlazo(c)) + '</div>' : '';
+            var equipos = c.equipos ? String(c.equipos) : '<span class="ct-vacio">0 · sin equipos</span>';
+            return '<tr class="ct-f-' + c.estado + '">' +
+                '<td>' + U.esc(TIPOS[c.tipo] || c.tipo) + '</td>' +
+                '<td>' + U.esc(c.proveedor) + '</td>' +
+                '<td>' + U.esc(c.numero || '—') + '</td>' +
+                '<td>' + U.fecha(c.fecha_inicio) + ' a ' + U.fecha(c.fecha_fin) + plazo + barra + '</td>' +
+                '<td>' + equipos + '</td>' +
+                '<td>' + U.dinero(c.costo, c.moneda) + '</td>' +
+                '<td>' + U.badge(c.estado, c.dias) + '</td>' +
+                '<td><div class="ct-acc">' + acc + '</div></td></tr>';
+        }).join('');
+    }
+
+    function pintarResumenActivo() {
+        var f = $("ctFiltro").value;
+        document.querySelectorAll("#ctResumen .card[data-filtro]").forEach(function (el) {
+            el.classList.toggle("activa", el.dataset.filtro === f);
+        });
+    }
+
+    async function cargar() {
+        try {
+            var d = await U.api("/api/contratos");
+            contratos = d.contratos;
+            umbralDias = d.umbral;
+            pintarAlertas();
+            pintarResumen(d.resumen, d.umbral);
+            pintarProveedores();
+            pintarTabla();
+        } catch (e) {
+            $("ctCuerpo").innerHTML = '<tr><td colspan="8"><div class="alert alert-danger">' + U.esc(e.message) + '</div></td></tr>';
+        }
+    }
+
+    // ---------- crear / editar ----------
+    function abrirForm(c) {
+        errorEn("ctFormError", "");
+        $("ctFormTitulo").textContent = c ? "Editar contrato" : "Nuevo contrato";
+        $("ctId").value = c ? c.id : "";
+        $("ctTipo").value = c ? c.tipo : "mantenimiento";
+        $("ctProveedor").value = c ? c.proveedor : "";
+        $("ctNumero").value = c && c.numero ? c.numero : "";
+        $("ctRenovacion").value = c ? c.renovacion : "manual";
+        $("ctInicio").value = c && c.fecha_inicio ? c.fecha_inicio.slice(0, 10) : "";
+        $("ctFin").value = c && c.fecha_fin ? c.fecha_fin.slice(0, 10) : "";
+        $("ctCosto").value = c && c.costo != null ? c.costo : "";
+        $("ctMoneda").value = c ? c.moneda : "COP";
+        $("ctNotas").value = c && c.notas ? c.notas : "";
+        $("ctDlgForm").showModal();
+    }
+
+    $("ctForm").addEventListener("submit", async function (ev) {
+        ev.preventDefault();
+        var id = $("ctId").value;
+        var ini = $("ctInicio").value, fin = $("ctFin").value;
+        if (ini && fin && fin < ini) { errorEn("ctFormError", "La fecha de fin no puede ser anterior a la de inicio."); return; }
+        var cuerpo = {
+            tipo: $("ctTipo").value, proveedor: $("ctProveedor").value, numero: $("ctNumero").value,
+            renovacion: $("ctRenovacion").value, fecha_inicio: ini, fecha_fin: fin,
+            costo: $("ctCosto").value, moneda: $("ctMoneda").value, notas: $("ctNotas").value
+        };
+        try {
+            await U.api(id ? "/api/contratos/" + id : "/api/contratos", { method: id ? "PUT" : "POST", body: cuerpo });
+            $("ctDlgForm").close();
+            cargar();
+        } catch (e) { errorEn("ctFormError", e.message); }
+    });
+
+    // ---------- renovar ----------
+    function abrirRenovar(c) {
+        renovando = c;
+        errorEn("ctRenovarError", "");
+        $("ctRenovarTitulo").textContent = "Renovar · " + (TIPOS[c.tipo] || c.tipo) + " · " + c.proveedor;
+        $("ctRenovarPrevia").innerHTML = 'Al confirmar:<ul style="margin:6px 0 0;padding-left:18px">' +
+            '<li>Se crea un contrato nuevo con los mismos datos.</li>' +
+            '<li>Se copian los <strong>' + (c.equipos || 0) + '</strong> equipo(s) cubiertos.</li>' +
+            '<li>El contrato actual se desactiva y queda como historial.</li></ul>';
+
+        // Propuesta: empieza el dia siguiente al fin y dura lo mismo que el anterior
+        var inicio = "", fin = "";
+        if (c.fecha_fin) {
+            inicio = sumarDias(c.fecha_fin, 1);
+            var dur = (c.fecha_inicio && c.fecha_fin) ? diasEntre(c.fecha_inicio, c.fecha_fin) : 364;
+            fin = sumarDias(inicio, dur);
+        }
+        $("ctRenInicio").value = inicio;
+        $("ctRenFin").value = fin;
+        $("ctRenCosto").value = c.costo != null ? c.costo : "";
+        $("ctRenovarOk").disabled = false;
+        $("ctDlgRenovar").showModal();
+    }
+
+    $("ctFormRenovar").addEventListener("submit", async function (ev) {
+        ev.preventDefault();
+        if (!renovando) return;
+        var ini = $("ctRenInicio").value, fin = $("ctRenFin").value;
+        if (ini && fin && fin < ini) { errorEn("ctRenovarError", "La fecha de fin no puede ser anterior a la de inicio."); return; }
+        var boton = $("ctRenovarOk");
+        boton.disabled = true;
+        errorEn("ctRenovarError", "");
+        try {
+            await U.api("/api/contratos/" + renovando.id + "/renovar", {
+                method: "POST",
+                body: { fecha_inicio: ini, fecha_fin: fin, costo: $("ctRenCosto").value }
+            });
+            $("ctDlgRenovar").close();
+            cargar();
+        } catch (e) {
+            errorEn("ctRenovarError", e.message);
+            boton.disabled = false;
+            cargar(); // el contrato nuevo pudo crearse aunque falle la copia de equipos
+        }
+    });
+
+    // ---------- equipos del contrato ----------
+    async function cargarEquipos() {
+        errorEn("ctEquiposError", "");
+        try {
+            var filas = await U.api("/api/contratos/" + contratoActual.id + "/activos");
+            var porTipo = {};
+            filas.forEach(function (f) { var t = (f.activos || {}).tipo || "Sin tipo"; porTipo[t] = (porTipo[t] || 0) + 1; });
+            $("ctEquiposResumen").innerHTML = filas.length
+                ? '<span class="ct-chip"><strong>' + filas.length + '</strong> equipo(s)</span>' +
+                  Object.keys(porTipo).map(function (t) { return '<span class="ct-chip">' + U.esc(t) + ': ' + porTipo[t] + '</span>'; }).join("")
+                : '';
+            $("ctEquiposLista").innerHTML = filas.length ? filas.map(function (f) {
+                var a = f.activos || {};
+                return '<div class="ct-equipo"><div><strong>' + U.esc(a.codigo) + '</strong> · ' + U.esc(a.tipo || '') +
+                    ' <span class="ct-muted">' + U.esc([a.marca, a.modelo].filter(Boolean).join(' ')) + '</span></div>' +
+                    (PUEDE.editar ? '<button type="button" class="btn btn-outline ct-sm" data-acc="quitar" data-id="' + f.id + '">Quitar</button>' : '') +
+                    '</div>';
+            }).join('') : '<div class="ct-muted">Este contrato todavía no cubre ningún equipo. Búscalos por código o agrega todos los de un tipo.</div>';
+        } catch (e) { errorEn("ctEquiposError", e.message); }
+    }
+
+    async function cargarTiposMasivo() {
+        if (!$("ctTipoMasivo") || tiposCargados) return;
+        try {
+            var tipos = await U.api("/api/contratos/tipos_activos");
+            $("ctTipoMasivo").innerHTML = '<option value="">Selecciona un tipo…</option>' +
+                tipos.map(function (t) { return '<option value="' + U.esc(t) + '">' + U.esc(t) + '</option>'; }).join("");
+            tiposCargados = true;
+        } catch (e) { errorEn("ctEquiposError", e.message); }
+    }
+
+    function abrirEquipos(c) {
+        contratoActual = c;
+        $("ctEquiposTitulo").textContent = "Equipos cubiertos · " + (TIPOS[c.tipo] || c.tipo) + " · " + c.proveedor;
+        if ($("ctBuscar")) { $("ctBuscar").value = ""; $("ctResultados").innerHTML = ""; }
+        if ($("ctTipoMasivo")) $("ctTipoMasivo").value = "";
+        $("ctDlgEquipos").showModal();
+        cargarEquipos();
+        cargarTiposMasivo();
+    }
+
+    var temporizador = null;
+    if ($("ctBuscar")) {
+        $("ctBuscar").addEventListener("input", function () {
+            clearTimeout(temporizador);
+            var q = this.value.trim();
+            if (q.length < 2) { $("ctResultados").innerHTML = ""; return; }
+            temporizador = setTimeout(async function () {
+                try {
+                    var r = await U.api("/api/contratos/buscar_activos?q=" + encodeURIComponent(q));
+                    $("ctResultados").innerHTML = r.length ? r.map(function (a) {
+                        return '<button type="button" class="ct-resultado" data-acc="agregar" data-id="' + a.id + '">' +
+                            '<strong>' + U.esc(a.codigo) + '</strong> · ' + U.esc(a.tipo || '') + ' ' +
+                            '<span class="ct-muted">' + U.esc([a.marca, a.modelo].filter(Boolean).join(' ')) + '</span></button>';
+                    }).join('') : '<div class="ct-muted">Sin resultados.</div>';
+                } catch (e) { errorEn("ctEquiposError", e.message); }
+            }, 250);
+        });
+    }
+
+    // ---------- acciones ----------
+    function porId(id) {
+        return contratos.filter(function (c) { return String(c.id) === String(id); })[0];
+    }
+
+    document.addEventListener("click", async function (ev) {
+        var cerrar = ev.target.closest("[data-cerrar]");
+        if (cerrar) { $(cerrar.dataset.cerrar).close(); return; }
+
+        // Tarjetas del resumen y enlaces "ver todos" filtran la tabla
+        var fl = ev.target.closest("[data-filtro]");
+        if (fl) {
+            ev.preventDefault();
+            var v = fl.dataset.filtro;
+            $("ctFiltro").value = (v === "urgentes" || $("ctFiltro").value === v) ? "" : v;
+            pintarTabla();
+            $("ctCuerpo").scrollIntoView({ behavior: "smooth", block: "start" });
+            return;
+        }
+
+        var b = ev.target.closest("[data-acc]");
+        if (!b || b.closest("#ct-activo")) return;
+        var id = b.dataset.id;
+        try {
+            switch (b.dataset.acc) {
+                case "equipos": abrirEquipos(porId(id)); break;
+                case "editar": abrirForm(porId(id)); break;
+                case "renovar": abrirRenovar(porId(id)); break;
+                case "desactivar":
+                    if (!await confirmar("Se conserva el historial de equipos y podrás reactivarlo cuando quieras.", "Desactivar", "¿Desactivar este contrato?")) return;
+                    await U.api("/api/contratos/" + id, { method: "DELETE" });
+                    cargar(); break;
+                case "reactivar":
+                    await U.api("/api/contratos/" + id + "/reactivar", { method: "POST", body: {} });
+                    cargar(); break;
+                case "agregar":
+                    await U.api("/api/contratos/" + contratoActual.id + "/activos", { method: "POST", body: { activo_id: id } });
+                    $("ctBuscar").value = ""; $("ctResultados").innerHTML = "";
+                    await cargarEquipos(); cargar(); break;
+                case "masivo":
+                    var tipo = $("ctTipoMasivo").value;
+                    if (!tipo) { errorEn("ctEquiposError", "Selecciona un tipo de equipo."); return; }
+                    if (!await confirmar("Se agregarán al contrato todos los equipos de tipo «" + tipo + "» que no estén dados de baja.", "Agregar todos", "¿Agregar equipos en bloque?")) return;
+                    b.disabled = true;
+                    try {
+                        var r = await U.api("/api/contratos/" + contratoActual.id + "/activos/masivo", {
+                            method: "POST", body: { tipo: tipo }
+                        });
+                        await cargarEquipos();
+                        exitoEn("ctEquiposError",
+                            r.agregados + " equipo(s) agregado(s)" +
+                            (r.omitidos ? " · " + r.omitidos + " omitido(s) (ya cubiertos o dados de baja)." : "."));
+                        cargar();
+                    } finally { b.disabled = false; }
+                    break;
+                case "quitar":
+                    if (!await confirmar("El equipo dejará de estar cubierto por este contrato.", "Quitar", "¿Quitar este equipo?")) return;
+                    await U.api("/api/vinculos/" + id, { method: "DELETE" });
+                    await cargarEquipos(); cargar(); break;
+            }
+        } catch (e) {
+            if ($("ctDlgEquipos").open) errorEn("ctEquiposError", e.message);
+            else aviso(e.message);
+        }
+    });
+
+    if ($("ctNuevo")) $("ctNuevo").addEventListener("click", function () { abrirForm(null); });
+    $("ctLimpiar").addEventListener("click", function () {
+        $("ctFiltro").value = ""; $("ctFiltroTipo").value = ""; $("ctFiltroProveedor").value = ""; $("ctBusqueda").value = "";
+        pintarTabla();
+    });
+    $("ctBusqueda").addEventListener("input", pintarTabla);
+    $("ctFiltro").addEventListener("change", pintarTabla);
+    $("ctFiltroTipo").addEventListener("change", pintarTabla);
+    $("ctFiltroProveedor").addEventListener("change", pintarTabla);
+
+    cargar();
+})();
+</script>
+{% endblock %}

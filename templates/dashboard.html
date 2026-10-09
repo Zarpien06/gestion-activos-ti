@@ -4,6 +4,12 @@
 
 {% block extra_css %}
 <style>
+    /* Azules del banner (Grupo Planeta: #005DAB -> #009DDC) */
+    :root { --hero-a: #005DAB; --hero-b: #009DDC; }
+    @media (prefers-color-scheme: dark) {
+        :root { --hero-a: #0A3F73; --hero-b: #0B7FB8; }
+    }
+
     /* ---------- Encabezado ---------- */
     .hero {
         display: flex;
@@ -16,19 +22,37 @@
         color: #fff;
         border-radius: 16px;
         background:
-            radial-gradient(circle at 92% 20%, rgba(255,255,255,.18), transparent 45%),
-            linear-gradient(135deg, var(--primary, #2563eb), #1e3a8a);
+            radial-gradient(circle at 92% 20%, rgba(255,255,255,.16), transparent 45%),
+            linear-gradient(135deg, var(--hero-a), var(--hero-b));
     }
     .hero h2 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -.02em; }
-    .hero p { margin: 6px 0 0; opacity: .85; font-size: 14px; }
+    .hero p { margin: 6px 0 0; opacity: .9; font-size: 14px; }
     .hero-date {
         padding: 8px 16px;
         font-size: 13px;
         font-weight: 600;
         border-radius: 999px;
-        background: rgba(255,255,255,.16);
+        background: rgba(255,255,255,.18);
         white-space: nowrap;
     }
+
+    /* ---------- Centro de alertas ---------- */
+    .alertas { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }
+    .alerta {
+        display: flex; align-items: center; gap: 10px;
+        padding: 10px 14px; font-size: 13.5px; font-weight: 600;
+        color: var(--text, #0f172a); text-decoration: none;
+        border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+        border-radius: 12px;
+        background: color-mix(in srgb, var(--accent) 10%, var(--surface, #fff));
+        transition: transform .15s ease;
+    }
+    .alerta:hover { transform: translateY(-1px); }
+    .alerta i { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+    .alerta-danger  { --accent: var(--danger, #dc2626); }
+    .alerta-warning { --accent: var(--warning, #f59e0b); }
+    .alerta-info    { --accent: #009DDC; }
+    .alertas-ok { margin-bottom: 22px; padding: 12px 16px; font-size: 13.5px; color: var(--text-light); }
 
     /* ---------- KPI principales ---------- */
     .stats-grid {
@@ -75,20 +99,61 @@
     .stats-grid.small .stat-value { font-size: 24px; }
     .stats-grid.small .stat-icon { width: 40px; height: 40px; font-size: 17px; border-radius: 10px; }
 
-    .stat-total  { --accent: var(--primary, #2563eb); }
+    .stat-total  { --accent: var(--primary, #005DAB); }
     .stat-ok     { --accent: var(--success, #16a34a); }
     .stat-warn   { --accent: var(--warning, #f59e0b); }
     .stat-danger { --accent: var(--danger, #dc2626); }
     .stat-muted  { --accent: #64748b; }
-    .stat-info   { --accent: #0891b2; }
+    .stat-info   { --accent: #009DDC; }
 
-    /* ---------- Rejilla de tarjetas ---------- */
-    .grid-2 {
+    /* ---------- Panel financiero ---------- */
+    .fin-panel { margin-bottom: 22px; }
+    .fin-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 26px;
+    }
+    @media (min-width: 900px) {
+        .fin-col + .fin-col { padding-left: 26px; border-left: 1px solid var(--border, #e5e7eb); }
+    }
+    .fin-label { margin: 0; color: var(--text-light); font-size: 12.5px; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; }
+    .fin-big { margin: 4px 0 0; font-size: 28px; font-weight: 700; letter-spacing: -.03em; line-height: 1.15; overflow-wrap: anywhere; }
+    .fin-mid { margin: 4px 0 0; font-size: 20px; font-weight: 700; letter-spacing: -.02em; overflow-wrap: anywhere; }
+    .fin-gap { margin-top: 18px; }
+    .fin-note { margin: 8px 0 0; color: var(--text-light); font-size: 12.5px; line-height: 1.45; }
+    .fin-note a { color: var(--primary, #005DAB); font-weight: 600; text-decoration: none; }
+    .fin-note a:hover { text-decoration: underline; }
+
+    .fin-bar { height: 10px; margin-top: 10px; overflow: hidden; border-radius: 999px; background: var(--surface-2, #e5e7eb); }
+    .fin-bar span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--primary, #005DAB), #009DDC); }
+
+    .seg { display: flex; height: 12px; margin-top: 12px; overflow: hidden; border-radius: 999px; background: var(--surface-2, #e5e7eb); }
+    .seg span { display: block; height: 100%; }
+    .seg-legend { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+    .seg-row { display: flex; align-items: center; gap: 10px; font-size: 13.5px; }
+    .seg-row i { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .seg-row em { flex: 1; font-style: normal; }
+    .seg-row b { font-weight: 700; }
+
+    /* ---------- Rejillas de tarjetas (columnas predecibles por ancho) ---------- */
+    .grid-2, .grid-3, .grid-4 {
+        display: grid;
         gap: 22px;
         margin-bottom: 22px;
+        align-items: stretch;            /* tarjetas de la misma altura en cada fila */
+        grid-template-columns: minmax(0, 1fr);   /* móvil: 1 columna */
     }
+    @media (min-width: 700px) {
+        .grid-2, .grid-3, .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (min-width: 1100px) {
+        .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @media (min-width: 1400px) {
+        .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+
+    .grid-2 > .card, .grid-3 > .card, .grid-4 > .card { min-width: 0; }
     .card-head {
         display: flex;
         align-items: center;
@@ -97,7 +162,7 @@
         margin-bottom: 18px;
     }
     .card-title { margin: 0; font-size: 16px; font-weight: 600; }
-    .card-link { font-size: 13px; font-weight: 600; color: var(--primary, #2563eb); text-decoration: none; }
+    .card-link { font-size: 13px; font-weight: 600; color: var(--primary, #005DAB); text-decoration: none; }
     .card-link:hover { text-decoration: underline; }
 
     /* ---------- Dona ---------- */
@@ -119,6 +184,12 @@
 
     /* ---------- Barras por tipo ---------- */
     .bar-box { position: relative; height: 260px; }
+    .line-box { position: relative; height: 240px; }
+
+    /* ---------- Mini KPI dentro de tarjetas ---------- */
+    .kpi-row { display: flex; flex-wrap: wrap; gap: 24px; margin-bottom: 16px; }
+    .kpi-row b { display: block; font-size: 24px; letter-spacing: -.03em; line-height: 1.1; }
+    .kpi-row span { color: var(--text-light); font-size: 12.5px; }
 
     /* ---------- Uso ---------- */
     .usage { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--border, #e5e7eb); }
@@ -127,7 +198,7 @@
     .usage-track { height: 10px; overflow: hidden; border-radius: 999px; background: var(--surface-2, #e5e7eb); }
     .usage-track span {
         display: block; height: 100%; border-radius: 999px;
-        background: linear-gradient(90deg, var(--primary, #2563eb), #38bdf8);
+        background: linear-gradient(90deg, var(--primary, #005DAB), #009DDC);
     }
 
     /* ---------- Listas ---------- */
@@ -142,6 +213,11 @@
     .list li:last-child { border-bottom: 0; padding-bottom: 0; }
     .list li:first-child { padding-top: 0; }
 
+    /* Tarjeta de lista que llena toda la altura y reparte sus filas */
+    .card-fill { display: flex; flex-direction: column; }
+    .card-fill > .list { flex: 1; justify-content: space-between; }
+    .card-fill > .list li { flex: 1; align-items: center; }
+
     .dot-icon {
         display: grid; place-items: center; flex-shrink: 0;
         width: 34px; height: 34px;
@@ -151,10 +227,10 @@
         background: color-mix(in srgb, var(--accent) 14%, transparent);
     }
     .item-main { flex: 1; min-width: 0; }
-    .item-title { margin: 0; font-size: 14px; font-weight: 600; }
+    .item-title { margin: 0; font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
     .item-sub { margin: 2px 0 0; color: var(--text-light); font-size: 12.5px; overflow-wrap: anywhere; }
     .item-date { color: var(--text-light); font-size: 12px; white-space: nowrap; }
-    
+
     .item-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 6px; font-size: 12px; color: var(--text-light); }
     .chip {
         padding: 2px 8px;
@@ -167,10 +243,34 @@
 
     .empty { padding: 28px 8px; text-align: center; color: var(--text-light); font-size: 14px; }
 
+    /* ---------- Ranking ---------- */
+    .rank { margin: 0; padding: 0; list-style: none; counter-reset: r; }
+    .rank li { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border, #e5e7eb); }
+    .rank li:last-child { border-bottom: 0; }
+    .rank li::before {
+        counter-increment: r; content: counter(r);
+        display: grid; place-items: center; flex-shrink: 0;
+        width: 26px; height: 26px; border-radius: 8px;
+        font-size: 12px; font-weight: 700; color: var(--primary, #005DAB);
+        background: var(--primary-soft, #E6F0F9);
+    }
+    .rank b { font-size: 15px; }
+
+    /* ---------- Garantias ---------- */
+    .count-badge {
+        padding: 2px 10px;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--accent);
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--accent) 14%, transparent);
+    }
+    .warranty-more { margin: 14px 0 0; font-size: 12.5px; color: var(--text-light); }
+
     /* ---------- Areas ---------- */
     .area-row { margin-bottom: 14px; }
     .area-row:last-child { margin-bottom: 0; }
-    .area-top { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px; }
+    .area-top { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 5px; font-size: 14px; }
     .area-top b { font-weight: 700; }
 
     /* ---------- Accesos rapidos ---------- */
@@ -188,15 +288,15 @@
     }
     .quick a:hover {
         transform: translateY(-2px);
-        border-color: var(--primary, #2563eb);
-        background: var(--primary-soft, #eff6ff);
+        border-color: var(--primary, #005DAB);
+        background: var(--primary-soft, #E6F0F9);
     }
     .quick span.ico { font-size: 18px; }
 
     @media (max-width: 700px) {
         .chart-layout { grid-template-columns: 1fr; gap: 24px; }
-        .grid-2 { grid-template-columns: 1fr; }
         .hero { padding: 20px; }
+        .line-box, .bar-box { height: 220px; }
     }
 </style>
 {% endblock %}
@@ -218,6 +318,20 @@
         {{ dias[hoy.weekday()]|capitalize }}, {{ hoy.day }} de {{ meses[hoy.month - 1] }} de {{ hoy.year }}
     </div>
 </div>
+
+
+<!-- CENTRO DE ALERTAS -->
+{% if alertas is defined %}
+    {% if alertas %}
+    <div class="alertas">
+        {% for a in alertas %}
+            <a class="alerta alerta-{{ a.nivel }}" href="{{ a.url }}"><i></i>{{ a.texto }}</a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card alertas-ok">Sin alertas: garantías, contratos, licencias y tickets están al día.</div>
+    {% endif %}
+{% endif %}
 
 
 <!-- KPI PRINCIPALES -->
@@ -299,6 +413,73 @@
 </div>
 
 
+<!-- RESUMEN FINANCIERO -->
+{% if fin and fin.total %}
+{% set t = fin.total %}
+<div class="card fin-panel">
+    <div class="card-head">
+        <h3 class="card-title">Resumen financiero</h3>
+        {% if tiene_permiso('reportes', 'ver') %}
+            <a class="card-link" href="{{ url_for('reportes') }}">Ver reportes</a>
+        {% endif %}
+    </div>
+
+    <div class="fin-grid">
+
+        <!-- Inversion y valor en libros -->
+        <div class="fin-col">
+            <p class="fin-label">Inversión total</p>
+            <p class="fin-big">{{ fin.compra_txt }}</p>
+
+            <p class="fin-label fin-gap">Valor actual en libros</p>
+            <p class="fin-mid">{{ fin.actual_txt }}</p>
+
+            {% if fin.pct_valor is not none %}
+                <div class="fin-bar"><span style="width: {{ [fin.pct_valor, 100]|min }}%;"></span></div>
+                <p class="fin-note">Se conserva el {{ fin.pct_valor }}% del valor de compra.</p>
+            {% endif %}
+            {% if fin.sin_vida_util %}
+                <p class="fin-note">{{ fin.sin_vida_util }} equipo{{ '' if fin.sin_vida_util == 1 else 's' }} con precio sin vida útil: no se calcula su depreciación.</p>
+            {% endif %}
+        </div>
+
+        <!-- Garantias -->
+        <div class="fin-col">
+            <p class="fin-label">Estado de garantías</p>
+            <div class="seg">
+                <span style="width: {{ fin.g_vigente * 100 / t }}%; background: var(--success, #16a34a);"></span>
+                <span style="width: {{ fin.g_por_vencer * 100 / t }}%; background: var(--warning, #f59e0b);"></span>
+                <span style="width: {{ fin.g_vencida * 100 / t }}%; background: var(--danger, #dc2626);"></span>
+                <span style="width: {{ fin.g_sin * 100 / t }}%; background: #64748b;"></span>
+            </div>
+            <div class="seg-legend">
+                <div class="seg-row"><i style="background: var(--success, #16a34a);"></i><em>Vigentes</em><b>{{ fin.g_vigente }}</b></div>
+                <div class="seg-row"><i style="background: var(--warning, #f59e0b);"></i><em>Por vencer</em><b>{{ fin.g_por_vencer }}</b></div>
+                <div class="seg-row"><i style="background: var(--danger, #dc2626);"></i><em>Vencidas</em><b>{{ fin.g_vencida }}</b></div>
+                <div class="seg-row"><i style="background: #64748b;"></i><em>Sin garantía registrada</em><b>{{ fin.g_sin }}</b></div>
+            </div>
+        </div>
+
+        <!-- Calidad de datos -->
+        <div class="fin-col">
+            <p class="fin-label">Datos de compra registrados</p>
+            {% set pct_precio = fin.con_precio * 100 / t %}
+            <p class="fin-big">{{ '%.0f'|format(pct_precio) }}%</p>
+            <div class="fin-bar"><span style="width: {{ pct_precio }}%;"></span></div>
+            <p class="fin-note">{{ fin.con_precio }} de {{ t }} equipos tienen precio de compra.</p>
+            {% if fin.sin_precio %}
+                <p class="fin-note">
+                    Faltan {{ fin.sin_precio }}: sin ese dato la inversión y el valor en libros quedan incompletos.
+                    {% if tiene_permiso('inventario', 'ver') %}<a href="{{ url_for('inventario') }}">Ir al inventario</a>{% endif %}
+                </p>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+{% endif %}
+
+
 <!-- ACCESOS RAPIDOS -->
 <div class="card" style="margin-bottom: 22px;">
     <div class="card-head"><h3 class="card-title">Accesos rápidos</h3></div>
@@ -321,11 +502,14 @@
         {% if tiene_permiso('inventario', 'ver') %}
             <a href="{{ url_for('inventario') }}"><span class="ico">&#128187;</span> Inventario</a>
         {% endif %}
+        {% if tiene_permiso('reportes', 'ver') %}
+            <a href="{{ url_for('reportes') }}"><span class="ico">&#128202;</span> Reportes</a>
+        {% endif %}
     </div>
 </div>
 
 
-<!-- ESTADO + TIPO -->
+<!-- ESTADO + TIPO (2 columnas) -->
 <div class="grid-2">
 
     <div class="card">
@@ -385,16 +569,61 @@
 </div>
 
 
-<!-- ACTIVIDAD + TICKETS + AREAS -->
+<!-- TENDENCIAS Y FINANZAS (2 columnas: 4 tarjetas = cuadrícula 2x2) -->
+{% if mov_mensual or tk_mensual or gasto_anual or por_marca %}
 <div class="grid-2">
 
-      <div class="card">
+    {% if mov_mensual %}
+    <div class="card">
+        <div class="card-head"><h3 class="card-title">Asignaciones y devoluciones por mes</h3></div>
+        <div class="line-box"><canvas id="movChart"></canvas></div>
+    </div>
+    {% endif %}
+
+    {% if tk_mensual %}
+    <div class="card">
+        <div class="card-head">
+            <h3 class="card-title">Tickets: creados vs. solucionados</h3>
+            {% if tiene_permiso('tickets', 'ver') %}<a class="card-link" href="{{ url_for('tickets') }}">Ver tickets</a>{% endif %}
+        </div>
+        <div class="kpi-row">
+            <div><b>{{ '%.1f'|format(tk_prom_dias) if tk_prom_dias is not none else '-' }}</b><span>Días promedio de solución</span></div>
+            <div><b>{{ total_tickets_abiertos }}</b><span>Abiertos hoy</span></div>
+        </div>
+        <div class="line-box" style="height: 190px;"><canvas id="tkChart"></canvas></div>
+    </div>
+    {% endif %}
+
+    {% if gasto_anual %}
+    <div class="card">
+        <div class="card-head"><h3 class="card-title">Inversión en equipos por año de compra</h3></div>
+        <div class="line-box"><canvas id="gastoChart"></canvas></div>
+        <p class="fin-note">Valores en millones. Solo equipos con precio de compra registrado.</p>
+    </div>
+    {% endif %}
+
+    {% if por_marca %}
+    <div class="card">
+        <div class="card-head"><h3 class="card-title">Activos por marca</h3></div>
+        <div class="line-box"><canvas id="marcaChart"></canvas></div>
+    </div>
+    {% endif %}
+
+</div>
+{% endif %}
+
+
+<!-- ACTIVIDAD + TICKETS (2 columnas, misma altura) -->
+<div class="grid-2">
+
+    <div class="card card-fill">
         <div class="card-head"><h3 class="card-title">Actividad reciente</h3></div>
 
         {% if actividad %}
             <ul class="list">
-                {% for mov in actividad %}
+                {% for mov in actividad[:6] %}
                     {% set accion = (mov.accion or '')|lower %}
+                    {% set es_sesion = ('ingreso' in accion or 'salida' in accion) %}
                     {% if 'asign' in accion %}
                         {% set color = 'var(--success, #16a34a)' %}{% set icono = '&#10133;' %}
                     {% elif 'devol' in accion %}
@@ -403,8 +632,16 @@
                         {% set color = 'var(--danger, #dc2626)' %}{% set icono = '&#8856;' %}
                     {% elif 'reactiv' in accion %}
                         {% set color = 'var(--success, #16a34a)' %}{% set icono = '&#10003;' %}
+                    {% elif 'retiro' in accion %}
+                        {% set color = 'var(--danger, #dc2626)' %}{% set icono = '&#10005;' %}
+                    {% elif 'ingreso' in accion %}
+                        {% set color = 'var(--success, #16a34a)' %}{% set icono = '&#10140;' %}
+                    {% elif 'salida' in accion %}
+                        {% set color = '#64748b' %}{% set icono = '&#10148;' %}
+                    {% elif 'persona' in accion %}
+                        {% set color = '#009DDC' %}{% set icono = '&#9823;' %}
                     {% else %}
-                        {% set color = 'var(--primary, #2563eb)' %}{% set icono = '&#9679;' %}
+                        {% set color = 'var(--primary, #005DAB)' %}{% set icono = '&#9679;' %}
                     {% endif %}
 
                     <li style="--accent: {{ color }};">
@@ -414,7 +651,8 @@
                             <p class="item-sub">{{ mov.detalle or '' }}</p>
                             <div class="item-meta">
                                 <span class="item-user">{{ mov.usuario_nombre or 'Sin registro' }}</span>
-                                {% if mov.activo_codigo %}<span class="chip">{{ mov.activo_codigo }}</span>{% endif %}
+                                {% if mov.activo_codigo %}<span class="chip">{{ mov.activo_codigo }}</span>
+                                {% elif not mov.activo_id %}<span class="chip">{{ 'Sesión' if es_sesion else 'Persona' }}</span>{% endif %}
                             </div>
                         </div>
                         <span class="item-date">{{ mov.fecha_local }}</span>
@@ -424,9 +662,9 @@
         {% else %}
             <div class="empty">Sin movimientos recientes.</div>
         {% endif %}
-        
     </div>
-    <div class="card">
+
+    <div class="card card-fill">
         <div class="card-head">
             <h3 class="card-title">Tickets pendientes</h3>
             {% if tiene_permiso('tickets', 'ver') %}
@@ -436,7 +674,7 @@
 
         {% if tickets_abiertos %}
             <ul class="list">
-                {% for t in tickets_abiertos %}
+                {% for t in tickets_abiertos[:6] %}
                     <li style="--accent: var(--danger, #dc2626);">
                         <span class="dot-icon">!</span>
                         <div class="item-main">
@@ -449,10 +687,126 @@
                     </li>
                 {% endfor %}
             </ul>
+            {% if tickets_abiertos|length > 6 %}
+                <p class="warranty-more">y {{ tickets_abiertos|length - 6 }} más</p>
+            {% endif %}
         {% else %}
             <div class="empty">No hay tickets abiertos. Todo al día.</div>
         {% endif %}
     </div>
+
+</div>
+
+
+<!-- VENCIMIENTOS (3 columnas) -->
+<div class="grid-3">
+
+    <div class="card">
+        <div class="card-head">
+            <h3 class="card-title">Garantías por vencer</h3>
+            {% if garantias %}
+                {% set hay_vencidas = garantias[0].dias < 0 %}
+                <span class="count-badge" style="--accent: {{ 'var(--danger, #dc2626)' if hay_vencidas else 'var(--warning, #f59e0b)' }};">{{ garantias|length }}</span>
+            {% endif %}
+        </div>
+
+        {% if garantias %}
+            <ul class="list">
+                {% for g in garantias[:6] %}
+                    {% if g.dias < 0 %}
+                        {% set color = 'var(--danger, #dc2626)' %}
+                    {% elif g.dias <= 7 %}
+                        {% set color = 'var(--warning, #f59e0b)' %}
+                    {% else %}
+                        {% set color = 'var(--primary, #005DAB)' %}
+                    {% endif %}
+
+                    <li style="--accent: {{ color }};">
+                        <span class="dot-icon">&#9202;</span>
+                        <div class="item-main">
+                            <p class="item-title">{{ g.codigo }}</p>
+                            <p class="item-sub">{{ g.tipo or 'Sin tipo' }} · {{ g.vence.strftime('%d/%m/%Y') }}</p>
+                        </div>
+                        <span class="item-date" style="color: {{ color }}; font-weight: 600;">
+                            {% if g.dias < 0 %}Venció hace {{ -g.dias }} d
+                            {% elif g.dias == 0 %}Vence hoy
+                            {% else %}En {{ g.dias }} d{% endif %}
+                        </span>
+                    </li>
+                {% endfor %}
+            </ul>
+            {% if garantias|length > 6 %}
+                <p class="warranty-more">y {{ garantias|length - 6 }} más</p>
+            {% endif %}
+        {% else %}
+            <div class="empty">Ninguna garantía vence pronto.</div>
+        {% endif %}
+    </div>
+
+    {% if contratos_prox is defined %}
+    <div class="card">
+        <div class="card-head">
+            <h3 class="card-title">Contratos por vencer</h3>
+            {% if contratos_prox %}<span class="count-badge" style="--accent: var(--warning, #f59e0b);">{{ contratos_prox|length }}</span>{% endif %}
+        </div>
+        {% if contratos_prox %}
+        <ul class="list">
+            {% for c in contratos_prox[:6] %}
+                {% set color = 'var(--danger, #dc2626)' if c.dias < 0 else ('var(--warning, #f59e0b)' if c.dias <= 30 else 'var(--primary, #005DAB)') %}
+                <li style="--accent: {{ color }};">
+                    <span class="dot-icon">&#9776;</span>
+                    <div class="item-main">
+                        <p class="item-title">{{ c.proveedor }}</p>
+                        <p class="item-sub">{{ c.tipo or 'Contrato' }} · {{ c.vence.strftime('%d/%m/%Y') }}</p>
+                    </div>
+                    <span class="item-date" style="color: {{ color }}; font-weight: 600;">
+                        {% if c.dias < 0 %}Venció hace {{ -c.dias }} d{% elif c.dias == 0 %}Vence hoy{% else %}En {{ c.dias }} d{% endif %}
+                    </span>
+                </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+            <div class="empty">Ningún contrato vence pronto.</div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if licencias_prox is defined %}
+    <div class="card">
+        <div class="card-head">
+            <h3 class="card-title">Licencias por vencer</h3>
+            {% if licencias_prox %}<span class="count-badge" style="--accent: var(--warning, #f59e0b);">{{ licencias_prox|length }}</span>{% endif %}
+        </div>
+        {% if licencias_prox %}
+        <ul class="list">
+            {% for l in licencias_prox[:6] %}
+                {% set color = 'var(--danger, #dc2626)' if l.dias < 0 else ('var(--warning, #f59e0b)' if l.dias <= 30 else 'var(--primary, #005DAB)') %}
+                <li style="--accent: {{ color }};">
+                    <span class="dot-icon">&#9881;</span>
+                    <div class="item-main">
+                        <p class="item-title">{{ l.software }}</p>
+                        <p class="item-sub">{{ l.vence.strftime('%d/%m/%Y') }}</p>
+                    </div>
+                    <span class="item-date" style="color: {{ color }}; font-weight: 600;">
+                        {% if l.dias < 0 %}Venció hace {{ -l.dias }} d{% elif l.dias == 0 %}Vence hoy{% else %}En {{ l.dias }} d{% endif %}
+                    </span>
+                </li>
+            {% endfor %}
+        </ul>
+        {% if licencias_prox|length > 6 %}
+            <p class="warranty-more">y {{ licencias_prox|length - 6 }} más</p>
+        {% endif %}
+        {% else %}
+            <div class="empty">Ninguna licencia vence pronto.</div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+</div>
+
+
+<!-- AREAS + RANKING (2 columnas) -->
+<div class="grid-2">
 
     <div class="card">
         <div class="card-head"><h3 class="card-title">Equipos asignados por área</h3></div>
@@ -460,7 +814,7 @@
         {% if por_area %}
             {% set maximo = por_area[0][1] %}
             {% for area, cantidad in por_area %}
-                <div class="area-row" style="--accent: var(--primary, #2563eb);">
+                <div class="area-row" style="--accent: var(--primary, #005DAB);">
                     <div class="area-top"><span>{{ area }}</span><b>{{ cantidad }}</b></div>
                     <div class="legend-bar"><span style="width: {{ (cantidad * 100 / maximo) }}%;"></span></div>
                 </div>
@@ -469,6 +823,26 @@
             <div class="empty">Aún no hay equipos asignados con área.</div>
         {% endif %}
     </div>
+
+    {% if top_personas %}
+    <div class="card">
+        <div class="card-head">
+            <h3 class="card-title">Personas con más equipos</h3>
+            {% if tiene_permiso('personas', 'ver') %}<a class="card-link" href="{{ url_for('personas') }}">Ver personas</a>{% endif %}
+        </div>
+        <ol class="rank">
+            {% for nombre, area, n in top_personas %}
+                <li>
+                    <div class="item-main">
+                        <p class="item-title">{{ nombre }}</p>
+                        <p class="item-sub">{{ area or 'Sin área' }}</p>
+                    </div>
+                    <b>{{ n }}</b>
+                </li>
+            {% endfor %}
+        </ol>
+    </div>
+    {% endif %}
 
 </div>
 
@@ -485,10 +859,13 @@
     const verde = color("--success", "#16a34a");
     const ambar = color("--warning", "#f59e0b");
     const rojo = color("--danger", "#dc2626");
-    const azul = color("--primary", "#2563eb");
-    const superficie = color("--surface", "#ffffff");
+    const azul = color("--primary", "#005DAB");
     const textoSuave = color("--text-light", "#64748b");
     const borde = color("--border", "#e5e7eb");
+
+    // El borde entre segmentos de la dona toma el color real de la tarjeta (claro u oscuro)
+    const tarjeta = document.querySelector(".card");
+    const fondoTarjeta = tarjeta ? getComputedStyle(tarjeta).backgroundColor : color("--surface", "#ffffff");
 
     // Texto central de la dona
     const textoCentro = {
@@ -517,7 +894,8 @@
             datasets: [{
                 data: [{{ disponibles }}, {{ asignados }}, {{ reparacion }}, {{ bajas }}],
                 backgroundColor: [verde, ambar, rojo, "#64748b"],
-                borderColor: superficie,
+                borderColor: fondoTarjeta,
+                hoverBorderColor: fondoTarjeta,
                 borderWidth: 4,
                 hoverOffset: 6
             }]
@@ -554,6 +932,71 @@
                 y: { ticks: { color: textoSuave }, grid: { display: false } }
             }
         }
+    });
+    {% endif %}
+
+    // ---------- Graficas nuevas ----------
+    const ejes = {
+        x: { ticks: { color: textoSuave }, grid: { display: false } },
+        y: { beginAtZero: true, ticks: { precision: 0, color: textoSuave }, grid: { color: borde } }
+    };
+    const leyenda = { position: "bottom", labels: { color: textoSuave, usePointStyle: true, boxWidth: 8 } };
+
+    {% if mov_mensual %}
+    new Chart(document.getElementById("movChart"), {
+        type: "bar",
+        data: {
+            labels: {{ mov_mensual.labels|tojson }},
+            datasets: [
+                { label: "Asignaciones", data: {{ mov_mensual.asignaciones|tojson }}, backgroundColor: verde, borderRadius: 6, maxBarThickness: 22 },
+                { label: "Devoluciones", data: {{ mov_mensual.devoluciones|tojson }}, backgroundColor: ambar, borderRadius: 6, maxBarThickness: 22 }
+            ]
+        },
+        options: { maintainAspectRatio: false, plugins: { legend: leyenda }, scales: ejes }
+    });
+    {% endif %}
+
+    {% if tk_mensual %}
+    new Chart(document.getElementById("tkChart"), {
+        type: "line",
+        data: {
+            labels: {{ tk_mensual.labels|tojson }},
+            datasets: [
+                { label: "Creados", data: {{ tk_mensual.creados|tojson }}, borderColor: rojo, backgroundColor: rojo, tension: .3, pointRadius: 3 },
+                { label: "Solucionados", data: {{ tk_mensual.solucionados|tojson }}, borderColor: verde, backgroundColor: verde, tension: .3, pointRadius: 3 }
+            ]
+        },
+        options: { maintainAspectRatio: false, plugins: { legend: leyenda }, scales: ejes }
+    });
+    {% endif %}
+
+    {% if gasto_anual %}
+    new Chart(document.getElementById("gastoChart"), {
+        type: "bar",
+        data: {
+            labels: {{ gasto_anual|map('first')|list|tojson }},
+            datasets: [{ data: {{ gasto_anual|map('last')|list|tojson }}, backgroundColor: azul, borderRadius: 8, maxBarThickness: 40 }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => c.parsed.y.toLocaleString("es-CO") + " M" } } },
+            scales: { x: ejes.x, y: { ...ejes.y, ticks: { color: textoSuave, callback: v => v.toLocaleString("es-CO") } } }
+        }
+    });
+    {% endif %}
+
+    {% if por_marca %}
+    new Chart(document.getElementById("marcaChart"), {
+        type: "doughnut",
+        data: {
+            labels: {{ por_marca|map('first')|list|tojson }},
+            datasets: [{
+                data: {{ por_marca|map('last')|list|tojson }},
+                backgroundColor: ["#005DAB", "#009DDC", "#16a34a", "#f59e0b", "#7c3aed", "#0891b2", "#64748b"],
+                borderColor: fondoTarjeta, borderWidth: 3
+            }]
+        },
+        options: { maintainAspectRatio: false, cutout: "62%", plugins: { legend: { position: "right", labels: { color: textoSuave, usePointStyle: true, boxWidth: 8 } } } }
     });
     {% endif %}
 </script>

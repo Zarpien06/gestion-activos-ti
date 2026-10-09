@@ -12,6 +12,7 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
+        flex-wrap: wrap;
         gap: 12px;
         padding: 20px 22px;
         border-bottom: 1px solid var(--border);
@@ -33,11 +34,17 @@
         white-space: nowrap;
     }
 
+    /* Buscador */
+    .search-bar { padding: 14px 22px; border-bottom: 1px solid var(--border); }
+    .search-bar .form-control { width: 100%; max-width: 420px; min-height: 42px; }
+
     .cell-code { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-weight: 600; font-size: 13px; }
     .cell-muted { color: var(--text-light); }
 
     .table .form-select,
     .table .form-control { min-width: 160px; padding: 8px 10px; font-size: 13px; }
+    .table .obs-input { min-width: 220px; }
+    .table .obs-input:invalid:not(:placeholder-shown) { border-color: var(--danger); }
 
     .table .form-select {
         appearance: none;
@@ -48,12 +55,15 @@
             no-repeat right 10px center;
     }
 
+    .table tr[hidden] { display: none !important; }
+
     .btn-sm { padding: 8px 14px; font-size: 12.5px; white-space: nowrap; }
 
     .empty-state { padding: 48px 16px; text-align: center; color: var(--text-light); }
 
     @media (max-width: 900px) {
         .table { min-width: 1000px; }
+        .search-bar { padding: 14px 16px; }
     }
 </style>
 {% endblock %}
@@ -71,11 +81,18 @@
     <div class="list-head">
         <div>
             <h2 class="card-title">Equipos asignados</h2>
-            <p class="card-sub">Selecciona el nuevo estado del equipo antes de registrar la devolución.</p>
+            <p class="card-sub">Elige el nuevo estado y escribe la observación (obligatoria) antes de devolver.</p>
         </div>
 
-        <span class="count-pill">{{ activos|length }} asignados</span>
+        <span class="count-pill" id="contador">{{ activos|length }} asignados</span>
     </div>
+
+    {% if activos %}
+    <div class="search-bar">
+        <input id="buscar" type="search" class="form-control" autocomplete="off"
+               placeholder="Buscar por persona, código, tipo o marca…" aria-label="Buscar equipos asignados">
+    </div>
+    {% endif %}
 
     <div class="table-responsive">
 
@@ -88,7 +105,7 @@
                     <th>Marca / Modelo</th>
                     <th>Asignado a</th>
                     <th>Nuevo estado</th>
-                    <th>Observaciones</th>
+                    <th>Observaciones *</th>
                     <th>Acción</th>
                 </tr>
             </thead>
@@ -97,13 +114,15 @@
 
                 {% for activo in activos %}
 
-                    <tr>
+                    <tr data-buscar="{{ [activo.codigo, activo.tipo, activo.marca, activo.modelo, activo.asignado_a, activo.area]|select|join(' ') }}">
 
                         <td class="cell-code">
                             {{ activo.codigo }}
                             <form id="devolucion-{{ activo.id }}"
                                   action="/devoluciones/{{ activo.id }}"
-                                  method="POST"></form>
+                                  method="POST">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            </form>
                         </td>
 
                         <td>{{ activo.tipo or "" }}</td>
@@ -134,15 +153,18 @@
                         </td>
 
                         <td>
-                            <input name="observacion" type="text" class="form-control"
+                            <input name="observacion" type="text" class="form-control obs-input"
                                    form="devolucion-{{ activo.id }}"
-                                   placeholder="Estado del equipo">
+                                   placeholder="Estado del equipo o motivo" maxlength="300"
+                                   pattern=".*\S.*" title="Escribe una observación"
+                                   required>
                         </td>
 
                         <td>
+                            {# El código se escribe ya dentro del texto: el modal de confirmación no evalúa concatenaciones #}
                             <button type="submit" class="btn btn-sm btn-danger"
                                     form="devolucion-{{ activo.id }}"
-                                    onclick="return confirm('¿Confirmas la devolución de este equipo?');">
+                                    onclick="return confirm('¿Confirmas la devolución de {{ (activo.codigo or '')|replace("'", '') }}?');">
                                 Devolver
                             </button>
                         </td>
@@ -159,6 +181,10 @@
 
                 {% endfor %}
 
+                <tr id="sinResultados" hidden>
+                    <td colspan="7"><div class="empty-state">Ningún equipo coincide con la búsqueda.</div></td>
+                </tr>
+
             </tbody>
 
         </table>
@@ -167,4 +193,37 @@
 
 </div>
 
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+(function () {
+    const buscar = document.getElementById("buscar");
+    if (!buscar) return;
+
+    const filas = Array.from(document.querySelectorAll("tr[data-buscar]"));
+    const aviso = document.getElementById("sinResultados");
+    const contador = document.getElementById("contador");
+    const total = filas.length;
+
+    // Sin tildes y en minusculas: "perez" encuentra "Pérez"
+    const limpiar = (t) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    const indices = filas.map((f) => limpiar(f.dataset.buscar));
+
+    buscar.addEventListener("input", () => {
+        const palabras = limpiar(buscar.value).split(/\s+/).filter(Boolean);
+        let visibles = 0;
+
+        filas.forEach((fila, i) => {
+            const ok = palabras.every((p) => indices[i].includes(p));
+            fila.hidden = !ok;
+            if (ok) visibles++;
+        });
+
+        aviso.hidden = visibles !== 0;
+        contador.textContent = palabras.length ? `${visibles} de ${total}` : `${total} asignados`;
+    });
+})();
+</script>
 {% endblock %}
